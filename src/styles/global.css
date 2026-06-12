@@ -1,0 +1,50 @@
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+  background-image:
+    radial-gradient(rgba(79, 195, 247, 0.045) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+::selection {
+  background: rgba(79, 195, 247, 0.28);
+}
+
+/* Viditelný focus pro klávesovou navigaci */
+:focus-visible {
+  outline: 2px solid #4fc3f7;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Telemetrický pruh — podpis designu */
+.telemetry-sep {
+  background: repeating-linear-gradient(
+    90deg,
+    #22303f 0 6px,
+    transparent 6px 12px
+  );
+  height: 1px;
+}
