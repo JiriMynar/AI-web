@@ -323,7 +323,7 @@ export function buildTeam(a: Answers, ctx: Ctx): TeamRole[] {
     team.push({
       role: "Ambasadoři z řad zaměstnanců",
       why: a.zkusenost === "stin"
-        ? "Lidé, kteří si už dnes pomáhají AI sami, jsou vaše největší výhoda — zapojte jeoficiálně. Kolegé uvěří jim, ne prezentaci."
+        ? "Lidé, kteří si už dnes pomáhají AI sami, jsou vaše největší výhoda — zapojte je oficiálně. Kolegové uvěří jim, ne prezentaci."
         : "Při nedůvěře v týmu potřebujete pár lidí z provozu, kteří nástroj vyzkouší první a řeknou kolegům pravdu. Adopce se šíří od kolegů, ne shora.",
       risk: "Bez nich: adopce stojí jen na příkazech shora — a ty dlouhodobě nefungují.",
     });
