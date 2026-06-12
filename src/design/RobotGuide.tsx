@@ -5,21 +5,27 @@ import { Lamp } from "./primitives";
 /**
  * Virtuální průvodce velínu — původní robot v designu řídicího panelu.
  * - jemně se vznáší, mrká, anténka pulzuje, na příchod zamává,
- * - očima sleduje prvek, na který uživatel míří (prop lookAt),
+ * - očima sleduje prvek, na který uživatel míří (prop lookAt) i bublinu při najetí,
  * - mluví bublinou s psacím efektem; zprávy se proklikávají,
+ * - „pokračovat →“ pulzuje světelným podsvícením, aby zvalo ke čtení dál,
  * - klik na bublinu dopíše text okamžitě (skip), poslední zpráva zůstává,
  * - přístupnost: aria-live, plný respekt k prefers-reduced-motion.
  */
 export default function RobotGuide({
   messages,
   lookAt = null,
+  finalHint = "↓ pokračujte níže",
+  onDone,
 }: {
   messages: string[];
   lookAt?: number | null; // -1 vlevo · 0 střed · 1 vpravo · null = před sebe
+  finalHint?: string;
+  onDone?: () => void;     // zavolá se, když uživatel dojde k poslední zprávě
 }) {
   const reduce = useReducedMotion();
   const [idx, setIdx] = useState(0);
   const [chars, setChars] = useState(0);
+  const [bubbleHover, setBubbleHover] = useState(false);
   const timer = useRef<number | null>(null);
 
   const text = messages[idx] ?? "";
@@ -52,13 +58,15 @@ export default function RobotGuide({
       if (timer.current) window.clearInterval(timer.current);
       setChars(text.length);
     } else if (!last) {
-      setIdx((i) => i + 1);
+      const next = idx + 1;
+      setIdx(next);
+      if (next === messages.length - 1) onDone?.();
     }
   };
 
-  // kam se dívají zorničky
-  const px = lookAt === null ? 0 : lookAt * 3.2;
-  const py = lookAt === null ? 0 : 2.4;
+  // kam se dívají zorničky: bublina má přednost, pak sledovaný prvek
+  const px = bubbleHover ? 3.6 : lookAt === null ? 0 : lookAt * 3.2;
+  const py = bubbleHover ? 1.8 : lookAt === null ? 0 : 2.4;
 
   return (
     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
@@ -143,6 +151,10 @@ export default function RobotGuide({
         <button
           type="button"
           onClick={skipOrNext}
+          onMouseEnter={() => setBubbleHover(true)}
+          onMouseLeave={() => setBubbleHover(false)}
+          onFocus={() => setBubbleHover(true)}
+          onBlur={() => setBubbleHover(false)}
           disabled={!typing && last}
           aria-label={typing ? "Dopsat zprávu" : last ? undefined : "Další zpráva"}
           className="w-full rounded-lg border border-line bg-panel px-5 py-4 text-left shadow-panel transition-colors enabled:hover:border-faint disabled:cursor-default"
@@ -161,9 +173,20 @@ export default function RobotGuide({
                 <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === idx ? "bg-vedeni" : "bg-line"}`} />
               ))}
             </div>
-            <span className="font-mono text-xs font-semibold tracking-wide2 text-dim">
-              {typing ? "klikněte pro dopsání" : last ? "↓ vyberte roli níže" : "pokračovat →"}
-            </span>
+            {!typing && !last ? (
+              <motion.span
+                animate={reduce ? undefined : { opacity: [0.65, 1, 0.65] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="rounded-full bg-vedeni/15 px-3 py-1 font-mono text-xs font-semibold tracking-wide2 text-vedeni"
+                style={{ boxShadow: "0 0 16px rgba(79, 195, 247, 0.35)" }}
+              >
+                pokračovat →
+              </motion.span>
+            ) : (
+              <span className="font-mono text-xs font-semibold tracking-wide2 text-dim">
+                {typing ? "klikněte pro dopsání" : finalHint}
+              </span>
+            )}
           </div>
         </button>
       </div>

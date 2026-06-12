@@ -5,6 +5,8 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
  * - barevné datové body s dohasínajícími světelnými stopami,
  * - blízké body se propojují do živé sítě,
  * - kolem kurzoru (reaktorového jádra) body orbitují jako ve víru,
+ * - upuštění (puštění tlačítka, odjetí myši, 2,5 s klidu) roj rozepne do prostoru,
+ * - pod textem uprostřed se body i linky ztlumují kvůli čitelnosti,
  * - bez myši jádro autonomně křižuje obrazovkou a vleče roj za sebou,
  * - explode() vyšle tlakovou vlnu (světelné prstence) a roj rozmetá.
  * Respektuje prefers-reduced-motion (nevykresluje se nic).
@@ -60,7 +62,7 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
       y: Math.random() * h,
       vx: (Math.random() - 0.5) * 0.5,
       vy: (Math.random() - 0.5) * 0.5,
-      r: 1.3 + Math.random() * 2.4,
+      r: 0.9 + Math.random() * 1.5,
       ci: Math.floor(Math.random() * COLORS.length),
       alpha: 0.45 + Math.random() * 0.5,
     });
@@ -74,17 +76,37 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const target = Math.min(230, Math.floor((w * h) / 8200));
+      const target = Math.min(330, Math.floor((w * h) / 5400));
       while (particles.length < target) particles.push(spawn());
       particles.length = target;
     };
 
+    let lastMove = 0;
     const onMove = (e: PointerEvent) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       mouse.active = true;
+      lastMove = performance.now();
     };
-    const onLeave = () => { mouse.active = false; };
+    // upuštění roje: shluk kolem jádra se rozepne do prostoru
+    const release = () => {
+      const R = Math.min(Math.max(Math.min(w, h) * 0.46, 280), 520);
+      for (const p of particles) {
+        const dx = p.x - core.x;
+        const dy = p.y - core.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < R) {
+          const power = 7.5 * (1 - dist / R) + 1.2;
+          p.vx += (dx / dist) * power;
+          p.vy += (dy / dist) * power;
+        }
+      }
+    };
+    const onUp = () => release();
+    const onLeave = () => {
+      if (mouse.active) release();
+      mouse.active = false;
+    };
 
     ctrl.current.explode = (x: number, y: number) => {
       const now = performance.now();
@@ -109,6 +131,25 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
       ctx.fillRect(0, 0, w, h);
 
       const exploding = now < ctrl.current.explodedUntil;
+
+      // myš se 2,5 s nehnula → roj se upustí a rozepne
+      if (mouse.active && now - lastMove > 2500) {
+        mouse.active = false;
+        release();
+      }
+
+      // ochranná zóna textu uprostřed: kuličky a linky pod textem ztlumit
+      const zoneHW = Math.min(470, w * 0.44);
+      const zoneTop = h * 0.16;
+      const zoneBottom = h * 0.8;
+      const dimAt = (x: number, y: number) => {
+        const dx = Math.abs(x - w / 2) - zoneHW;
+        const dy = y < zoneTop ? zoneTop - y : y > zoneBottom ? y - zoneBottom : -1;
+        const outside = Math.max(dx, dy);
+        if (outside >= 90) return 1;
+        if (outside <= 0) return 0.2;
+        return 0.2 + 0.8 * (outside / 90);
+      };
 
       // cíl jádra: myš, jinak autonomní křižování (Lissajous)
       const tx = mouse.active ? mouse.x : w / 2 + Math.cos(now * 0.00031) * w * 0.3;
@@ -172,7 +213,7 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
           if (dy > LINK_DIST || dy < -LINK_DIST) continue;
           const d2 = dx * dx + dy * dy;
           if (d2 > L2) continue;
-          ctx.globalAlpha = (1 - Math.sqrt(d2) / LINK_DIST) * 0.22;
+          ctx.globalAlpha = (1 - Math.sqrt(d2) / LINK_DIST) * 0.22 * Math.min(dimAt(a.x, a.y), dimAt(b.x, b.y));
           ctx.strokeStyle = COLORS[a.ci];
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
@@ -184,7 +225,7 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
       // datové body se září
       for (const p of particles) {
         const size = p.r * 7;
-        ctx.globalAlpha = p.alpha;
+        ctx.globalAlpha = p.alpha * dimAt(p.x, p.y);
         ctx.drawImage(sprites[p.ci], p.x - size / 2, p.y - size / 2, size, size);
         if (p.alpha > 0.95) p.alpha -= 0.004; // záblesk po explozi pomalu dohasíná
       }
@@ -238,6 +279,7 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
     ctx.fillRect(0, 0, w, h);
     window.addEventListener("resize", resize);
     window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
     window.addEventListener("pointerleave", onLeave);
     raf = requestAnimationFrame(step);
 
@@ -245,6 +287,7 @@ const ParticleField = forwardRef<ParticleFieldHandle>(function ParticleField(_, 
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointerleave", onLeave);
     };
   }, []);

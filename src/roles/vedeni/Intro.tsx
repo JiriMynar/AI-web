@@ -1,71 +1,100 @@
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Eyebrow, Lamp, Panel, Reveal } from "../../design/primitives";
+import { Eyebrow, Reveal } from "../../design/primitives";
+import RobotGuide from "../../design/RobotGuide";
 import { useSeo } from "../../lib/seo";
 import { STEPS } from "./data";
 
+const GUIDE_MESSAGES = [
+  "Vítejte v modulu pro vedení. Výsledkem analýzy bude rozhodovací podklad: celková náročnost implementace u vás ve firmě, verdikt realističnosti každého záměru, tým, který budete potřebovat — a rizikové scénáře s cestami ven.",
+  "Pomůže vám vyvarovat se chyb, které dělají i zkušení manažeři, když AI zavádějí poprvé: nákup nástroje před zmapováním procesu, projekt bez vlastníka a měřitelného cíle, nebo ambice, na kterou nestačí kapacita lidí.",
+  "Nástrahy se přitom liší podle profilu a stavu vaší firmy — jinde číhají u výrobce s papírovou evidencí, jinde u kanceláře plné excelů. Proto se vás zeptám na pár věcí o firmě, datech, procesech a lidech, a vše vyhodnotím přesně pro vaši situaci.",
+];
+
+/** Úvod modulu Vedení: průvodce vysvětlí výstup a nástrahy, pak odkryje kroky analýzy. */
 export default function Intro() {
   useSeo(
-    "Vedení / majitel — průvodce implementací AI | Velín",
-    "Rozhodujete o zavedení AI? Za 5 minut zjistíte náročnost implementace, realističnost záměrů, potřebný tým a rizika."
+    "Vedení / majitel — analýza implementace AI | Velín",
+    "Rozhodujete o zavedení AI? Analýza vám dá rozhodovací podklad: náročnost, realističnost záměrů, potřebný tým a rizika — přesně pro stav vaší firmy."
   );
+  const [showSteps, setShowSteps] = useState(false);
+  const stepsRef = useRef<HTMLDivElement>(null);
+
+  const revealSteps = () => {
+    setShowSteps(true);
+    // dopřát Revealu jeden frame a pak dovést pozornost ke krokům
+    window.setTimeout(() => {
+      stepsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 250);
+  };
+
   return (
     <div className="mx-auto max-w-shell px-5 py-12 sm:py-16">
       <Eyebrow tone="text-vedeni">MODUL 01 · VEDENÍ / MAJITEL</Eyebrow>
       <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">
-        Rozhodujete o AI?{" "}
-        <span className="text-dim">Tady zjistíte, do čeho jdete — dřív, než podepíšete.</span>
+        Analýza pro vedení
       </h1>
-      <p className="mt-5 max-w-2xl leading-relaxed text-dim">
-        Tenhle modul je psaný z perspektivy vedení: nezajímá vás, jak se konfiguruje nástroj, ale
-        jestli je záměr realistický, kolik lidí a času spolkne a kde projekt může umřít.
-        Odpovíte na otázky o firmě — a dostanete rozhodovací podklad.
-      </p>
 
-      <div className="mt-10 grid gap-3 md:grid-cols-2">
-        {[
-          { t: "Celková náročnost", d: "Startovní, standardní, náročná, nebo komplexní — podle kombinace vašich odpovědí, ne podle slibů dodavatele." },
-          { t: "Verdikt každého záměru", d: "Proveditelné hned, po přípravě, nebo zatím ne — s konkrétními důvody, co chybí." },
-          { t: "Tým a 8 oblastí povinností", d: "Kdo implementaci reálně ponese, co se stane bez vlastníka — a jestli na to vaše kapacita stačí." },
-          { t: "Rizikové scénáře", d: "Pojmenované kombinace, na kterých implementace umírají — a cesty ven z každé." },
-        ].map((b, i) => (
-          <Reveal key={b.t} delay={i * 0.05}>
-            <Panel className="h-full px-5 py-4">
-              <div className="flex items-center gap-2.5">
-                <Lamp tone="bg-vedeni" />
-                <span className="font-semibold">{b.t}</span>
-              </div>
-              <p className="mt-2 text-[13px] leading-relaxed text-dim">{b.d}</p>
-            </Panel>
-          </Reveal>
-        ))}
+      <div className="mt-8">
+        <Reveal>
+          <RobotGuide
+            messages={GUIDE_MESSAGES}
+            finalHint={showSteps ? "↓ kroky analýzy níže" : ""}
+            onDone={revealSteps}
+          />
+        </Reveal>
       </div>
 
-      <div className="mt-12">
-        <Eyebrow>PROJDETE 5 KROKŮ</Eyebrow>
-        <div className="mt-3 flex flex-col gap-2.5">
-          {STEPS.map((s, i) => (
-            <Reveal key={s.id} delay={i * 0.04}>
-              <div className="flex items-start gap-3">
-                <span className="font-mono text-xs font-semibold text-vedeni">{String(i + 1).padStart(2, "0")}</span>
-                <p className="text-sm leading-relaxed">
-                  <span className="font-semibold">{s.full}</span>
-                  <span className="text-dim"> — {s.desc.split(".")[0].toLowerCase()}.</span>
+      {showSteps && (
+        <div ref={stepsRef} className="scroll-mt-24 pt-14">
+          <Reveal>
+            <div className="mb-5 flex items-center gap-3">
+              <Eyebrow>CO VÁS ČEKÁ — 5 KROKŮ ANALÝZY</Eyebrow>
+              <div className="telemetry-sep flex-1" aria-hidden />
+            </div>
+          </Reveal>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {STEPS.map((s, i) => (
+              <Reveal key={s.id} delay={i * 0.07}>
+                <div className="flex h-full gap-4 rounded-lg border border-line bg-panel px-5 py-4 shadow-panel">
+                  <span className="font-mono text-lg font-semibold text-vedeni">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <div className="font-semibold">{s.full}</div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-dim">{s.desc}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+            <Reveal delay={STEPS.length * 0.07}>
+              <div className="flex h-full flex-col justify-center rounded-lg border border-dashed border-vedeni/40 bg-vedeni/5 px-5 py-4">
+                <div className="font-semibold text-vedeni">Výstup: report pro vedení</div>
+                <p className="mt-1 text-[13px] leading-relaxed text-dim">
+                  Náročnost, verdikty záměrů, tým, povinnosti, rizikové scénáře a pravidla z praxe.
+                  Sdílitelný odkazem — nic se nikam neodesílá.
                 </p>
               </div>
             </Reveal>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      <div className="mt-12 flex flex-wrap items-center gap-5">
-        <Link
-          to="/vedeni/pruvodce"
-          className="rounded-md bg-vedeni px-7 py-3.5 text-[15px] font-semibold text-bg transition-transform duration-150 hover:-translate-y-0.5"
-        >
-          Spustit průvodce
-        </Link>
-        <span className="font-mono text-xs tracking-wide2 text-faint">5 kroků · cca 5 minut · žádná registrace, nic se nikam neodesílá</span>
-      </div>
+          <Reveal delay={0.35}>
+            <div className="mt-10 flex flex-wrap items-center gap-5">
+              <Link
+                to="/vedeni/pruvodce"
+                className="group inline-flex items-center gap-3 rounded-full bg-vedeni px-9 py-4 text-lg font-semibold text-bg shadow-[0_0_36px_rgba(79,195,247,0.35)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_0_56px_rgba(79,195,247,0.5)]"
+              >
+                Spustit analýzu
+                <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
+              </Link>
+              <span className="font-mono text-xs tracking-wide2 text-faint">
+                5 kroků · cca 5 minut · odpovědi zůstávají jen ve vašem prohlížeči
+              </span>
+            </div>
+          </Reveal>
+        </div>
+      )}
     </div>
   );
 }

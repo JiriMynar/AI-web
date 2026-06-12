@@ -132,7 +132,7 @@ export default function Vyber() {
 
       <section className="pb-10">
         <Reveal>
-          <RobotGuide messages={GUIDE_MESSAGES} lookAt={lookAt} />
+          <RobotGuide messages={GUIDE_MESSAGES} lookAt={lookAt} finalHint="↓ vyberte roli níže" />
         </Reveal>
       </section>
 
