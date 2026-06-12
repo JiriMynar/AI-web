@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 import Shell from "./design/Shell";
 import Landing from "./pages/Landing";
+import Vyber from "./pages/Vyber";
 
 /*
  * Striktní oddělení rolí: každá role je samostatný lazy modul.
@@ -23,6 +24,7 @@ export default function App() {
       >
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/vyber" element={<Vyber />} />
           <Route path="/vedeni/*" element={<Vedeni />} />
           <Route path="/hr/*" element={<Hr />} />
           <Route path="/specialista/*" element={<Specialista />} />
