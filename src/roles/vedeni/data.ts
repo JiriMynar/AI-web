@@ -143,7 +143,7 @@ export const Q: Record<string, Question> = {
       { v: "nic", t: "Zatím žádná", d: "Čistý start — žádná zátěž z minula, o to víc rozhodne první pilot" },
       { v: "stin", t: "Lidé si pomáhají sami", d: "Veřejné nástroje bez pravidel — máte nadšence i riziko úniku dat zároveň" },
       { v: "neuspech", t: "Pokus, který nedopadl", d: "Druhý pokus musí nejdřív nahlas pojmenovat, proč padl ten první" },
-      { v: "bezi", t: "Něco už běží", d: "Máte na čem stavět, koho se ptat a co měřit" },
+      { v: "bezi", t: "Něco už běží", d: "Máte na čem stavět, koho se ptát a co měřit" },
     ],
   },
   lide: {
