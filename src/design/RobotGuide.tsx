@@ -4,7 +4,7 @@ import { Lamp } from "./primitives";
 
 /**
  * Virtuální průvodce velínu — původní robot v designu řídicího panelu.
- * - jemně se vznáší, mrká, anténka pulzuje,
+ * - jemně se vznáší, mrká, anténka pulzuje, na příchod zamává,
  * - očima sleduje prvek, na který uživatel míří (prop lookAt),
  * - mluví bublinou s psacím efektem; zprávy se proklikávají,
  * - klik na bublinu dopíše text okamžitě (skip), poslední zpráva zůstává,
@@ -107,12 +107,26 @@ export default function RobotGuide({
               <rect x="61" y="35" width="22" height="18" rx="9" fill="#0F1722" />
             </motion.g>
           )}
-          {/* pusa */}
-          <motion.rect
-            x="48" y="60" width="16" height="3" rx="1.5" fill="#5C7185"
-            animate={reduce || !typing ? { height: 3, y: 60 } : { height: [3, 6, 3, 5, 3], y: [60, 58.5, 60, 59, 60] }}
-            transition={{ duration: 0.5, repeat: typing ? Infinity : 0 }}
-          />
+          {/* pusa — při mluvení kmitá, v klidu se usmívá */}
+          {typing && !reduce ? (
+            <motion.rect
+              x="48" y="60" width="16" height="3" rx="1.5" fill="#9FB4C9"
+              animate={{ height: [3, 6, 3, 5, 3], y: [60, 58.5, 60, 59, 60] }}
+              transition={{ duration: 0.5, repeat: Infinity }}
+            />
+          ) : (
+            <path d="M47 60 Q56 67 65 60" stroke="#9FB4C9" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          )}
+          {/* ruce — levá zamává na pozdrav */}
+          <motion.g
+            animate={reduce ? undefined : { rotate: [0, -28, 10, -28, 10, 0] }}
+            transition={{ duration: 1.6, delay: 0.6, ease: "easeInOut" }}
+            style={{ transformOrigin: "30px 90px" }}
+          >
+            <rect x="14" y="84" width="18" height="7" rx="3.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" transform="rotate(-38 30 90)" />
+            <circle cx="13" cy="79" r="4.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
+          </motion.g>
+          <rect x="80" y="88" width="18" height="7" rx="3.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" transform="rotate(28 82 90)" />
           {/* krk + tělo s proužky rolí */}
           <rect x="48" y="76" width="16" height="6" fill="#15202E" />
           <rect x="28" y="82" width="56" height="38" rx="10" fill="#0F1722" stroke="#22303F" strokeWidth="2" />
