@@ -93,6 +93,18 @@ export default function Landing() {
           >
             5 minut · žádná registrace · nic se nikam neodesílá
           </motion.p>
+
+          <motion.a
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.6 }}
+            href="https://www.linkedin.com/in/jirimynar/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 font-mono text-[11px] tracking-label text-dim underline decoration-line underline-offset-4 transition-colors hover:text-ink"
+          >
+            VYTVOŘIL JIŘÍ MYNÁŘ · LINKEDIN ↗
+          </motion.a>
         </section>
       </motion.div>
     </div>

@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Eyebrow, Lamp, Reveal } from "../design/primitives";
+import RobotGuide from "../design/RobotGuide";
 import { useSeo } from "../lib/seo";
 
 const ROLES = [
@@ -7,7 +9,7 @@ const ROLES = [
     to: "/vedeni",
     code: "MODUL 01",
     lamp: "bg-vedeni",
-    border: "hover:border-vedeni/60",
+    border: "hover:border-vedeni/60 focus-visible:border-vedeni/60",
     text: "text-vedeni",
     title: "Vedení / majitel",
     desc: "Rozhodujete o zavedení AI. Uvidíte náročnost implementace, realističnost záměrů, potřebný tým a rizika, na kterých projekty umírají.",
@@ -17,7 +19,7 @@ const ROLES = [
     to: "/hr",
     code: "MODUL 02",
     lamp: "bg-hr",
-    border: "hover:border-hr/60",
+    border: "hover:border-hr/60 focus-visible:border-hr/60",
     text: "text-hr",
     title: "HR / nábor",
     desc: "Hledáte člověka na AI. Uvidíte, koho vlastně hledat, co napsat do inzerátu, co nepožadovat — a na co se ptát na pohovoru.",
@@ -27,7 +29,7 @@ const ROLES = [
     to: "/specialista",
     code: "MODUL 03",
     lamp: "bg-spec",
-    border: "hover:border-spec/60",
+    border: "hover:border-spec/60 focus-visible:border-spec/60",
     text: "text-spec",
     title: "AI specialista",
     desc: "Implementaci provádíte. Uvidíte verdikty proveditelnosti, postup krok za krokem, rizika a legislativu s termíny.",
@@ -35,33 +37,44 @@ const ROLES = [
   },
 ];
 
-/** Výběr perspektivy — analýza se liší podle role, kterou ve firmě máte. */
+const GUIDE_MESSAGES = [
+  "Vítejte ve velínu! Jsem váš průvodce implementací AI — provedu vás analýzou a na konci dostanete konkrétní výstup pro svou práci.",
+  "Důležitá věc na úvod: implementace AI se dá pozorovat z mnoha pohledů. Vedení rozhoduje a odstraňuje překážky, HR hledá správného člověka a specialista implementaci provádí — každý z nich potřebuje vědět něco jiného.",
+  "Vyberte si proto pohled, který je váš. Připravím vám přesně vaši část práce — nic víc, nic míň.",
+];
+
+/** Výběr perspektivy — provází jím virtuální průvodce. */
 export default function Vyber() {
   useSeo(
     "Vyberte svou roli — Velín",
     "Implementace AI jsou tři různé práce: vedení rozhoduje, HR hledá člověka, specialista ji provádí. Vyberte svou perspektivu."
   );
+  const [lookAt, setLookAt] = useState<number | null>(null);
 
   return (
     <div className="mx-auto max-w-shell px-5">
-      <section className="pb-10 pt-14 sm:pt-20">
+      <section className="pb-8 pt-12 sm:pt-16">
         <Eyebrow tone="text-dim">/// KROK 1 · VOLBA PERSPEKTIVY</Eyebrow>
         <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">
           Odkud se na AI díváte?
         </h1>
-        <p className="mt-4 max-w-2xl leading-relaxed text-dim">
-          Implementace AI nejsou jedna práce, ale tři různé: vedení rozhoduje a odstraňuje
-          překážky, HR hledá správného člověka, specialista ji provádí. Vyberte svou roli —
-          analýza vám ukáže přesně vaši část práce.
-        </p>
       </section>
 
-      <section className="pb-16">
+      <section className="pb-10">
+        <Reveal>
+          <RobotGuide messages={GUIDE_MESSAGES} lookAt={lookAt} />
+        </Reveal>
+      </section>
+
+      <section className="pb-16" onMouseLeave={() => setLookAt(null)}>
         <div className="grid gap-4 md:grid-cols-3">
           {ROLES.map((r, i) => (
             <Reveal key={r.to} delay={i * 0.06}>
               <Link
                 to={r.to}
+                onMouseEnter={() => setLookAt(i - 1)}
+                onFocus={() => setLookAt(i - 1)}
+                onBlur={() => setLookAt(null)}
                 className={`group flex h-full flex-col rounded-lg border border-line bg-panel p-6 shadow-panel transition-[border-color,transform] duration-200 hover:-translate-y-1 ${r.border}`}
               >
                 <div className="flex items-center justify-between">
