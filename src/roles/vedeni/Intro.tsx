@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Eyebrow, Reveal } from "../../design/primitives";
 import RobotGuide from "../../design/RobotGuide";
 import { useSeo } from "../../lib/seo";
@@ -11,7 +12,100 @@ const GUIDE_MESSAGES = [
   "Nástrahy se přitom liší podle profilu a stavu vaší firmy — jinde číhají u výrobce s papírovou evidencí, jinde u kanceláře plné excelů. Proto se vás zeptám na pár věcí o firmě, datech, procesech a lidech, a vše vyhodnotím přesně pro vaši situaci.",
 ];
 
-/** Úvod modulu Vedení: průvodce vysvětlí výstup a nástrahy, pak odkryje kroky analýzy. */
+/**
+ * Interaktivní svislá osa kroků analýzy:
+ * - gradientní linka s putující jiskrou (data tečou velínem),
+ * - uzly s čísly se na hover rozsvítí a zvětší, popis zjasní,
+ * - zakončená uzlem výstupu a tlačítkem Spustit analýzu.
+ */
+function StepTimeline({ active }: { active: boolean }) {
+  const reduce = useReducedMotion();
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  return (
+    <div className="relative ml-1 sm:ml-3">
+      {/* svislá linka */}
+      <div
+        aria-hidden
+        className="absolute bottom-3 left-[15px] top-1 w-[2px] rounded bg-gradient-to-b from-vedeni/80 via-line to-vedeni/50"
+      />
+      {/* putující jiskra po lince */}
+      {active && !reduce && (
+        <motion.div
+          aria-hidden
+          className="absolute left-[11px] h-2.5 w-2.5 rounded-full bg-vedeni"
+          style={{ boxShadow: "0 0 12px #4FC3F7" }}
+          animate={{ top: ["0%", "97%"], opacity: [0, 1, 1, 0] }}
+          transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", times: [0, 0.08, 0.92, 1] }}
+        />
+      )}
+
+      {STEPS.map((s, i) => {
+        const lit = hovered === i;
+        return (
+          <div
+            key={s.id}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            className="group relative pb-9 pl-12"
+          >
+            {/* uzel */}
+            <span
+              aria-hidden
+              className={`absolute left-0 top-0 grid h-8 w-8 place-items-center rounded-full border-2 font-mono text-[11px] font-semibold transition-all duration-200 ${
+                lit ? "scale-110 border-vedeni bg-vedeni text-bg" : "border-line bg-panel text-vedeni"
+              }`}
+              style={lit ? { boxShadow: "0 0 18px rgba(79, 195, 247, 0.55)" } : undefined}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            {/* obsah kroku */}
+            <div className={`-mt-1 transition-transform duration-200 ${lit ? "translate-x-1" : ""}`}>
+              <div className={`font-semibold transition-colors duration-200 ${lit ? "text-vedeni" : "text-ink"}`}>
+                {s.full}
+              </div>
+              <p className={`mt-1 max-w-2xl text-[13px] leading-relaxed transition-colors duration-200 ${lit ? "text-ink" : "text-dim"}`}>
+                {s.desc}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* koncový uzel — výstup */}
+      <div className="relative pl-12">
+        <span
+          aria-hidden
+          className="absolute left-[5px] top-1 h-[22px] w-[22px] rotate-45 rounded-[5px] border-2 border-vedeni bg-vedeni/15"
+          style={{ boxShadow: "0 0 16px rgba(79, 195, 247, 0.4)" }}
+        />
+        <div className="rounded-lg border border-dashed border-vedeni/40 bg-vedeni/5 px-5 py-4">
+          <div className="font-semibold text-vedeni">Výstup: report pro vedení</div>
+          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-dim">
+            Náročnost, verdikty záměrů, tým, povinnosti, rizikové scénáře a pravidla z praxe.
+            Sdílitelný odkazem — nic se nikam neodesílá.
+          </p>
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center gap-5">
+          <Link
+            to="/vedeni/pruvodce"
+            tabIndex={active ? 0 : -1}
+            className="group inline-flex items-center gap-3 rounded-full bg-vedeni px-9 py-4 text-lg font-semibold text-bg shadow-[0_0_36px_rgba(79,195,247,0.35)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_0_56px_rgba(79,195,247,0.5)]"
+          >
+            Spustit analýzu
+            <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
+          </Link>
+          <span className="font-mono text-xs tracking-wide2 text-faint">
+            5 kroků · cca 5 minut · odpovědi zůstávají jen ve vašem prohlížeči
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Úvod modulu Vedení: průvodce → osa kroků se vynoří z mlhy → spuštění analýzy. */
 export default function Intro() {
   useSeo(
     "Vedení / majitel — analýza implementace AI | Velín",
@@ -22,10 +116,9 @@ export default function Intro() {
 
   const revealSteps = () => {
     setShowSteps(true);
-    // dopřát Revealu jeden frame a pak dovést pozornost ke krokům
     window.setTimeout(() => {
       stepsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 250);
+    }, 300);
   };
 
   return (
@@ -39,62 +132,50 @@ export default function Intro() {
         <Reveal>
           <RobotGuide
             messages={GUIDE_MESSAGES}
-            finalHint={showSteps ? "↓ kroky analýzy níže" : ""}
+            finalHint="↓ kroky analýzy níže"
             onDone={revealSteps}
+            backTo="/vyber"
+            backLabel="Zpět na volbu perspektivy"
           />
         </Reveal>
       </div>
 
-      {showSteps && (
-        <div ref={stepsRef} className="scroll-mt-24 pt-14">
-          <Reveal>
-            <div className="mb-5 flex items-center gap-3">
-              <Eyebrow>CO VÁS ČEKÁ — 5 KROKŮ ANALÝZY</Eyebrow>
-              <div className="telemetry-sep flex-1" aria-hidden />
-            </div>
-          </Reveal>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.id} delay={i * 0.07}>
-                <div className="flex h-full gap-4 rounded-lg border border-line bg-panel px-5 py-4 shadow-panel">
-                  <span className="font-mono text-lg font-semibold text-vedeni">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <div className="font-semibold">{s.full}</div>
-                    <p className="mt-1 text-[13px] leading-relaxed text-dim">{s.desc}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-            <Reveal delay={STEPS.length * 0.07}>
-              <div className="flex h-full flex-col justify-center rounded-lg border border-dashed border-vedeni/40 bg-vedeni/5 px-5 py-4">
-                <div className="font-semibold text-vedeni">Výstup: report pro vedení</div>
-                <p className="mt-1 text-[13px] leading-relaxed text-dim">
-                  Náročnost, verdikty záměrů, tým, povinnosti, rizikové scénáře a pravidla z praxe.
-                  Sdílitelný odkazem — nic se nikam neodesílá.
-                </p>
-              </div>
-            </Reveal>
+      {/* Osa kroků: před briefingem v mlze, pak se vyjasní */}
+      <div ref={stepsRef} className="relative scroll-mt-24 pt-14">
+        <motion.div
+          aria-hidden={!showSteps}
+          initial={false}
+          animate={{
+            filter: showSteps ? "blur(0px)" : "blur(7px)",
+            opacity: showSteps ? 1 : 0.35,
+          }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className={showSteps ? "" : "pointer-events-none select-none"}
+        >
+          <div className="mb-7 flex items-center gap-3">
+            <Eyebrow>CO VÁS ČEKÁ — 5 KROKŮ ANALÝZY</Eyebrow>
+            <div className="telemetry-sep flex-1" aria-hidden />
           </div>
+          <StepTimeline active={showSteps} />
+        </motion.div>
 
-          <Reveal delay={0.35}>
-            <div className="mt-10 flex flex-wrap items-center gap-5">
-              <Link
-                to="/vedeni/pruvodce"
-                className="group inline-flex items-center gap-3 rounded-full bg-vedeni px-9 py-4 text-lg font-semibold text-bg shadow-[0_0_36px_rgba(79,195,247,0.35)] transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-[0_0_56px_rgba(79,195,247,0.5)]"
-              >
-                Spustit analýzu
-                <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-              </Link>
-              <span className="font-mono text-xs tracking-wide2 text-faint">
-                5 kroků · cca 5 minut · odpovědi zůstávají jen ve vašem prohlížeči
+        {/* popisek nad mlhou */}
+        <AnimatePresence>
+          {!showSteps && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 z-10 flex items-center justify-center"
+            >
+              <span className="rounded-full border border-line bg-bg/70 px-5 py-2 font-mono text-[11px] font-semibold tracking-label text-dim backdrop-blur-sm">
+                DOKONČETE BRIEFING S PRŮVODCEM — KROKY SE VYJASNÍ
               </span>
-            </div>
-          </Reveal>
-        </div>
-      )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

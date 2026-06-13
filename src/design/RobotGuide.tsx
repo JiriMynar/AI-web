@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Lamp } from "./primitives";
 
@@ -6,9 +7,10 @@ import { Lamp } from "./primitives";
  * Virtuální průvodce velínu — původní robot v designu řídicího panelu.
  * - jemně se vznáší, mrká, anténka pulzuje, na příchod zamává,
  * - očima sleduje prvek, na který uživatel míří (prop lookAt) i bublinu při najetí,
+ * - volitelné dveře (prop backTo): odkaz zpět; při najetí se pootevřou,
+ *   rozsvítí se v nich světlo a robot se k nim vydá, jako že odchází,
  * - mluví bublinou s psacím efektem; zprávy se proklikávají,
  * - „pokračovat →“ pulzuje světelným podsvícením, aby zvalo ke čtení dál,
- * - klik na bublinu dopíše text okamžitě (skip), poslední zpráva zůstává,
  * - přístupnost: aria-live, plný respekt k prefers-reduced-motion.
  */
 export default function RobotGuide({
@@ -16,16 +18,21 @@ export default function RobotGuide({
   lookAt = null,
   finalHint = "↓ pokračujte níže",
   onDone,
+  backTo,
+  backLabel = "Zpět na předchozí stránku",
 }: {
   messages: string[];
   lookAt?: number | null; // -1 vlevo · 0 střed · 1 vpravo · null = před sebe
   finalHint?: string;
   onDone?: () => void;     // zavolá se, když uživatel dojde k poslední zprávě
+  backTo?: string;         // cesta pro dveře „zpět"
+  backLabel?: string;
 }) {
   const reduce = useReducedMotion();
   const [idx, setIdx] = useState(0);
   const [chars, setChars] = useState(0);
   const [bubbleHover, setBubbleHover] = useState(false);
+  const [doorHover, setDoorHover] = useState(false);
   const timer = useRef<number | null>(null);
 
   const text = messages[idx] ?? "";
@@ -64,85 +71,130 @@ export default function RobotGuide({
     }
   };
 
-  // kam se dívají zorničky: bublina má přednost, pak sledovaný prvek
-  const px = bubbleHover ? 3.6 : lookAt === null ? 0 : lookAt * 3.2;
-  const py = bubbleHover ? 1.8 : lookAt === null ? 0 : 2.4;
+  // kam se dívají zorničky: dveře > bublina > sledovaný prvek
+  const px = doorHover ? -3.6 : bubbleHover ? 3.6 : lookAt === null ? 0 : lookAt * 3.2;
+  const py = doorHover ? 1.2 : bubbleHover ? 1.8 : lookAt === null ? 0 : 2.4;
 
   return (
     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-      {/* Robot */}
-      <motion.div
-        aria-hidden
-        animate={reduce ? undefined : { y: [0, -7, 0] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-        className="flex-shrink-0"
-      >
-        <svg width="112" height="128" viewBox="0 0 112 128" role="img" aria-label="">
-          {/* anténka s kontrolkou */}
-          <line x1="56" y1="18" x2="56" y2="6" stroke="#22303F" strokeWidth="3" />
-          <motion.circle
-            cx="56" cy="6" r="4" fill="#43DD9A"
-            animate={reduce ? undefined : { opacity: [1, 0.35, 1] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            style={{ filter: "drop-shadow(0 0 6px #43DD9A)" }}
-          />
-          {/* hlava */}
-          <rect x="16" y="18" width="80" height="58" rx="14" fill="#0F1722" stroke="#22303F" strokeWidth="2" />
-          {/* oči — bělma */}
-          <ellipse cx="40" cy="44" rx="9" ry="9" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
-          <ellipse cx="72" cy="44" rx="9" ry="9" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
-          {/* zorničky — sledují cíl */}
-          <motion.circle
-            cx="40" cy="44" r="4" fill="#4FC3F7"
-            animate={{ x: px, y: py }}
-            transition={{ type: "spring", stiffness: 240, damping: 20 }}
-            style={{ filter: "drop-shadow(0 0 5px #4FC3F7)" }}
-          />
-          <motion.circle
-            cx="72" cy="44" r="4" fill="#4FC3F7"
-            animate={{ x: px, y: py }}
-            transition={{ type: "spring", stiffness: 240, damping: 20 }}
-            style={{ filter: "drop-shadow(0 0 5px #4FC3F7)" }}
-          />
-          {/* víčka — mrkání */}
-          {!reduce && (
-            <motion.g
-              animate={{ scaleY: [0, 0, 1, 0] }}
-              transition={{ duration: 4.4, repeat: Infinity, times: [0, 0.93, 0.965, 1] }}
-              style={{ transformOrigin: "56px 44px" }}
-            >
-              <rect x="29" y="35" width="22" height="18" rx="9" fill="#0F1722" />
-              <rect x="61" y="35" width="22" height="18" rx="9" fill="#0F1722" />
-            </motion.g>
-          )}
-          {/* pusa — při mluvení kmitá, v klidu se usmívá */}
-          {typing && !reduce ? (
-            <motion.rect
-              x="48" y="60" width="16" height="3" rx="1.5" fill="#9FB4C9"
-              animate={{ height: [3, 6, 3, 5, 3], y: [60, 58.5, 60, 59, 60] }}
-              transition={{ duration: 0.5, repeat: Infinity }}
-            />
-          ) : (
-            <path d="M47 60 Q56 67 65 60" stroke="#9FB4C9" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          )}
-          {/* ruce — levá zamává na pozdrav */}
-          <motion.g
-            animate={reduce ? undefined : { rotate: [0, -28, 10, -28, 10, 0] }}
-            transition={{ duration: 1.6, delay: 0.6, ease: "easeInOut" }}
-            style={{ transformOrigin: "30px 90px" }}
+      <div className="flex items-center gap-1">
+        {/* Dveře zpět */}
+        {backTo && (
+          <Link
+            to={backTo}
+            aria-label={backLabel}
+            onMouseEnter={() => setDoorHover(true)}
+            onMouseLeave={() => setDoorHover(false)}
+            onFocus={() => setDoorHover(true)}
+            onBlur={() => setDoorHover(false)}
+            className="group flex-shrink-0 self-center"
           >
-            <rect x="14" y="84" width="18" height="7" rx="3.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" transform="rotate(-38 30 90)" />
-            <circle cx="13" cy="79" r="4.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
-          </motion.g>
-          <rect x="80" y="88" width="18" height="7" rx="3.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" transform="rotate(28 82 90)" />
-          {/* krk + tělo s proužky rolí */}
-          <rect x="48" y="76" width="16" height="6" fill="#15202E" />
-          <rect x="28" y="82" width="56" height="38" rx="10" fill="#0F1722" stroke="#22303F" strokeWidth="2" />
-          <rect x="38" y="92" width="36" height="4" rx="2" fill="#4FC3F7" opacity="0.9" />
-          <rect x="38" y="100" width="24" height="4" rx="2" fill="#FF8896" opacity="0.9" />
-          <rect x="38" y="108" width="30" height="4" rx="2" fill="#43DD9A" opacity="0.9" />
-        </svg>
-      </motion.div>
+            <svg width="62" height="124" viewBox="0 0 62 124" aria-hidden>
+              {/* zárubeň */}
+              <rect x="5" y="4" width="52" height="104" rx="5" fill="#0F1722" stroke="#22303F" strokeWidth="2" />
+              {/* světlo za dveřmi */}
+              <motion.rect
+                x="9" y="8" width="44" height="96" rx="3" fill="#FFB547"
+                animate={{ opacity: doorHover ? 0.4 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+              {/* křídlo dveří — pootevře se */}
+              <motion.g
+                animate={doorHover && !reduce ? { x: -7, skewY: -7, scaleX: 0.8 } : { x: 0, skewY: 0, scaleX: 1 }}
+                transition={{ type: "spring", stiffness: 180, damping: 18 }}
+                style={{ transformOrigin: "9px 56px" }}
+              >
+                <rect x="9" y="8" width="44" height="96" rx="3" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
+                <rect x="15" y="16" width="32" height="36" rx="2" fill="none" stroke="#22303F" strokeWidth="1.5" />
+                <rect x="15" y="58" width="32" height="38" rx="2" fill="none" stroke="#22303F" strokeWidth="1.5" />
+                <circle cx="46" cy="56" r="2.6" fill="#92A6BB" />
+              </motion.g>
+              {/* šipka zpět nade dveřmi */}
+              <path d="M31 116 h-8 m0 0 l4 -3.5 m-4 3.5 l4 3.5 m4 -3.5 h8" stroke="#5C7185" strokeWidth="1.8" strokeLinecap="round" fill="none" className="transition-colors group-hover:stroke-[#FFB547]" />
+            </svg>
+            <span className="block text-center font-mono text-[10px] font-semibold tracking-label text-faint transition-colors group-hover:text-warn">
+              ZPĚT
+            </span>
+          </Link>
+        )}
+
+        {/* Robot */}
+        <motion.div
+          aria-hidden
+          animate={reduce ? undefined : { y: [0, -7, 0], x: doorHover && backTo ? -26 : 0 }}
+          transition={{
+            y: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
+            x: { type: "spring", stiffness: 130, damping: 15 },
+          }}
+          className="flex-shrink-0"
+        >
+          <svg width="112" height="128" viewBox="0 0 112 128" role="img" aria-label="">
+            {/* anténka s kontrolkou */}
+            <line x1="56" y1="18" x2="56" y2="6" stroke="#22303F" strokeWidth="3" />
+            <motion.circle
+              cx="56" cy="6" r="4" fill="#43DD9A"
+              animate={reduce ? undefined : { opacity: [1, 0.35, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              style={{ filter: "drop-shadow(0 0 6px #43DD9A)" }}
+            />
+            {/* hlava */}
+            <rect x="16" y="18" width="80" height="58" rx="14" fill="#0F1722" stroke="#22303F" strokeWidth="2" />
+            {/* oči — bělma */}
+            <ellipse cx="40" cy="44" rx="9" ry="9" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
+            <ellipse cx="72" cy="44" rx="9" ry="9" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
+            {/* zorničky — sledují cíl */}
+            <motion.circle
+              cx="40" cy="44" r="4" fill="#4FC3F7"
+              animate={{ x: px, y: py }}
+              transition={{ type: "spring", stiffness: 240, damping: 20 }}
+              style={{ filter: "drop-shadow(0 0 5px #4FC3F7)" }}
+            />
+            <motion.circle
+              cx="72" cy="44" r="4" fill="#4FC3F7"
+              animate={{ x: px, y: py }}
+              transition={{ type: "spring", stiffness: 240, damping: 20 }}
+              style={{ filter: "drop-shadow(0 0 5px #4FC3F7)" }}
+            />
+            {/* víčka — mrkání */}
+            {!reduce && (
+              <motion.g
+                animate={{ scaleY: [0, 0, 1, 0] }}
+                transition={{ duration: 4.4, repeat: Infinity, times: [0, 0.93, 0.965, 1] }}
+                style={{ transformOrigin: "56px 44px" }}
+              >
+                <rect x="29" y="35" width="22" height="18" rx="9" fill="#0F1722" />
+                <rect x="61" y="35" width="22" height="18" rx="9" fill="#0F1722" />
+              </motion.g>
+            )}
+            {/* pusa — při mluvení kmitá, v klidu se usmívá */}
+            {typing && !reduce ? (
+              <motion.rect
+                x="48" y="60" width="16" height="3" rx="1.5" fill="#9FB4C9"
+                animate={{ height: [3, 6, 3, 5, 3], y: [60, 58.5, 60, 59, 60] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+              />
+            ) : (
+              <path d="M47 60 Q56 67 65 60" stroke="#9FB4C9" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            )}
+            {/* ruce — levá zamává na pozdrav */}
+            <motion.g
+              animate={reduce ? undefined : { rotate: [0, -28, 10, -28, 10, 0] }}
+              transition={{ duration: 1.6, delay: 0.6, ease: "easeInOut" }}
+              style={{ transformOrigin: "30px 90px" }}
+            >
+              <rect x="14" y="84" width="18" height="7" rx="3.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" transform="rotate(-38 30 90)" />
+              <circle cx="13" cy="79" r="4.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" />
+            </motion.g>
+            <rect x="80" y="88" width="18" height="7" rx="3.5" fill="#15202E" stroke="#22303F" strokeWidth="1.5" transform="rotate(28 82 90)" />
+            {/* krk + tělo s proužky rolí */}
+            <rect x="48" y="76" width="16" height="6" fill="#15202E" />
+            <rect x="28" y="82" width="56" height="38" rx="10" fill="#0F1722" stroke="#22303F" strokeWidth="2" />
+            <rect x="38" y="92" width="36" height="4" rx="2" fill="#4FC3F7" opacity="0.9" />
+            <rect x="38" y="100" width="24" height="4" rx="2" fill="#FF8896" opacity="0.9" />
+            <rect x="38" y="108" width="30" height="4" rx="2" fill="#43DD9A" opacity="0.9" />
+          </svg>
+        </motion.div>
+      </div>
 
       {/* Bublina */}
       <div className="relative w-full max-w-xl">
