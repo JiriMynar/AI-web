@@ -18,7 +18,7 @@ export const STEPS: Step[] = [
   { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření, IT zázemí a systémy určují náročnost koordinace a integrace.", questions: ["size", "focus", "it", "systemy", "kdeData"] },
   { id: "regulace", label: "Regulace", full: "Regulace a citlivá data", desc: "Co vás omezuje a chrání. Verdikty záměrů s regulacemi počítají — drahé je zjistit omezení až po nákupu.", questions: ["regs"] },
   { id: "vize", label: "Vize", full: "Vize a záměry", desc: "Jaké číslo se má pohnout a co konkrétně od AI čekáte. Každý zvolený záměr dostane vlastní verdikt proveditelnosti.", questions: ["vize", "goals", "ambition"] },
-  { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět. Stav dat a zmapování procesů jsou nejsilnější faktory toho, co je proveditelné hned.", questions: ["data", "erpUsage", "strojeData", "procesy"] },
+  { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět a jestli se to vyplatí. Stav dat a procesů určuje proveditelnost, objem a výchozí čísla rozhodují o návratnosti.", questions: ["data", "erpUsage", "strojeData", "procesy", "objem", "mereni"] },
   { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet"] },
 ];
 
@@ -166,6 +166,27 @@ export const Q: Record<string, Question> = {
       { v: "ano", t: "Ano", d: "Popsané kroky, vlastníci, výjimky — můžete jít rovnou k výběru pilotu" },
       { v: "castecne", t: "Částečně", d: "Něco popsané je, hodně žije jen v praxi — dotáhnete mapování u dotčených procesů" },
       { v: "ne", t: "Ne", d: "Procesy fungují, ale popsané nejsou — mapování bude první fáze" },
+    ],
+  },
+  objem: {
+    key: "objem",
+    title: "Kolik té hlavní agendy přibližně zvládnete za měsíc?",
+    subtitle: "Myslíme objem toho, co by AI měla zpracovávat — doklady, požadavky, nabídky, kusy. Objem rozhoduje o návratnosti: nákladnější automatizace se vyplatí až od určitého množství. Stačí řádový odhad.",
+    options: [
+      { v: "maly", t: "Spíš málo — desítky měsíčně", d: "Do zhruba 100 dokladů, požadavků nebo kusů za měsíc" },
+      { v: "stredni", t: "Středně — stovky měsíčně", d: "Pravidelná, ale ne extrémní zátěž" },
+      { v: "velky", t: "Hodně — tisíce a více měsíčně", d: "Velký opakovaný objem — tady se automatizace vyplatí nejrychleji" },
+      { v: "nevim", t: "Nevím / těžko odhadnout", d: "Objem nesledujeme nebo hodně kolísá" },
+    ],
+  },
+  mereni: {
+    key: "mereni",
+    title: "Víte, kolik vás ta činnost dnes stojí?",
+    subtitle: "Čas nebo peníze — kolik hodin lidí nebo korun spolkne dnes práce, kterou má AI ulehčit. Tohle číslo je jediný způsob, jak po nasazení doložit, že se něco zlepšilo. Bez něj nejde přínos obhájit před vedením.",
+    options: [
+      { v: "ano", t: "Ano, máme to změřené", d: "Známe čísla — kolik hodin nebo korun to dnes spotřebuje" },
+      { v: "odhad", t: "Jen odhadem", d: "Přesně to neměříme, ale umíme kvalifikovaně odhadnout" },
+      { v: "ne", t: "Nevíme", d: "Dnes to nesledujeme — nemáme s čím výsledek porovnat" },
     ],
   },
   zkusenost: {
