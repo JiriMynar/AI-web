@@ -4,6 +4,10 @@
  */
 import { LEVELS, SUBQ, Sub } from "./data";
 
+/** Kolik upřesněných záměrů (subs) je pro jednoho člověka ještě sériově únosné.
+ *  Nad tuto hranici jde o frontu na roky, ne plán na rok. Sdíleno skóre, povinnostmi i scénáři. */
+const SOLO_OVERLOAD = 2;
+
 export type Answers = {
   size?: string;
   focus?: string;
@@ -111,6 +115,7 @@ export function evalSub(sub: string, ctx: Ctx): SubEval {
       if (!hasIT && dataQ === 0) { hard = true; gaps.push("Bez IT zázemí a digitálních základů je projekt tohoto typu předčasný — nejdřív výrobní reporting a partner se zkušeností z výroby."); }
       else if (!hasIT) gaps.push("Bez vlastního IT nutný externí partner — vybírejte podle referencí z výroby, ne podle prezentace.");
       if (procQ === 0) gaps.push("Nezmapovaný proces kontroly — popsat, co je vada, kdo rozhoduje o sporných kusech a co se s nimi děje.");
+      if (regs.has("automotive")) gaps.push("Automotive: nasazení AI do kontroly kvality mění kontrolní proces — IATF a požadavky OEM mohou vyžadovat souhlas zákazníka. Ověřit u zákazníka před nasazením, ne po něm.");
       break;
     case "udrzba":
       if (dataQ === 0) { hard = true; gaps.push("Prediktivní údržba potřebuje historii strojních dat (senzory, MES, záznamy poruch). Bez ní nelze začít — predikce nemá z čeho vznikat."); }
@@ -143,8 +148,20 @@ export function evalSub(sub: string, ctx: Ctx): SubEval {
       if (regs.has("gdpr")) gaps.push("Kontakty a komunikace se zákazníky jsou osobní údaje — smluvně ošetřit zpracování u poskytovatele.");
       break;
     default:
+      gaps.push("Tento záměr zatím nemá detailní pravidla pro vyhodnocení — ověřte proveditelnost individuálně, neberte „proveditelné hned“ jako potvrzené.");
       break;
   }
+
+  // Průřezové poznámky napříč záměry — drží konzistentní pokrytí regulací a IT zázemí
+  // tam, kde by se jinak řešilo ad-hoc jen u některých záměrů.
+  const needsIntegration = new Set(["faktury", "reporty", "planovani", "chatbot", "crmZapisy", "trideni"]);
+  const dataLeavesToProvider = new Set(["faktury", "smlouvy", "emaily", "chatbot", "crmZapisy"]);
+  if (regs.has("finance") && dataLeavesToProvider.has(sub))
+    gaps.push("Finance / pojišťovnictví: zpracování u externího poskytovatele AI spadá pod pravidla outsourcingu ČNB — ošetřit smluvně a posoudit, zda nejde o významný outsourcing.");
+  if (regs.has("verejny") && needsIntegration.has(sub))
+    gaps.push("Veřejný sektor / NIS2: výběr dodavatele a integrace podléhají přísnějšímu schvalování — počítejte s delším výběrem a požadavky na kyberbezpečnost.");
+  if (!hasIT && needsIntegration.has(sub) && !note)
+    note = "Bez vlastního IT integraci pokryje externí partner — počítejte s ním v rozpočtu i harmonogramu.";
 
   const verdict: Verdict = hard ? "ne" : gaps.length > 0 ? "priprava" : "hned";
   return { verdict, gaps, note };
@@ -169,12 +186,12 @@ export function score(a: Answers, ctx: Ctx): number {
   if (ctx.erpFormal) p += 1;
   p += ({ ne: 2, castecne: 1, ano: 0 } as Record<string, number>)[a.procesy ?? ""] ?? 0;
   if (a.sponzor === "ne") p += 2;
-  if (a.rozpocet === "zadna") p += 1;
+  if (a.rozpocet === "zadna") p += a.ambition === "plosne" ? 2 : 1;
   if (a.zkusenost === "neuspech") p += 1;
   if (a.lide === "odpor") p += 1;
   if (!(a.vize || []).filter((v) => v !== "nevime").length) p += 1;
   if (a.kapacita === "nikdo") p += 2;
-  else if (a.kapacita === "jeden" && (subs.length > 2 || a.ambition === "plosne")) p += 1;
+  else if (a.kapacita === "jeden" && (subs.length > SOLO_OVERLOAD || a.ambition === "plosne")) p += 1;
   return p;
 }
 
@@ -254,7 +271,7 @@ export function buildDuties(a: Answers, ctx: Ctx): DutiesResult {
   if (kap === "nikdo")
     verdict = { tone: "stop", text: "Všech 8 oblastí níže zůstává bez vlastníka. „Lidé to zvládnou k běžné práci“ je nejspolehlivější způsob, jak implementaci pohřbít — v každém sporu o čas prohraje. Minimální start: jeden člověk s reálně vyhrazeným úvazkem (klidně částečným) a zúžení na jediný záměr." };
   else if (kap === "jeden")
-    verdict = { tone: "warn", text: "Jeden člověk všech 8 oblastí pokryje — ale jen sériově, na jednom záměru najednou" + (nSubs > 2 ? ` (vybrali jste ${nSubs} záměrů — pro jednoho člověka je to fronta na roky, ne plán na rok)` : "") + ". V praxi to znamená: MAX 1 běžící pilot bez ohledu na velikost firmy, " + (ext.length ? "nakoupená externí podpora na " + ext.join(" a ") + ", " : "") + "a delší termíny, než slibují dodavatelé. Sólo specialista bez opory vyhoří nebo odejde — sponzor a vlastníci procesů ho musí reálně podržet." };
+    verdict = { tone: "warn", text: "Jeden člověk všech 8 oblastí pokryje — ale jen sériově, na jednom záměru najednou" + (nSubs > SOLO_OVERLOAD ? ` (vybrali jste ${nSubs} záměrů — pro jednoho člověka je to fronta na roky, ne plán na rok)` : "") + ". V praxi to znamená: MAX 1 běžící pilot bez ohledu na velikost firmy, " + (ext.length ? "nakoupená externí podpora na " + ext.join(" a ") + ", " : "") + "a delší termíny, než slibují dodavatelé. Sólo specialista bez opory vyhoří nebo odejde — sponzor a vlastníci procesů ho musí reálně podržet." };
   else if (kap === "maly")
     verdict = { tone: "ok", text: "2–3 lidé umožňují rozdělit role: koordinátor (procesy, pilot, komunikace s vedením) a garant dat (data, nástroje, provoz)" + (ext.length ? ", s externí podporou na " + ext.join(" a ") : "") + ". Souběžně utáhnete 1–2 piloty. Pozor, aby role byly skutečně rozdělené — dva lidé, kteří oba dělají všechno, jsou jen dražší verze jednoho." };
   else
@@ -307,6 +324,8 @@ export function buildTeam(a: Answers, ctx: Ctx): TeamRole[] {
   });
   if (regulated)
     team.push({ role: "Pověřenec / právní podpora", why: "Vaše odpovědi ukazují na regulovaná data. Někdo musí posoudit zpracování osobních údajů, smlouvy s poskytovateli AI a dopady AI Actu — před výběrem nástroje, ne po něm.", risk: "Bez něj: smlouvy a zpracování dat se řeší zpětně — v lepším případě zdržení, v horším pokuta a zákaz zpracování." });
+  if (ctx.regs.has("koncern"))
+    team.push({ role: "Kontakt na schvalování v koncernu", why: "Nástroje schvaluje mateřská společnost. Tato smyčka bývá nejdelší položkou harmonogramu — musí se rozběhnout dřív než výběr nástroje, ne až po něm.", risk: "Bez něj: vybraný nástroj uvízne měsíce ve schvalování centrály a pilot stojí — termíny postavené na vlastním rozhodování neplatí." });
   if (vyroba && subs.some((s) => ["kvalita", "udrzba", "planovani", "vyrReporting"].includes(s)))
     team.push({ role: "Garant výroby (technolog / OT)", why: "AI ve výrobě se potkává se stroji, technologiemi a bezpečností provozu. Potřebujete člověka, který zná výrobní realitu a řekne, co je technicky a bezpečnostně průchodné.", risk: "Bez něj: hrozí řešení, které nezná takt linky ani bezpečnostní pravidla — a údržba ho po prvním incidentu vypne." });
   if (ctx.dataQ < 2 || a.ambition === "plosne")
@@ -340,7 +359,7 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
 
   if (a.kapacita === "nikdo")
     sc.push({ t: "IMPLEMENTACE BEZ RUKOU", d: "Záměry jsou vybrané, ale nikdo na ně nemá vyhrazený čas. Implementace „k běžné práci“ prohraje každý spor o priority — mapování se odsouvá, pilot se vleče a po půl roce se projekt tiše rozpustí.", out: "Cesta ven: jeden člověk s chráněným úvazkem (stačí částečný) a zúžení na jediný záměr z verdiktů. Dokud tohle nemáte, nekupujte žádný nástroj." });
-  else if (a.kapacita === "jeden" && (subs.length > 3 || a.ambition === "plosne"))
+  else if (a.kapacita === "jeden" && (subs.length > SOLO_OVERLOAD || a.ambition === "plosne"))
     sc.push({ t: "JEDEN ČLOVĚK NA VŠECHNO", d: `Jeden specialista má pokrýt mapování, data, regulace, nástroje, pilot, školení i komunikaci s vedením — napříč ${subs.length} záměry${a.ambition === "plosne" ? " s plošnou ambicí" : ""}. To není pracovní pozice, to je seznam práce pro celé oddělení.`, out: "Cesta ven: zúžit na jeden záměr a postupovat sériově, nakoupit externí podporu na právo a IT, a od sponzora získat veřejné krytí priorit. Jinak specialista vyhoří nebo odejde." });
 
   if (!(a.vize || []).filter((v) => v !== "nevime").length)
@@ -353,8 +372,12 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
     sc.push({ t: "SPÁLENÝ POKUS", d: "Druhý pokus má těžší pozici než první — lidé i vedení si pamatují, že „AI jsme zkoušeli a nefungovalo to“. Každé zaváhání teď bude číst jako potvrzení.", out: "Cesta ven: pojmenujte nahlas, proč minulý pokus padl (téměř vždy: chyběl vlastník, měření nebo data). Nový pilot dělejte na jiném procesu, menší, s kritériem dohodnutým předem." });
   if (a.sponzor === "ne")
     sc.push({ t: "PROJEKT JEDNOHO NADŠENCE", d: "Téma táhne jednotlivec bez opory ve vedení. Implementace ale bere lidem čas a mění zaběhnuté postupy — a projekt bez sponzora prohraje každý spor o priority.", out: "Cesta ven: než cokoliv kupovat, získat sponzora. Nejlepší argument je malá ukázka na reálném firemním problému + čísla: kolik hodin měsíčně proces stojí dnes." });
+  if (a.ambition === "plosne" && a.rozpocet === "zadna")
+    sc.push({ t: "NEUZRÁLÉ ROZHODNUTÍ", d: "Plošná ambice bez jakékoli představy o investici je signál, že padlo „chceme AI“, ne „chceme vyřešit tohle za tolik“. Rozpočet se nedá ukotvit, dokud není co měřit — a plošné nasazení bez rozpočtu se nejčastěji zastaví po prvním vyúčtování.", out: "Cesta ven: pilot na jednom procesu dodá první čísla — kolik hodin proces stojí dnes a kolik po nasazení. Z nich teprve vznikne obhajitelný rozpočet pro širší nasazení." });
   if (a.regs?.includes("aiakt"))
     sc.push({ t: "VYSOKÉ RIZIKO DLE AI ACTU", d: "AI rozhodující o lidech (nábor, hodnocení, posuzování klientů) spadá do vysoce rizikové kategorie — povinný lidský dohled, dokumentace, transparentnost. Zjistit to až po nákupu nástroje je drahé.", out: "Cesta ven: právní posouzení před výběrem nástroje. Zvažte režim „AI připravuje podklady, člověk rozhoduje“ — riziková kategorie se tím zásadně mění." });
+  if (ctx.regs.has("koncern"))
+    sc.push({ t: "SCHVALOVACÍ SMYČKA MATKY", d: "Výběr nástroje musí projít centrálou. Týmy to typicky podcení a naplánují termíny, jako by rozhodovaly samy — a pak čekají měsíce na souhlas, který nemají jak urychlit.", out: "Cesta ven: zjistit schvalovací proces matky hned na začátku a zařadit ho jako první úkol harmonogramu, paralelně s mapováním. Nejdražší je narazit na něj až u hotového výběru." });
   if (a.zkusenost === "stin")
     sc.push({ t: "STÍNOVÉ AI", d: "Vaši lidé už AI používají — bez pravidel, na soukromých účtech. Firemní data a know-how už možná odcházejí do veřejných nástrojů. Zákaz to nevyřeší, jen zatlačí hlouběji do stínu.", out: "Cesta ven: rychle vydat směrnici (co se smí a nesmí vkládat), dát lidem legální firemní nástroj — a nadšence zapojit jako ambasadory adopce." });
   if (a.lide === "odpor")
