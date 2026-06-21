@@ -42,8 +42,8 @@ Každá nová otázka se dotkne těchto míst:
 2. **`logic.ts`** — přidat pole do typu `Answers`; zapojit do vyhodnocení podle účelu:
    `buildCtx` (odvozený příznak), `score` (náročnost), `evalSub` (gap/note u záměru),
    `buildTeam` / `buildDuties` (role), `buildScenarios` (rizikový scénář). **Nesmí zůstat nezapojené.**
-3. **`Pruvodce.tsx`** — u podmíněné otázky rozšířit filtr `visible`. Validaci `stepDone`
-   není nutné měnit (single = neprázdný string, multi = `length > 0`); `toggleMulti` zvládá `exclusive` sám.
+3. **`Pruvodce.tsx`** — u podmíněné otázky rozšířit filtr `visible`; u nového vícevýběru rozšířit
+   typ `toggleMulti`. Validaci `stepDone` není nutné měnit (single = neprázdný string, multi = `length > 0`).
 4. **`Report.tsx`** — pokud se má odpověď nebo odvozená poznámka zobrazit v reportu, doplnit.
 5. **Ověřit** `tsc` / `npm run build` a že staré sdílené odkazy nepadají (nová pole jsou nepovinná).
 
@@ -142,21 +142,21 @@ kde nástroj metriku vyžaduje („100 % pilotů potřebuje metriku předem"), a
 > *Proč:* licence i náročnost adopce škálují s počtem uživatelů — ne s velikostí implementačního týmu (`kapacita`).
 
 Volby: `par` „Pár lidí (do 10)" · `oddeleni` „Celé oddělení (desítky)" · `firma` „Velká část firmy (stovky)" · `nevim` „Zatím nevíme"
-*Napojení:* `buildTeam` (ambasadoři při mnoha uživatelích + nedůvěře); `buildDuties` (rozsah školení).
+*Napojení:* `buildTeam` — role ambasadorů se přidá při velkém rolloutu (`firma`/`oddeleni`), pokud lidé nejsou vyloženě nadšení. Vědomě nezasahuje do skóre.
 
 **3.2 Jazyky firmy** · krok **Profil** · `Answers.jazyky` · **multi**
 > *Znění:* „V jakých jazycích firma běžně komunikuje?"
 > *Proč:* ovlivňuje kvalitu LLM a OCR (čeština/němčina) i volbu nástroje; dnes je jazyk jen use-case v SUBQ, ne omezení.
 
 Volby (více výběrů): `cestina` · `slovenstina` · `nemcina` · `anglictina` · `jine`
-*Napojení:* `evalSub` — poznámka u `servis`/`texty`/`smlouvy`/`chatbot`; soulad s `automotive`/`koncern` (často DE/EN).
+*Napojení:* `buildScenarios` — scénář „JAZYKOVÁ PAST" při vícejazyčném provozu (nebo `jine`) v kombinaci s jazykovým záměrem (chatbot, texty, smlouvy, znalostní, porady, třídění, nabídky).
 
 **3.3 Časový horizont** · krok **Vize** · `Answers.horizont`
 > *Znění:* „Do kdy byste chtěli první výsledek?"
 > *Proč:* termín a jeho hnací síla mění sekvenci kroků i realističnost ambice.
 
 Volby: `hned` „Co nejdřív (do 3 měsíců)" · `letos` „Během letošního roku" · `neni` „Není to časově tlačené" · `termin` „Váže to na konkrétní termín (zakázka, audit, dotace)"
-*Napojení:* `hned` + plošná ambice → scénář konfliktu; `termin` → poznámka zmapovat termín jako první.
+*Napojení:* `buildScenarios` — `hned` + plošná ambice → scénář „RYCHLE A PLOŠNĚ NARAZ"; `termin` → scénář „PEVNÝ TERMÍN" (plánovat od termínu zpět).
 
 ### Fáze 4 — České a organizační specifikum
 
@@ -193,7 +193,7 @@ jsou **nepovinná**, takže:
 
 - [x] **Fáze 1** — `systemy`, `kdeData`, `strojeData` (proveditelnostní jádro) — *hotovo, commit Fáze 1*
 - [x] **Fáze 2** — `objem`, `mereni` (návratnost a měřitelnost) — *hotovo, scénáře NÁSTROJ BEZ OBJEMU + BEZ VÝCHOZÍHO ČÍSLA*
-- [ ] **Fáze 3** — `uzivatele`, `jazyky`, `horizont` (realita nasazení)
+- [x] **Fáze 3** — `uzivatele`, `jazyky`, `horizont` (realita nasazení) — *hotovo, scénáře JAZYKOVÁ PAST / PEVNÝ TERMÍN / RYCHLE A PLOŠNĚ NARAZ + ambasadoři v týmu*
 - [ ] **Fáze 4** — `dotace`, `odbory` (české a organizační specifikum)
 
 Doporučený start: **Fáze 1** jako jeden uzavřený celek (otázky + napojení do logiky + validace),
