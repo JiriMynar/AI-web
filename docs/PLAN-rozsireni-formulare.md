@@ -120,8 +120,8 @@ Volby (jeden výběr):
 - `velky` — „Hodně (tisíce a více měsíčně)" — *Velký opakovaný objem — automatizace se vyplatí nejrychleji*
 - `nevim` — „Nevím / těžko odhadnout"
 
-*Napojení:* `evalSub` — `maly` + náročný automatizační záměr → poznámka o slabé návratnosti;
-`velky` → posílení „proveditelné hned". Možný nový scénář „NÁSTROJ BEZ OBJEMU".
+*Napojení:* `buildScenarios` — scénář „NÁSTROJ BEZ OBJEMU" při `maly`/`nevim` v kombinaci
+s nákladnou automatizací. Vědomě nezasahuje do skóre (objem je business-case, ne feasibility).
 
 **2.2 Měříte to dnes** · krok **Data a procesy** · `Answers.mereni`
 > *Znění:* „Víte, kolik vás ta činnost dnes stojí (čas nebo peníze)?"
@@ -132,8 +132,8 @@ Volby (jeden výběr):
 - `odhad` — „Jen odhadem" — *Přesně neměříme, ale umíme kvalifikovaně odhadnout*
 - `ne` — „Nevíme" — *Dnes nesledujeme — nemáme s čím porovnat výsledek*
 
-*Napojení:* `ne` → gap/scénář, že prvním krokem je změřit výchozí stav (baseline);
-report může ukázat příznak „připravenost na měření". Uzavře smyčku, kde nástroj metriku vyžaduje, ale nekontroluje.
+*Napojení:* `buildScenarios` — scénář „BEZ VÝCHOZÍHO ČÍSLA" při `ne`. Uzavírá smyčku,
+kde nástroj metriku vyžaduje („100 % pilotů potřebuje metriku předem"), ale dosud nekontroloval.
 
 ### Fáze 3 — Realita nasazení
 
@@ -192,7 +192,7 @@ jsou **nepovinná**, takže:
 ## 4. Postup integrace (tracking)
 
 - [x] **Fáze 1** — `systemy`, `kdeData`, `strojeData` (proveditelnostní jádro) — *hotovo, commit Fáze 1*
-- [ ] **Fáze 2** — `objem`, `mereni` (návratnost a měřitelnost)
+- [x] **Fáze 2** — `objem`, `mereni` (návratnost a měřitelnost) — *hotovo, scénáře NÁSTROJ BEZ OBJEMU + BEZ VÝCHOZÍHO ČÍSLA*
 - [ ] **Fáze 3** — `uzivatele`, `jazyky`, `horizont` (realita nasazení)
 - [ ] **Fáze 4** — `dotace`, `odbory` (české a organizační specifikum)
 
