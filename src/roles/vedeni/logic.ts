@@ -23,6 +23,8 @@ export type Answers = {
   erpUsage?: string;
   strojeData?: string;
   procesy?: string;
+  objem?: string;
+  mereni?: string;
   zkusenost?: string;
   lide?: string;
   kapacita?: string;
@@ -405,6 +407,12 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
     sc.push({ t: "PROJEKT JEDNOHO NADŠENCE", d: "Téma táhne jednotlivec bez opory ve vedení. Implementace ale bere lidem čas a mění zaběhnuté postupy — a projekt bez sponzora prohraje každý spor o priority.", out: "Cesta ven: než cokoliv kupovat, získat sponzora. Nejlepší argument je malá ukázka na reálném firemním problému + čísla: kolik hodin měsíčně proces stojí dnes." });
   if (a.ambition === "plosne" && a.rozpocet === "zadna")
     sc.push({ t: "NEUZRÁLÉ ROZHODNUTÍ", d: "Plošná ambice bez jakékoli představy o investici je signál, že padlo „chceme AI“, ne „chceme vyřešit tohle za tolik“. Rozpočet se nedá ukotvit, dokud není co měřit — a plošné nasazení bez rozpočtu se nejčastěji zastaví po prvním vyúčtování.", out: "Cesta ven: pilot na jednom procesu dodá první čísla — kolik hodin proces stojí dnes a kolik po nasazení. Z nich teprve vznikne obhajitelný rozpočet pro širší nasazení." });
+  if (a.mereni === "ne")
+    sc.push({ t: "BEZ VÝCHOZÍHO ČÍSLA", d: "Dnes neměříte, kolik vás dotčená činnost stojí — po nasazení tedy nebude s čím porovnat výsledek. Přesně na tom padá většina pilotů: nejde obhájit přínos, který nikdo nezměřil (pravidlo „100 % pilotů potřebuje metriku předem“).", out: "Cesta ven: než cokoliv spustíte, změřte výchozí stav — kolik hodin nebo korun proces dnes spotřebuje. Stačí pár týdnů sledování a jedno číslo, se kterým se po pilotu porovná." });
+  if ((a.objem === "maly" || a.objem === "nevim") && subs.some((s) => ["faktury", "reporty", "smlouvy", "kvalita", "udrzba", "planovani", "chatbot", "trideni", "crmZapisy", "nabidky"].includes(s)))
+    sc.push({ t: "NÁSTROJ BEZ OBJEMU", d: a.objem === "maly"
+      ? "Vybrali jste automatizaci, která něco stojí postavit — ale objem agendy je malý. Návratnost se počítá z toho, kolik práce nástroj ušetří; při desítkách kusů měsíčně se nákladnější řešení nemusí vyplatit."
+      : "Vybrali jste automatizaci, která něco stojí postavit, ale objem agendy zatím neznáte. Bez něj nejde spočítat návratnost — a to je první otázka, kterou položí každý, kdo schvaluje rozpočet.", out: "Cesta ven: spočítejte, kolik kusů měsíčně proces obnáší a kolik času každý zabere. Při malém objemu začněte levnějším nástrojem (hotová služba místo vlastního vývoje) nebo záměrem s vyšším objemem." });
   if (a.regs?.includes("aiakt"))
     sc.push({ t: "VYSOKÉ RIZIKO DLE AI ACTU", d: "AI rozhodující o lidech (nábor, hodnocení, posuzování klientů) spadá do vysoce rizikové kategorie — povinný lidský dohled, dokumentace, transparentnost. Zjistit to až po nákupu nástroje je drahé.", out: "Cesta ven: právní posouzení před výběrem nástroje. Zvažte režim „AI připravuje podklady, člověk rozhoduje“ — riziková kategorie se tím zásadně mění." });
   if (ctx.regs.has("koncern"))
