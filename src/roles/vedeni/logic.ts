@@ -33,6 +33,8 @@ export type Answers = {
   sponzor?: string;
   rozpocet?: string;
   uzivatele?: string;
+  dotace?: string;
+  odbory?: string;
 };
 
 export type Ctx = {
@@ -385,6 +387,8 @@ export function buildTeam(a: Answers, ctx: Ctx): TeamRole[] {
         : "Nástroj má používat hodně lidí — adopci v takovém počtu neutáhne školení shora. Vyberte pár lidí z provozu, kteří ho vyzkouší první a pomůžou ostatním. Adopce se šíří od kolegů.",
       risk: "Bez nich: adopce stojí jen na příkazech shora — a ty dlouhodobě nefungují.",
     });
+  if (a.odbory === "ano" && (subs.some((s) => ["faktury", "emaily", "reporty", "smlouvy", "trideni", "chatbot", "crmZapisy", "kvalita", "udrzba", "planovani", "vyrReporting", "nabidky"].includes(s)) || a.lide === "odpor"))
+    team.push({ role: "Zástupci zaměstnanců (odbory / rada)", why: "Máte odbory nebo radu zaměstnanců a nasazení se dotkne pracovních postupů. Projednání se zástupci je u takových změn obvykle povinné — a hlavně se vyplatí udělat ho včas, ne až jako formalitu na konci.", risk: "Bez něj: projednání se objeví na poslední chvíli jako překážka, nebo se vynechá úplně — což může nasazení zablokovat a podkopat důvěru lidí." });
   return team;
 }
 
@@ -431,6 +435,10 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
     sc.push({ t: "RYCHLE A PLOŠNĚ NARAZ", d: "Chcete první výsledek do tří měsíců a zároveň plošné nasazení — to jsou dva protichůdné cíle. Plošné nasazení se vždy fázuje přes ověřený pilot; tlak na rychlost i šíři zároveň skončí buď nedodělaným rolloutem, nebo nedůvěryhodným pilotem.", out: "Cesta ven: za tři měsíce je reálný jeden dotažený pilot s měřitelným výsledkem. Plošné nasazení postavte až na něm — rychlost získáte tím, že se neplýtvá na širokém záběru bez ověření." });
   if (a.horizont === "termin")
     sc.push({ t: "PEVNÝ TERMÍN", d: "Termín je daný zvenčí (zakázka, audit, dotace). Riziko je, že se naplánuje podle přání, ne podle toho, co termín reálně umožní — a u dotace navíc platí vlastní pravidla výběru dodavatele i vyúčtování.", out: "Cesta ven: plánujte od termínu zpět — co přesně musí být k datu hotové, kolik na to reálně zbývá času a co se do něj vejde. Co se nevejde, zařaďte za termín, ne před něj." });
+  if (a.dotace === "ano" || a.dotace === "zvazujeme")
+    sc.push({ t: "DOTACE MĚNÍ PRAVIDLA", d: a.dotace === "ano"
+      ? "Počítáte s dotací (např. OP TAK, Digitální podnik) — ta má vlastní pravidla, která mění celý postup: způsobilé výdaje, povinné výběrové řízení na dodavatele, termíny navázané na výzvu a dokumentaci k vyúčtování. Nedá se prostě vybrat nástroj a koupit ho."
+      : "Zvažujete dotaci (např. OP TAK, Digitální podnik). Pokud do ní půjdete, změní celý postup — způsobilé výdaje, výběrové řízení na dodavatele i termíny navázané na výzvu. Rozhodněte se dřív, než začnete vybírat nástroj.", out: "Cesta ven: zjistěte si podmínky konkrétní výzvy (způsobilé výdaje, spoluúčast, harmonogram) ještě před výběrem nástroje a počítejte s vlastním spolufinancováním — dotace nikdy nepokryje vše. U výběru dodavatele dodržte pravidla výzvy, jinak hrozí vrácení dotace." });
   if (((a.jazyky?.length ?? 0) > 1 || (a.jazyky ?? []).includes("jine")) && subs.some((s) => ["chatbot", "texty", "smlouvy", "znalostni", "porady", "trideni", "nabidky"].includes(s)))
     sc.push({ t: "JAZYKOVÁ PAST", d: "Komunikujete ve více jazycích a vybrané záměry pracují s textem nebo řečí. Nástroje, které v anglické ukázce září, mohou na češtině, němčině nebo méně častém jazyce výrazně ztrácet — a kvalita se liší dodavatel od dodavatele.", out: "Cesta ven: do výběru zařaďte test na vašich reálných datech ve všech jazycích, které potřebujete. Nerozhodujte podle dema v angličtině." });
   if (a.ambition === "plosne" && allSelectedSubs(a).length >= 4)
