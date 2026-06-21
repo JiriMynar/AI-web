@@ -15,10 +15,10 @@ export type Question = {
 export type Step = { id: string; label: string; full: string; desc: string; questions: string[] };
 
 export const STEPS: Step[] = [
-  { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření a IT zázemí určují náročnost koordinace a integrace.", questions: ["size", "focus", "it"] },
+  { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření, IT zázemí a systémy určují náročnost koordinace a integrace.", questions: ["size", "focus", "it", "systemy", "kdeData"] },
   { id: "regulace", label: "Regulace", full: "Regulace a citlivá data", desc: "Co vás omezuje a chrání. Verdikty záměrů s regulacemi počítají — drahé je zjistit omezení až po nákupu.", questions: ["regs"] },
   { id: "vize", label: "Vize", full: "Vize a záměry", desc: "Jaké číslo se má pohnout a co konkrétně od AI čekáte. Každý zvolený záměr dostane vlastní verdikt proveditelnosti.", questions: ["vize", "goals", "ambition"] },
-  { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět. Stav dat a zmapování procesů jsou nejsilnější faktory toho, co je proveditelné hned.", questions: ["data", "erpUsage", "procesy"] },
+  { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět. Stav dat a zmapování procesů jsou nejsilnější faktory toho, co je proveditelné hned.", questions: ["data", "erpUsage", "strojeData", "procesy"] },
   { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet"] },
 ];
 
@@ -51,6 +51,28 @@ export const Q: Record<string, Question> = {
     options: [
       { v: "ano", t: "Ano", d: "Interní IT zvládne přístupy, integrace a bezpečnost — zapojte ho od prvního dne" },
       { v: "ne", t: "Ne / jen externí správa", d: "Integrace pokryje externí partner — vybírejte podle referencí, ne podle ceny" },
+    ],
+  },
+  systemy: {
+    key: "systemy",
+    title: "V čem vedete hlavní firemní agendu?",
+    subtitle: "Objednávky, sklad, fakturace, zakázky. Ptáme se proto, že napojení nového nástroje je u každého systému jinak snadné a drahé — je to první věc, kterou potřebuje vědět každý, kdo bude integraci dělat. Nemusíte znát detaily.",
+    options: [
+      { v: "velkysystem", t: "Velký podnikový systém", d: "Např. SAP, Microsoft Dynamics, Helios, K2 — ucelený systém pro celou firmu" },
+      { v: "ucetni", t: "Účetní nebo skladový program", d: "Např. Pohoda, Money, Abra, Vario — hlavně účetnictví a sklad" },
+      { v: "excelnic", t: "Hlavně Excel, e-maily a papír", d: "Žádný ucelený systém — agenda žije v tabulkách a hlavách lidí" },
+      { v: "nevim", t: "Nevím / spravuje to externí firma", d: "Systémy řeší externí dodavatel, sami do nich nevidíme" },
+    ],
+  },
+  kdeData: {
+    key: "kdeData",
+    title: "Kde máte firemní e-maily a dokumenty?",
+    subtitle: "Tahle odpověď rozhoduje, jestli data smí ven a jaké nástroje vůbec přicházejí v úvahu. Nejde o značku, ale o to, kde vaše data fyzicky leží.",
+    options: [
+      { v: "m365", t: "Microsoft 365 / Outlook", d: "E-maily a dokumenty v Microsoftu — Teams, OneDrive, SharePoint" },
+      { v: "google", t: "Google Workspace / Gmail", d: "Firemní Gmail a Disk Google" },
+      { v: "vlastni", t: "Na vlastním serveru ve firmě", d: "Data zůstávají u vás, ne v cloudu" },
+      { v: "nevim", t: "Nevím", d: "Nevíme přesně, kde data leží — spravuje to někdo jiný" },
     ],
   },
   regs: {
@@ -123,6 +145,17 @@ export const Q: Record<string, Question> = {
     options: [
       { v: "zije", t: "Systém žije", d: "Lidé zapisují průběžně a data odpovídají realitě — na tom se dá stavět" },
       { v: "formalne", t: "Spíš formálně", d: "Zapisuje se zpětně a neúplně — pro AI zásadní rozdíl" },
+    ],
+  },
+  strojeData: {
+    key: "strojeData",
+    title: "Sbíráte data ze strojů automaticky?",
+    subtitle: "Pokročilejší AI ve výrobě (kontrola kvality, prediktivní údržba, plánování) potřebuje data přímo ze strojů. Jestli vznikají automaticky, nebo se opisují ručně, je tady zásadní rozdíl.",
+    options: [
+      { v: "ano", t: "Ano, stroje posílají data do systému", d: "Hodnoty z výroby se ukládají automaticky — přes řídicí systém nebo MES" },
+      { v: "castecne", t: "Částečně / jen některé stroje", d: "Něco se sbírá automaticky, něco se opisuje ručně" },
+      { v: "ne", t: "Ne, zapisuje se ručně nebo vůbec", d: "Data z výroby vznikají na papíře, v hlavách lidí nebo nikde" },
+      { v: "nevim", t: "Nevím", d: "Nevíme, jestli a jak se strojní data sbírají" },
     ],
   },
   procesy: {
