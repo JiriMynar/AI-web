@@ -84,8 +84,14 @@ export default function Pruvodce() {
 
   const visible = useMemo(() => {
     const ids = STEPS[step].questions;
-    return ids.filter((id) => (id === "erpUsage" ? a.data === "erp" : true));
-  }, [step, a.data]);
+    return ids.filter((id) =>
+      id === "erpUsage"
+        ? a.data === "erp"
+        : id === "strojeData"
+        ? (a.goals || []).includes("vyrobaAI")
+        : true
+    );
+  }, [step, a.data, a.goals]);
 
   const stepDone = useMemo(() => {
     return visible.every((id) => {

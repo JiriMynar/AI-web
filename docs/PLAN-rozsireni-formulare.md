@@ -19,13 +19,14 @@ pravidel, která **platí pro každou novou otázku**:
 1. **Ptáme se na pozorovatelnou realitu, ne na odborné pojmy.** „Kde máte firemní
    e-maily?" místo „jste on-premise?". „Posílají stroje data samy?" místo „máte historian/MES?".
 2. **Každá otázka má únikovou volbu „Nevím".** Realizuje se přes `exclusive: true`
-   (jako dnešní „Nic z toho" / „Zatím nevíme přesně"). Netechnik nesmí uváznout.
+   (jako dnešní „Nic z toho" / „Zatím nevíme přesně") u vícevýběru; u jednovýběru stačí
+   běžná volba „Nevím" (výběrem se sama nahradí). Netechnik nesmí uváznout.
 3. **Konkrétní příklady v popisu volby (`d`).** Značky a situace, které uživatel pozná
    (Pohoda, SAP, Outlook, Gmail) — ne abstraktní kategorie.
 4. **Max 4 volby, krátký název (`t`), vysvětlení patří do `d`.** Konzistentní se stávajícími otázkami.
 5. **Žádné volné psaní.** UI je výběr karet (`OptionCard`) — vše musí jít vyjádřit volbami.
 6. **Otázky relevantní jen pro část firem zobrazujeme podmíněně.** Např. otázka na data
-   ze strojů se ukáže jen u výrobního/kombinovaného zaměření (mechanika `visible` v `Pruvodce.tsx`,
+   ze strojů se ukáže jen u zvolených výrobních záměrů (mechanika `visible` v `Pruvodce.tsx`,
    stejně jako dnes `erpUsage` jen při `data === "erp"`).
 7. **„Nevím" nikdy není slepá ulička v logice.** Vede k doporučení „tohle si nejdřív
    zjistěte / ověřte s dodavatelem", ne k chybě ani k falešně optimistickému verdiktu.
@@ -73,10 +74,10 @@ Volby (jeden výběr):
 - `velkysystem` — „Velký podnikový systém" — *Např. SAP, Microsoft Dynamics, Helios, K2 — ucelený systém pro celou firmu*
 - `ucetni` — „Účetní nebo skladový program" — *Např. Pohoda, Money, Abra, Vario — hlavně účetnictví a sklad*
 - `excelnic` — „Hlavně Excel, e-maily a papír" — *Žádný ucelený systém, agenda žije v tabulkách a hlavách lidí*
-- `nevim` — „Nevím / spravuje to externí firma" — *(exclusive)* *Systémy řeší externí dodavatel, sami do toho nevidíme*
+- `nevim` — „Nevím / spravuje to externí firma" — *Systémy řeší externí dodavatel, sami do toho nevidíme*
 
-*Napojení:* `score` (excelnic/nevim → vyšší náročnost integrace); `evalSub` — průřezová poznámka
-o náročnosti napojení u integračních záměrů; `buildTeam` — zostřit roli IT/partnera.
+*Napojení:* `evalSub` — průřezová poznámka o náročnosti napojení u integračních záměrů
+(`excelnic` → napojení = zavést evidenci; `nevim` → nejdřív zjistit systém). `buildTeam` — role IT/partnera.
 *Pozn.:* doplňuje stávající `data` (stav dat), neduplikuje ho — firma může mít Pohodu a přitom hodně v Excelu.
 
 **1.2 Kde jsou e-maily a dokumenty** · krok **Profil** · `Answers.kdeData`
@@ -87,12 +88,12 @@ Volby (jeden výběr):
 - `m365` — „Microsoft 365 / Outlook" — *E-maily a dokumenty v Microsoftu (Teams, OneDrive, SharePoint)*
 - `google` — „Google Workspace / Gmail" — *Firemní Gmail a Disk Google*
 - `vlastni` — „Na vlastním serveru ve firmě" — *Data zůstávají u vás, ne v cloudu*
-- `nevim` — „Nevím" — *(exclusive)*
+- `nevim` — „Nevím"
 
-*Napojení:* `evalSub`/`buildScenarios` — `vlastni` bez IT → poznámka o nutném partnerovi a privátním nasazení;
-`m365`/`google` → rychlejší cesta k adopci. Interaguje s `regs` (`knowhow` + cloud → vyšší opatrnost).
+*Napojení:* `evalSub` — `vlastni` → poznámka o privátním nasazení vs. vědomém puštění dat ven;
+`nevim` → gap „nejdřív zjistit, kde data leží". Interaguje s `regs` (`knowhow` + cloud → vyšší opatrnost).
 
-**1.3 Data ze strojů** · krok **Data a procesy** · `Answers.strojeData` · **jen když `focus` = `vyroba`/`kombinace`**
+**1.3 Data ze strojů** · krok **Data a procesy** · `Answers.strojeData` · **jen když je zvolen výrobní záměr (`goals` obsahuje `vyrobaAI`)**
 > *Znění:* „Sbíráte data ze strojů automaticky?"
 > *Proč:* výrobní AI (kvalita, údržba, plánování, reporting) stojí a padá na dostupnosti dat ze strojů.
 
@@ -100,10 +101,10 @@ Volby (jeden výběr):
 - `ano` — „Ano, stroje posílají data do systému" — *Hodnoty z výroby se ukládají automaticky (řídicí systém, MES)*
 - `castecne` — „Částečně / jen některé stroje" — *Něco automaticky, něco se opisuje ručně*
 - `ne` — „Ne, zapisuje se ručně nebo vůbec" — *Data z výroby vznikají na papíře, v hlavách lidí nebo nikde*
-- `nevim` — „Nevím" — *(exclusive)*
+- `nevim` — „Nevím"
 
-*Napojení:* dává `evalSub` skutečný OT signál pro `vyrReporting`/`kvalita`/`udrzba`/`planovani`
-místo odvozování z obecného `data`; posiluje scénář „SKOK PŘES PROPAST".
+*Napojení:* dává `evalSub` skutečný OT signál pro `vyrReporting`/`udrzba` místo odvozování
+z obecného `data`; `ne`/`castecne`/`nevim` přidá strojní gap. (`kvalita` zůstává u svého kamerového gapu.)
 
 ### Fáze 2 — Návratnost a měřitelnost
 
@@ -117,7 +118,7 @@ Volby (jeden výběr):
 - `maly` — „Spíš málo (desítky měsíčně)" — *Do ~100 dokladů, požadavků nebo nabídek za měsíc*
 - `stredni` — „Středně (stovky měsíčně)" — *Pravidelná, ale ne extrémní zátěž*
 - `velky` — „Hodně (tisíce a více měsíčně)" — *Velký opakovaný objem — automatizace se vyplatí nejrychleji*
-- `nevim` — „Nevím / těžko odhadnout" — *(exclusive)*
+- `nevim` — „Nevím / těžko odhadnout"
 
 *Napojení:* `evalSub` — `maly` + náročný automatizační záměr → poznámka o slabé návratnosti;
 `velky` → posílení „proveditelné hned". Možný nový scénář „NÁSTROJ BEZ OBJEMU".
@@ -127,7 +128,7 @@ Volby (jeden výběr):
 > *Proč:* logika káže „100 % pilotů potřebuje metriku předem" — ale nikdy se neptá, jestli ji firma má.
 
 Volby (jeden výběr):
-- `ano` — „Ano, máme to změřené" — *Známe čísla — hodiny nebo koruny, co to dnes spotřebuje*
+- `ano` — „Ano, máme to změřené" — *Známe čísla — kolik hodin nebo korun to dnes spotřebuje*
 - `odhad` — „Jen odhadem" — *Přesně neměříme, ale umíme kvalifikovaně odhadnout*
 - `ne` — „Nevíme" — *Dnes nesledujeme — nemáme s čím porovnat výsledek*
 
@@ -140,7 +141,7 @@ report může ukázat příznak „připravenost na měření". Uzavře smyčku,
 > *Znění:* „Kolik lidí bude nástroj nakonec používat?"
 > *Proč:* licence i náročnost adopce škálují s počtem uživatelů — ne s velikostí implementačního týmu (`kapacita`).
 
-Volby: `par` „Pár lidí (do 10)" · `oddeleni` „Celé oddělení (desítky)" · `firma` „Velká část firmy (stovky)" · `nevim` „Zatím nevíme" *(exclusive)*
+Volby: `par` „Pár lidí (do 10)" · `oddeleni` „Celé oddělení (desítky)" · `firma` „Velká část firmy (stovky)" · `nevim` „Zatím nevíme"
 *Napojení:* `buildTeam` (ambasadoři při mnoha uživatelích + nedůvěře); `buildDuties` (rozsah školení).
 
 **3.2 Jazyky firmy** · krok **Profil** · `Answers.jazyky` · **multi**
@@ -164,7 +165,7 @@ Volby: `hned` „Co nejdřív (do 3 měsíců)" · `letos` „Během letošního
 > *Proč:* velmi česká realita — dotace (OP TAK / Digitální podnik a podobné) mění harmonogram,
 > pravidla výběru dodavatele i dokumentační zátěž. `rozpocet` to dnes nezachytí.
 
-Volby: `ano` „Ano, počítáme s dotací" · `zvazujeme` „Zvažujeme to" · `ne` „Ne, z vlastního" · `nevim` „Nevím" *(exclusive)*
+Volby: `ano` „Ano, počítáme s dotací" · `zvazujeme` „Zvažujeme to" · `ne` „Ne, z vlastního" · `nevim` „Nevím"
 *Napojení:* `buildScenarios` — vázanost výběru a termínů na výzvu; interakce s `rozpocet`.
 
 **4.2 Odbory / rada zaměstnanců** · krok **Lidé** · `Answers.odbory`
@@ -172,7 +173,7 @@ Volby: `ano` „Ano, počítáme s dotací" · `zvazujeme` „Zvažujeme to" · 
 > *Proč:* u větších a koncernových firem může nasazení AI dotýkající se míst vyžadovat projednání —
 > povinný krok harmonogramu. `lide` řeší postoj, ne formální reprezentaci.
 
-Volby: `ano` „Ano" · `ne` „Ne" · `nevim` „Nevím" *(exclusive)*
+Volby: `ano` „Ano" · `ne` „Ne" · `nevim` „Nevím"
 *Napojení:* `ano` + záměry dotýkající se míst (nebo `lide = odpor`) → poznámka v týmu/povinnostech o projednání.
 
 ---
@@ -190,7 +191,7 @@ jsou **nepovinná**, takže:
 
 ## 4. Postup integrace (tracking)
 
-- [ ] **Fáze 1** — `systemy`, `kdeData`, `strojeData` (proveditelnostní jádro)
+- [x] **Fáze 1** — `systemy`, `kdeData`, `strojeData` (proveditelnostní jádro) — *hotovo, commit Fáze 1*
 - [ ] **Fáze 2** — `objem`, `mereni` (návratnost a měřitelnost)
 - [ ] **Fáze 3** — `uzivatele`, `jazyky`, `horizont` (realita nasazení)
 - [ ] **Fáze 4** — `dotace`, `odbory` (české a organizační specifikum)
