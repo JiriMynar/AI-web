@@ -14,11 +14,13 @@ export type Answers = {
   it?: string;
   systemy?: string;
   kdeData?: string;
+  jazyky?: string[];
   regs?: string[];
   vize?: string[];
   goals?: string[];
   subs?: Record<string, string[]>;
   ambition?: string;
+  horizont?: string;
   data?: string;
   erpUsage?: string;
   strojeData?: string;
@@ -30,6 +32,7 @@ export type Answers = {
   kapacita?: string;
   sponzor?: string;
   rozpocet?: string;
+  uzivatele?: string;
 };
 
 export type Ctx = {
@@ -371,12 +374,15 @@ export function buildTeam(a: Answers, ctx: Ctx): TeamRole[] {
         : "Někdo musí dát data do použitelné podoby a držet jejich kvalitu — roztříštěné excely jsou nejčastější důvod, proč pilot nedopadne.",
       risk: "Bez něj: pilot poběží na datech, kterým nikdo nevěří — a stejně dopadnou i jeho výsledky.",
     });
-  if (a.lide === "odpor" || a.zkusenost === "stin")
+  const manyUsers = a.uzivatele === "firma" || a.uzivatele === "oddeleni";
+  if (a.lide === "odpor" || a.zkusenost === "stin" || (manyUsers && a.lide !== "tesi"))
     team.push({
       role: "Ambasadoři z řad zaměstnanců",
       why: a.zkusenost === "stin"
         ? "Lidé, kteří si už dnes pomáhají AI sami, jsou vaše největší výhoda — zapojte je oficiálně. Kolegové uvěří jim, ne prezentaci."
-        : "Při nedůvěře v týmu potřebujete pár lidí z provozu, kteří nástroj vyzkouší první a řeknou kolegům pravdu. Adopce se šíří od kolegů, ne shora.",
+        : a.lide === "odpor"
+        ? "Při nedůvěře v týmu potřebujete pár lidí z provozu, kteří nástroj vyzkouší první a řeknou kolegům pravdu. Adopce se šíří od kolegů, ne shora."
+        : "Nástroj má používat hodně lidí — adopci v takovém počtu neutáhne školení shora. Vyberte pár lidí z provozu, kteří ho vyzkouší první a pomůžou ostatním. Adopce se šíří od kolegů.",
       risk: "Bez nich: adopce stojí jen na příkazech shora — a ty dlouhodobě nefungují.",
     });
   return team;
@@ -421,6 +427,12 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
     sc.push({ t: "STÍNOVÉ AI", d: "Vaši lidé už AI používají — bez pravidel, na soukromých účtech. Firemní data a know-how už možná odcházejí do veřejných nástrojů. Zákaz to nevyřeší, jen zatlačí hlouběji do stínu.", out: "Cesta ven: rychle vydat směrnici (co se smí a nesmí vkládat), dát lidem legální firemní nástroj — a nadšence zapojit jako ambasadory adopce." });
   if (a.lide === "odpor")
     sc.push({ t: "TICHÝ ODPOR", d: "Nejčastější konec implementace nevypadá jako vzpoura — nástroj funguje a nikdo ho nepoužívá. Lidé se bojí o práci nebo to berou jako kontrolu shora, a tak nástroj prostě tiše obejdou.", out: "Cesta ven: zapojit lidi z procesu už do mapování, ne až do školení. První nasazení vybrat tak, aby lidem ulevilo od otravné práce — a říct narovinu, co AI znamená pro jejich místa." });
+  if (a.horizont === "hned" && a.ambition === "plosne")
+    sc.push({ t: "RYCHLE A PLOŠNĚ NARAZ", d: "Chcete první výsledek do tří měsíců a zároveň plošné nasazení — to jsou dva protichůdné cíle. Plošné nasazení se vždy fázuje přes ověřený pilot; tlak na rychlost i šíři zároveň skončí buď nedodělaným rolloutem, nebo nedůvěryhodným pilotem.", out: "Cesta ven: za tři měsíce je reálný jeden dotažený pilot s měřitelným výsledkem. Plošné nasazení postavte až na něm — rychlost získáte tím, že se neplýtvá na širokém záběru bez ověření." });
+  if (a.horizont === "termin")
+    sc.push({ t: "PEVNÝ TERMÍN", d: "Termín je daný zvenčí (zakázka, audit, dotace). Riziko je, že se naplánuje podle přání, ne podle toho, co termín reálně umožní — a u dotace navíc platí vlastní pravidla výběru dodavatele i vyúčtování.", out: "Cesta ven: plánujte od termínu zpět — co přesně musí být k datu hotové, kolik na to reálně zbývá času a co se do něj vejde. Co se nevejde, zařaďte za termín, ne před něj." });
+  if (((a.jazyky?.length ?? 0) > 1 || (a.jazyky ?? []).includes("jine")) && subs.some((s) => ["chatbot", "texty", "smlouvy", "znalostni", "porady", "trideni", "nabidky"].includes(s)))
+    sc.push({ t: "JAZYKOVÁ PAST", d: "Komunikujete ve více jazycích a vybrané záměry pracují s textem nebo řečí. Nástroje, které v anglické ukázce září, mohou na češtině, němčině nebo méně častém jazyce výrazně ztrácet — a kvalita se liší dodavatel od dodavatele.", out: "Cesta ven: do výběru zařaďte test na vašich reálných datech ve všech jazycích, které potřebujete. Nerozhodujte podle dema v angličtině." });
   if (a.ambition === "plosne" && allSelectedSubs(a).length >= 4)
     sc.push({ t: "VŠE NAJEDNOU", d: "Plošná ambice napříč mnoha záměry znamená, že se kapacita lidí, rozpočet i pozornost vedení rozdrobí — a za rok nebude hotové nic, jen rozpracované všechno.", out: "Cesta ven: seřadit záměry podle verdiktů. Začít jedním „proveditelné hned“, dotáhnout do měřitelného výsledku, a teprve s ověřeným postupem přidávat další." });
 
