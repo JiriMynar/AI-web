@@ -12,6 +12,8 @@ export type Answers = {
   size?: string;
   focus?: string;
   it?: string;
+  systemy?: string;
+  kdeData?: string;
   regs?: string[];
   vize?: string[];
   goals?: string[];
@@ -19,6 +21,7 @@ export type Answers = {
   ambition?: string;
   data?: string;
   erpUsage?: string;
+  strojeData?: string;
   procesy?: string;
   zkusenost?: string;
   lide?: string;
@@ -33,6 +36,9 @@ export type Ctx = {
   procQ: number;
   hasIT: boolean;
   regs: Set<string>;
+  systemy?: string;
+  kdeData?: string;
+  strojeData?: string;
 };
 
 export function buildCtx(a: Answers): Ctx {
@@ -46,6 +52,9 @@ export function buildCtx(a: Answers): Ctx {
     procQ: ({ ne: 0, castecne: 1, ano: 2 } as Record<string, number>)[a.procesy ?? ""] ?? 0,
     hasIT: a.it === "ano",
     regs,
+    systemy: a.systemy,
+    kdeData: a.kdeData,
+    strojeData: a.strojeData,
   };
 }
 
@@ -70,7 +79,7 @@ export function evalSub(sub: string, ctx: Ctx): SubEval {
   const gaps: string[] = [];
   let hard = false;
   let note: string | null = null;
-  const { dataQ, erpFormal, procQ, hasIT, regs } = ctx;
+  const { dataQ, erpFormal, procQ, hasIT, regs, systemy, kdeData, strojeData } = ctx;
 
   switch (sub) {
     case "znalostni":
@@ -152,14 +161,36 @@ export function evalSub(sub: string, ctx: Ctx): SubEval {
       break;
   }
 
-  // Průřezové poznámky napříč záměry — drží konzistentní pokrytí regulací a IT zázemí
-  // tam, kde by se jinak řešilo ad-hoc jen u některých záměrů.
+  // Průřezové poznámky napříč záměry — drží konzistentní pokrytí regulací, IT zázemí,
+  // cílového systému a datového/strojního prostředí (Fáze 1).
   const needsIntegration = new Set(["faktury", "reporty", "planovani", "chatbot", "crmZapisy", "trideni"]);
   const dataLeavesToProvider = new Set(["faktury", "smlouvy", "emaily", "chatbot", "crmZapisy"]);
+  const machineSubs = new Set(["vyrReporting", "udrzba"]);
+
   if (regs.has("finance") && dataLeavesToProvider.has(sub))
     gaps.push("Finance / pojišťovnictví: zpracování u externího poskytovatele AI spadá pod pravidla outsourcingu ČNB — ošetřit smluvně a posoudit, zda nejde o významný outsourcing.");
   if (regs.has("verejny") && needsIntegration.has(sub))
     gaps.push("Veřejný sektor / NIS2: výběr dodavatele a integrace podléhají přísnějšímu schvalování — počítejte s delším výběrem a požadavky na kyberbezpečnost.");
+
+  // Cílový systém — jak snadno se nový nástroj napojí
+  if (needsIntegration.has(sub)) {
+    if (systemy === "nevim") gaps.push("Nevíte, v jakém systému tahle agenda běží — to je první věc ke zjištění (často u externího správce IT). Bez toho nejde odhadnout napojení ani jeho cenu.");
+    else if (systemy === "excelnic") gaps.push("Bez uceleného systému (jen Excel a e-maily) se nový nástroj nemá na co napojit — napojení tu znamená nejdřív zavést evidenci, ne jen propojit dva systémy.");
+  }
+
+  // Kde leží data — smí vůbec ven?
+  if (dataLeavesToProvider.has(sub)) {
+    if (kdeData === "nevim") gaps.push("Nevíte, kde firemní data leží — než je pošlete do AI nástroje, je potřeba to zjistit kvůli souhlasu i bezpečnosti.");
+    else if (kdeData === "vlastni" && !note) note = "Data držíte na vlastním serveru — to chrání soukromí, ale pro AI v cloudu bude potřeba buď privátní nasazení, nebo vědomé rozhodnutí pustit konkrétní data ven.";
+  }
+
+  // Strojní data — telemetrie z výroby (jen relevantní výrobní záměry)
+  if (machineSubs.has(sub)) {
+    if (strojeData === "ne") gaps.push("Data ze strojů se dnes nesbírají automaticky — pro tenhle záměr je jejich sběr (terminály, čidla, napojení řídicích systémů) nutný první krok a obvykle většina projektu.");
+    else if (strojeData === "castecne") gaps.push("Strojní data se sbírají jen částečně — dotčené stroje bude potřeba doplnit do automatického sběru.");
+    else if (strojeData === "nevim") gaps.push("Nevíte, jestli stroje poskytují data — ověřte s údržbou nebo dodavatelem strojů; bez toho záměr nelze naplánovat.");
+  }
+
   if (!hasIT && needsIntegration.has(sub) && !note)
     note = "Bez vlastního IT integraci pokryje externí partner — počítejte s ním v rozpočtu i harmonogramu.";
 
