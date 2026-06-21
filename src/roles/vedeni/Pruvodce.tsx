@@ -71,7 +71,7 @@ export default function Pruvodce() {
   const set = (k: keyof Answers, v: unknown) => setA((p) => ({ ...p, [k]: v as never }));
   const setSub = (goal: string, vals: string[]) => setA((p) => ({ ...p, subs: { ...(p.subs || {}), [goal]: vals } }));
 
-  const toggleMulti = (k: "regs" | "vize" | "goals", opt: Option, opts: Option[]) => {
+  const toggleMulti = (k: "regs" | "vize" | "goals" | "jazyky", opt: Option, opts: Option[]) => {
     const sel = (a[k] as string[] | undefined) || [];
     let next: string[];
     if (opt.exclusive) next = sel.includes(opt.v) ? [] : [opt.v];
@@ -140,7 +140,7 @@ export default function Pruvodce() {
                           opt={opt}
                           multi
                           selected={((val as string[]) || []).includes(opt.v)}
-                          onClick={() => toggleMulti(id as "regs" | "vize" | "goals", opt, q.options)}
+                          onClick={() => toggleMulti(id as "regs" | "vize" | "goals" | "jazyky", opt, q.options)}
                         />
                       ) : (
                         <OptionCard key={opt.v} opt={opt} selected={val === opt.v} onClick={() => set(id as keyof Answers, opt.v)} />
