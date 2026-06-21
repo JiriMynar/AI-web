@@ -19,7 +19,7 @@ export const STEPS: Step[] = [
   { id: "regulace", label: "Regulace", full: "Regulace a citlivá data", desc: "Co vás omezuje a chrání. Verdikty záměrů s regulacemi počítají — drahé je zjistit omezení až po nákupu.", questions: ["regs"] },
   { id: "vize", label: "Vize", full: "Vize a záměry", desc: "Jaké číslo se má pohnout a co konkrétně od AI čekáte. Každý zvolený záměr dostane vlastní verdikt proveditelnosti.", questions: ["vize", "goals", "ambition", "horizont"] },
   { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět a jestli se to vyplatí. Stav dat a procesů určuje proveditelnost, objem a výchozí čísla rozhodují o návratnosti.", questions: ["data", "erpUsage", "strojeData", "procesy", "objem", "mereni"] },
-  { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet", "uzivatele"] },
+  { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet", "uzivatele", "dotace", "odbory"] },
 ];
 
 export const Q: Record<string, Question> = {
@@ -273,6 +273,27 @@ export const Q: Record<string, Question> = {
       { v: "oddeleni", t: "Celé oddělení (desítky)", d: "Potřeba školení a lidí, kteří ostatní potáhnou" },
       { v: "firma", t: "Velká část firmy (stovky)", d: "Velký rollout — adopce a školení jsou půlka úspěchu" },
       { v: "nevim", t: "Zatím nevíme", d: "Rozsah nasazení ještě není rozhodnutý" },
+    ],
+  },
+  dotace: {
+    key: "dotace",
+    title: "Plánujete na to využít dotaci?",
+    subtitle: "Dotace (např. OP TAK, Digitální podnik) může hodně pomoci, ale mění celý postup — má vlastní pravidla pro výběr dodavatele, termíny i vyúčtování. Je dobré to vědět hned na začátku.",
+    options: [
+      { v: "ano", t: "Ano, počítáme s dotací", d: "Financování stojí na dotaci — podmínky výzvy určují harmonogram i výběr dodavatele" },
+      { v: "zvazujeme", t: "Zvažujeme to", d: "Ještě není rozhodnuto — vyplatí se zjistit podmínky dřív, než se vybírá nástroj" },
+      { v: "ne", t: "Ne, z vlastního", d: "Financujeme sami — bez dotačních pravidel a omezení" },
+      { v: "nevim", t: "Nevím", d: "Zatím jsme to neřešili" },
+    ],
+  },
+  odbory: {
+    key: "odbory",
+    title: "Máte ve firmě odbory nebo radu zaměstnanců?",
+    subtitle: "Pokud se nasazení dotkne pracovních postupů nebo míst, bývá projednání se zástupci zaměstnanců povinný krok — a hlavně se vyplatí udělat ho včas, ne až na konci jako formalitu.",
+    options: [
+      { v: "ano", t: "Ano", d: "Změny dotýkající se práce je obvykle nutné projednat — zařaďte to do harmonogramu" },
+      { v: "ne", t: "Ne", d: "Bez formálního zastoupení zaměstnanců" },
+      { v: "nevim", t: "Nevím", d: "Nejsme si jistí" },
     ],
   },
 };
