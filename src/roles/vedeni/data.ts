@@ -15,11 +15,11 @@ export type Question = {
 export type Step = { id: string; label: string; full: string; desc: string; questions: string[] };
 
 export const STEPS: Step[] = [
-  { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření, IT zázemí a systémy určují náročnost koordinace a integrace.", questions: ["size", "focus", "it", "systemy", "kdeData"] },
+  { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření, IT zázemí a systémy určují náročnost koordinace a integrace.", questions: ["size", "focus", "it", "systemy", "kdeData", "jazyky"] },
   { id: "regulace", label: "Regulace", full: "Regulace a citlivá data", desc: "Co vás omezuje a chrání. Verdikty záměrů s regulacemi počítají — drahé je zjistit omezení až po nákupu.", questions: ["regs"] },
-  { id: "vize", label: "Vize", full: "Vize a záměry", desc: "Jaké číslo se má pohnout a co konkrétně od AI čekáte. Každý zvolený záměr dostane vlastní verdikt proveditelnosti.", questions: ["vize", "goals", "ambition"] },
+  { id: "vize", label: "Vize", full: "Vize a záměry", desc: "Jaké číslo se má pohnout a co konkrétně od AI čekáte. Každý zvolený záměr dostane vlastní verdikt proveditelnosti.", questions: ["vize", "goals", "ambition", "horizont"] },
   { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět a jestli se to vyplatí. Stav dat a procesů určuje proveditelnost, objem a výchozí čísla rozhodují o návratnosti.", questions: ["data", "erpUsage", "strojeData", "procesy", "objem", "mereni"] },
-  { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet"] },
+  { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet", "uzivatele"] },
 ];
 
 export const Q: Record<string, Question> = {
@@ -75,6 +75,19 @@ export const Q: Record<string, Question> = {
       { v: "nevim", t: "Nevím", d: "Nevíme přesně, kde data leží — spravuje to někdo jiný" },
     ],
   },
+  jazyky: {
+    key: "jazyky",
+    title: "V jakých jazycích firma běžně komunikuje?",
+    subtitle: "Vyberte vše, co platí. Jazyk ovlivňuje kvalitu AI nástrojů víc, než se čeká — co skvěle funguje v angličtině, může na češtině nebo méně častém jazyce výrazně ztrácet.",
+    multi: true,
+    options: [
+      { v: "cestina", t: "Čeština", d: "Hlavní jazyk většiny firem v ČR" },
+      { v: "slovenstina", t: "Slovenština", d: "Častá u firem s vazbou na Slovensko" },
+      { v: "nemcina", t: "Němčina", d: "Typická u automotive a koncernových firem" },
+      { v: "anglictina", t: "Angličtina", d: "Mezinárodní zákazníci a dodavatelé" },
+      { v: "jine", t: "Jiné jazyky", d: "Další jazyky podle vašich trhů" },
+    ],
+  },
   regs: {
     key: "regs",
     title: "Co se týká vašich dat a regulací?",
@@ -126,6 +139,17 @@ export const Q: Record<string, Question> = {
     options: [
       { v: "pilot", t: "Pilot na jednom procesu", d: "6–12 týdnů, jeden proces, měřitelné kritérium — nejlevnější cesta k jistotě" },
       { v: "plosne", t: "Plošné nasazení", d: "Legitimní cíl, ale výsledek ho rozfázuje: vždy se začíná ověřeným pilotem" },
+    ],
+  },
+  horizont: {
+    key: "horizont",
+    title: "Do kdy byste chtěli první výsledek?",
+    subtitle: "Termín a jeho důvod mění pořadí kroků i to, jak velká ambice je reálná. Něco jiného je „chceme to vyzkoušet“ a něco jiného „musí to běžet k auditu v září“.",
+    options: [
+      { v: "hned", t: "Co nejdřív (do 3 měsíců)", d: "Tlak na rychlost — reálný je jeden dotažený pilot" },
+      { v: "letos", t: "Během letošního roku", d: "Rozumný prostor na pilot i přípravu" },
+      { v: "neni", t: "Není to časově tlačené", d: "Můžete jít důkladně a po krocích" },
+      { v: "termin", t: "Váže to na konkrétní termín", d: "Zakázka, audit nebo dotace s pevným datem" },
     ],
   },
   data: {
@@ -238,6 +262,17 @@ export const Q: Record<string, Question> = {
       { v: "jasna", t: "Jasnou", d: "Víte, kolik investovat — zbývá to ukotvit do měřitelného kritéria úspěchu" },
       { v: "ramcova", t: "Rámcovou", d: "Řádová představa, upřesní se podle pilotu — pro start úplně stačí" },
       { v: "zadna", t: "Žádnou", d: "Legitimní postoj; pilot dodá čísla pro rozhodnutí" },
+    ],
+  },
+  uzivatele: {
+    key: "uzivatele",
+    title: "Kolik lidí bude nástroj nakonec používat?",
+    subtitle: "Nejde o tým, který implementaci povede, ale o koncové uživatele — kolik lidí si nástroj má osvojit do každodenní práce. Čím víc lidí, tím víc rozhoduje adopce a školení, ne samotná technologie.",
+    options: [
+      { v: "par", t: "Pár lidí (do 10)", d: "Malá skupina — adopci zvládnete osobně a rychle" },
+      { v: "oddeleni", t: "Celé oddělení (desítky)", d: "Potřeba školení a lidí, kteří ostatní potáhnou" },
+      { v: "firma", t: "Velká část firmy (stovky)", d: "Velký rollout — adopce a školení jsou půlka úspěchu" },
+      { v: "nevim", t: "Zatím nevíme", d: "Rozsah nasazení ještě není rozhodnutý" },
     ],
   },
 };
