@@ -5,7 +5,7 @@ import { Eyebrow, GhostButton, Panel, PrimaryButton } from "../../design/primiti
 import { useSeo } from "../../lib/seo";
 import { encodeAnswers } from "../../lib/share";
 import { Q, STEPS, SUBQ, Option } from "./data";
-import { Answers } from "./logic";
+import { Answers, VOLUME_SENSITIVE } from "./logic";
 
 function OptionCard({
   opt, selected, multi, compact, onClick,
@@ -84,14 +84,18 @@ export default function Pruvodce() {
 
   const visible = useMemo(() => {
     const ids = STEPS[step].questions;
+    // Pouze subs patřící aktuálně vybraným cílům (respektuje odznačení cíle).
+    const selectedSubs = (a.goals || []).flatMap((g) => (a.subs?.[g]) || []);
     return ids.filter((id) =>
       id === "erpUsage"
         ? a.data === "erp"
         : id === "strojeData"
-        ? (a.goals || []).includes("vyrobaAI")
+        ? selectedSubs.some((s) => s === "vyrReporting" || s === "udrzba")
+        : id === "objem"
+        ? selectedSubs.some((s) => VOLUME_SENSITIVE.includes(s))
         : true
     );
-  }, [step, a.data, a.goals]);
+  }, [step, a.data, a.goals, a.subs]);
 
   const stepDone = useMemo(() => {
     return visible.every((id) => {
