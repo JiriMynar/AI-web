@@ -5,7 +5,7 @@ import { useSeo } from "../../lib/seo";
 import { decodeAnswers, encodeAnswers } from "../../lib/share";
 import { LEVELS } from "./data";
 import {
-  Answers, buildCtx, buildDuties, buildRules, buildScenarios, buildTeam,
+  Answers, Ctx, buildCtx, buildDuties, buildRules, buildScenarios, buildTeam,
   allSelectedSubs, evalSub, levelIndex, score,
 } from "./logic";
 
@@ -41,6 +41,50 @@ const HOW: { title: string; body: string }[] = [
     body: "Plošné nasazení stavte až na pilotu, který prokázal přínos. Další procesy přidávejte po jednom, stejnou metodou. Tak se z jednoho úspěchu stane opakovatelný postup, ne náhoda — a tempo si určujete vy, ne dodavatel.",
   },
 ];
+
+/** Otázky, které položit dodavateli nebo kandidátovi — a proč. */
+const VENDOR_QUESTIONS: { q: string; why: string }[] = [
+  { q: "Jak změříte přínos a co se stane, když se cíl nesplní?", why: "Dobrý odborník přijde s výchozím číslem a metrikou sám. Mlžení tady znamená, že přínos nakonec nikdo neobhájí." },
+  { q: "Co budete potřebovat od nás?", why: "Správná odpověď: přístup k datům, čas vlastníků procesů, zapojení lidí. Kdo řekne „skoro nic“, podceňuje 80 % práce." },
+  { q: "Ukážete referenci v našem oboru, na našich datech a v našem jazyce?", why: "Obecné demo nic neznamená. Chcete vidět, že to fungovalo v podobné realitě — a mít možnost si s tím klientem promluvit." },
+  { q: "Co se stane s našimi daty a kde se zpracovávají?", why: "Musí umět jasně říct, kam data tečou, jak jsou chráněná a co na to smlouva. Vyhýbavá odpověď je varování sama o sobě." },
+  { q: "Jak se vyhneme závislosti jen na vás?", why: "Ptejte se na dokumentaci, export dat a možnost řešení převzít. Kdo vás zamkne k sobě, bude pak diktovat cenu." },
+  { q: "Co navrhujete jako úplně první krok?", why: "Správná odpověď je ohraničený pilot s jedním kritériem — ne rovnou plošné nasazení nebo roční zakázka." },
+];
+
+/** Varovné signály při výběru. */
+const RED_FLAGS: string[] = [
+  "Nabízí konkrétní nástroj dřív, než pochopil váš proces a co chcete měřit.",
+  "Slibuje pevné procento úspory, aniž viděl vaše data.",
+  "V nabídce není žádný výchozí stav ani kritérium úspěchu.",
+  "„AI vyřeší všechno“ — bez zmínky o práci na datech, procesech a školení lidí.",
+  "Odmítá ukázat reference nebo vás nepustí k dřívějším klientům.",
+  "Řešení je uzavřené: bez exportu dat, bez dokumentace, bez možnosti odejít.",
+];
+
+/** Z odpovědí odvozený profil pomoci, kterou firma potřebuje — co u dodavatele vyžadovat. */
+function vendorProfile(a: Answers, ctx: Ctx, subList: string[]): { need: string; why: string }[] {
+  const out: { need: string; why: string }[] = [];
+  if (subList.some((s) => ["vyrReporting", "kvalita", "udrzba", "planovani"].includes(s)))
+    out.push({ need: "Zkušenost přímo z výroby (technolog / OT), ne generického „AI konzultanta“", why: "Výrobní AI se potkává se stroji, senzory a bezpečností provozu. Kancelářský dodavatel tohle prostředí nezná a navrhne řešení, které údržba po prvním incidentu vypne." });
+  if (!ctx.hasIT)
+    out.push({ need: "Partner, který pokryje integraci a IT — přístupy, napojení, bezpečnost", why: "Vlastní IT nemáte, takže tohle musí dodat někdo zvenčí. Vybírejte podle referencí z podobných firem, ne podle nejnižší ceny — levná integrace bývá nakonec nejdražší." });
+  if (ctx.regs.has("aiakt"))
+    out.push({ need: "Doložené zkušenosti s vysoce rizikovým AI podle AI Actu", why: "Vaše použití (AI rozhoduje o lidech) spadá do nejpřísnější kategorie — povinný lidský dohled, dokumentace, transparentnost. Vyžadujte konkrétní příklady, ne ujištění." });
+  else if (["gdpr", "zdravotnictvi", "finance", "verejny"].some((r) => ctx.regs.has(r)))
+    out.push({ need: "Schopnost posoudit GDPR a AI Act a ošetřit smlouvy s poskytovateli", why: "Pracujete s regulovanými daty. Dodavatel, který tohle přejde mlčením, vás vystaví pokutě nebo zákazu zpracování — ideálně ať má vlastní právní podporu." });
+  if (ctx.regs.has("koncern"))
+    out.push({ need: "Zkušenost se schvalováním v nadnárodní struktuře", why: "Nástroje schvaluje vaše centrála a tahle smyčka bývá nejdelší položkou harmonogramu. Zeptejte se, jak dodavatel s koncernovými pravidly pracoval jinde." });
+  if (ctx.dataQ < 2)
+    out.push({ need: "Nejdřív někoho na data a digitalizaci, teprve pak dodavatele modelu", why: "Vaše data zatím nejsou ve stavu, ze kterého může AI těžit. Nákup nástroje je předčasný — 60–80 % práce je stejně na datech a procesech, tady začněte." });
+  if ((a.jazyky?.length ?? 0) > 1 || (a.jazyky ?? []).includes("jine"))
+    out.push({ need: "Ověřená kvalita ve vašich jazycích, ne jen v angličtině", why: "Komunikujete ve více jazycích. Nástroj, který září v anglickém demu, může na češtině nebo němčině výrazně ztrácet — vyžádejte si test na vašich reálných datech." });
+  if (a.kapacita === "nikdo" || a.kapacita === "jeden")
+    out.push({ need: "Důraz na předání know-how a možnost odejít — budete se o pomoc hodně opírat", why: "Interně máte málo rukou, takže externí partner ponese hodně. O to pečlivěji ověřte, že vás nezamkne k sobě — vyžadujte dokumentaci a jasný plán předání." });
+  if (out.length === 0)
+    out.push({ need: "Partner, který začíná vaším procesem a metrikou, ne svým produktem", why: "Vaše odpovědi nevyžadují žádnou specializaci navíc — o to víc rozhoduje přístup. Správná pomoc nejdřív pochopí, co měříte, a teprve pak navrhne nástroj." });
+  return out;
+}
 
 function plural(n: number, one: string, few: string, many: string) {
   if (n === 1) return one;
@@ -174,6 +218,11 @@ function Section({ kicker, title, intro, children }: {
   );
 }
 
+/** Mono podnadpis uvnitř sekce. */
+function SubHead({ children, tone = "text-faint" }: { children: ReactNode; tone?: string }) {
+  return <h3 className={`mt-12 font-mono text-[11px] font-semibold tracking-label ${tone}`}>{children}</h3>;
+}
+
 function ShareBar({ answers }: { answers: Answers }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -206,7 +255,7 @@ function ShareBar({ answers }: { answers: Answers }) {
 }
 
 export default function Report() {
-  useSeo("Report pro vedení — Velín", "Vyhodnocení implementace AI z pohledu vedení: jak postupovat, realističnost záměrů, rizika, tým a pravidla z praxe.");
+  useSeo("Report pro vedení — Velín", "Vyhodnocení implementace AI z pohledu vedení: jak postupovat, realističnost záměrů, jak vybrat odborníka, rizika, tým a pravidla z praxe.");
   const { hash } = useLocation();
   const navigate = useNavigate();
   const decoded = useMemo(() => decodeAnswers<Answers>(hash), [hash]);
@@ -238,6 +287,7 @@ export default function Report() {
   const lvl = LEVELS[idx];
   const lvlTone = TONE[lvl.tone];
   const subs = allSelectedSubs(a).map((s) => ({ ...s, ev: evalSub(s.sub, ctx) }));
+  const subKeys = subs.map((s) => s.sub);
   const sortedSubs = [...subs].sort((x, y) => VERDICT_ORDER[x.ev.verdict] - VERDICT_ORDER[y.ev.verdict]);
   const hned = subs.filter((s) => s.ev.verdict === "hned").length;
   const prip = subs.filter((s) => s.ev.verdict === "priprava").length;
@@ -246,6 +296,7 @@ export default function Report() {
   const team = buildTeam(a, ctx);
   const scenarios = buildScenarios(a, ctx);
   const rules = buildRules(a);
+  const profile = vendorProfile(a, ctx, subKeys);
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
@@ -273,8 +324,8 @@ export default function Report() {
               Upřesnili jste {subs.length} {plural(subs.length, "záměr", "záměry", "záměrů")} —{" "}
               <span className="font-semibold text-ok">{hned} {plural(hned, "proveditelný", "proveditelné", "proveditelných")} hned</span>,{" "}
               <span className="font-semibold text-warn">{prip} po přípravě</span>
-              {neC > 0 && <> a <span className="font-semibold text-stop">{neC} {plural(neC, "zatím ne", "zatím ne", "zatím ne")}</span></>}.
-              Níže najdete doporučený postup, vyhodnocení každého záměru, na co si dát pozor a kdo to musí ponést.
+              {neC > 0 && <> a <span className="font-semibold text-stop">{neC} zatím ne</span></>}.
+              Níže najdete doporučený postup, vyhodnocení každého záměru, jak vybrat správnou pomoc, na co si dát pozor a kdo to musí ponést.
             </p>
           )}
         </Reveal>
@@ -313,6 +364,60 @@ export default function Report() {
             </Reveal>
           ))}
         </div>
+      </Section>
+
+      {/* Jak vybrat pomoc — odborník / dodavatel */}
+      <Section
+        kicker="JAK VYBRAT POMOC"
+        title="Jak poznat dobrého odborníka nebo dodavatele"
+        intro="Tady firmy nejčastěji chybují: bez ujasněného cíle najmou špatně. Dobrý odborník nezačne nástrojem — začne otázkou, jaké číslo chcete pohnout. Kdo nabízí řešení dřív, než pochopil váš proces a jak změříte přínos, je první varovný signál."
+      >
+        <p className="max-w-2xl text-[15px] leading-relaxed text-ink">
+          Než začnete vybírat, mějte ujasněný měřitelný cíl (viz krok 1 výše). Bez něj vám každý prodá něco
+          jiného a nepoznáte, kdo má pravdu. S jasným cílem se role obrátí — vybíráte vy, podle toho, kdo vás
+          k tomu číslu nejlíp dostane.
+        </p>
+
+        <SubHead>JAKÁ POMOC SE K VÁM HODÍ</SubHead>
+        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-dim">
+          Odvozeno z vašich odpovědí — tyhle schopnosti u odborníka nebo dodavatele vyžadujte.
+        </p>
+        <div className="mt-5 space-y-6">
+          {profile.map((p, i) => (
+            <Reveal key={i} delay={i * 0.02}>
+              <div className="border-l-2 border-vedeni pl-4">
+                <h4 className="text-[15px] font-semibold text-ink">{p.need}</h4>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-dim">{p.why}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <SubHead>CO SE ZEPTAT, NEŽ NĚKOHO NAJMETE</SubHead>
+        <div className="mt-5 space-y-5">
+          {VENDOR_QUESTIONS.map((item, i) => (
+            <div key={i} className="flex gap-3 border-l-2 border-line pl-4">
+              <span className="font-mono text-sm font-semibold text-vedeni">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <p className="text-[15px] font-semibold leading-snug text-ink">„{item.q}“</p>
+                <p className="mt-1 text-[14px] leading-relaxed text-dim">{item.why}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <SubHead tone="text-stop">ČERVENÉ VLAJKY</SubHead>
+        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-dim">
+          Když uvidíte tohle, zpozorněte — ať jde o externího dodavatele, nebo o interního kandidáta.
+        </p>
+        <ul className="mt-5 space-y-3">
+          {RED_FLAGS.map((f, i) => (
+            <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-ink">
+              <span className="mt-0.5 font-mono font-semibold text-stop" aria-hidden>✕</span>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
       </Section>
 
       {/* Na co si dát pozor — scénáře */}
@@ -360,7 +465,7 @@ export default function Report() {
           ))}
         </div>
 
-        <h3 className="mt-12 font-mono text-[11px] font-semibold tracking-label text-faint">OSM OBLASTÍ A JEJICH VLASTNÍCI</h3>
+        <SubHead>OSM OBLASTÍ A JEJICH VLASTNÍCI</SubHead>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-dim">
           Práce se dělí do osmi oblastí podle kapacity, kterou jste uvedli. Žádná z nich nesmí zůstat bez vlastníka — sloupec vpravo říká, co se stane, když zůstane.
         </p>
