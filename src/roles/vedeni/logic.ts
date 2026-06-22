@@ -8,6 +8,11 @@ import { LEVELS, SUBQ, Sub } from "./data";
  *  Nad tuto hranici jde o frontu na roky, ne plán na rok. Sdíleno skóre, povinnostmi i scénáři. */
 const SOLO_OVERLOAD = 2;
 
+/** Záměry, jejichž návratnost závisí na objemu (nákladnější automatizace s přínosem na kus).
+ *  Sdíleno scénářem „NÁSTROJ BEZ OBJEMU" a podmíněným zobrazením otázky „objem" v průvodci —
+ *  jeden zdroj pravdy, ať se seznam nerozejde. */
+export const VOLUME_SENSITIVE = ["faktury", "reporty", "smlouvy", "emaily", "kvalita", "udrzba", "planovani", "chatbot", "trideni", "crmZapisy", "nabidky"];
+
 export type Answers = {
   size?: string;
   focus?: string;
@@ -179,10 +184,12 @@ export function evalSub(sub: string, ctx: Ctx): SubEval {
   if (regs.has("verejny") && needsIntegration.has(sub))
     gaps.push("Veřejný sektor / NIS2: výběr dodavatele a integrace podléhají přísnějšímu schvalování — počítejte s delším výběrem a požadavky na kyberbezpečnost.");
 
-  // Cílový systém — jak snadno se nový nástroj napojí
+  // Cílový systém — jak snadno se nový nástroj napojí.
+  // Pozn.: gap „nemáte ucelený systém" se nevydává, když data=erp (dataQ===2) — to by si
+  // odporovalo s odpovědí, že hlavní agenda běží v reálně používaném ERP.
   if (needsIntegration.has(sub)) {
     if (systemy === "nevim") gaps.push("Nevíte, v jakém systému tahle agenda běží — to je první věc ke zjištění (často u externího správce IT). Bez toho nejde odhadnout napojení ani jeho cenu.");
-    else if (systemy === "excelnic") gaps.push("Bez uceleného systému (jen Excel a e-maily) se nový nástroj nemá na co napojit — napojení tu znamená nejdřív zavést evidenci, ne jen propojit dva systémy.");
+    else if (systemy === "excelnic" && dataQ < 2) gaps.push("Bez uceleného systému (jen Excel a e-maily) se nový nástroj nemá na co napojit — napojení tu znamená nejdřív zavést evidenci, ne jen propojit dva systémy.");
   }
 
   // Kde leží data — smí vůbec ven?
@@ -219,6 +226,9 @@ export function score(a: Answers, ctx: Ctx): number {
   const heavy = subs.filter((s) => ["kvalita", "udrzba", "planovani"].includes(s.sub)).length;
   p += Math.min(heavy, 2);
   if (subs.length > 5) p += 1;
+  // Výrobní záměr je náročný nezávisle na deklarovaném zaměření — pokud firma volí výrobní
+  // záměry, ale focus není výroba/kombinace, přičti bod, který by jinak dalo zaměření.
+  if (!(a.focus === "vyroba" || a.focus === "kombinace") && subs.some((s) => ["vyrReporting", "kvalita", "udrzba", "planovani"].includes(s.sub))) p += 1;
   if (a.ambition === "plosne") p += 2;
   p += ({ papir: 3, excel: 1, erp: 0 } as Record<string, number>)[a.data ?? ""] ?? 0;
   if (ctx.erpFormal) p += 1;
@@ -398,6 +408,7 @@ export type Scenario = { t: string; d: string; out: string };
 
 export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
   const subs = allSelectedSubs(a).map((s) => s.sub);
+  const hasGoal = (a.vize || []).filter((v) => v !== "nevime").length > 0;
   const sc: Scenario[] = [];
 
   if (a.kapacita === "nikdo")
@@ -405,7 +416,7 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
   else if (a.kapacita === "jeden" && (subs.length > SOLO_OVERLOAD || a.ambition === "plosne"))
     sc.push({ t: "JEDEN ČLOVĚK NA VŠECHNO", d: `Jeden specialista má pokrýt mapování, data, regulace, nástroje, pilot, školení i komunikaci s vedením — napříč ${subs.length} záměry${a.ambition === "plosne" ? " s plošnou ambicí" : ""}. To není pracovní pozice, to je seznam práce pro celé oddělení.`, out: "Cesta ven: zúžit na jeden záměr a postupovat sériově, nakoupit externí podporu na právo a IT, a od sponzora získat veřejné krytí priorit. Jinak specialista vyhoří nebo odejde." });
 
-  if (!(a.vize || []).filter((v) => v !== "nevime").length)
+  if (!hasGoal)
     sc.push({ t: "AI BEZ CÍLE", d: "Chcete AI, ale zatím nevíte k čemu — technologie si hledá problém. Takhle vznikají nákupy licencí „ať něco máme“, které MIT řadí mezi 95 % pilotů bez měřitelného dopadu.", out: "Cesta ven: krátký workshop vedení nad otázkou „jaké číslo nás bolí“ — náklady, kapacita, chybovost, nebo rychlost. Teprve z odpovědi vyberte záměr." });
   if (ctx.erpFormal)
     sc.push({ t: "PAPÍROVÉ ERP", d: "Systém existuje, ale realita firmy běží mimo něj — v excelech, e-mailech a po telefonu. Každá AI postavená nad daty ze systému bude pracovat s fikcí.", out: "Cesta ven: na dotčeném procesu nejdřív vrátit systém do hry — zjednodušit zápis, vyžadovat ho a po 4–6 týdnech zkontrolovat, že data odpovídají realitě." });
@@ -417,9 +428,9 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
     sc.push({ t: "PROJEKT JEDNOHO NADŠENCE", d: "Téma táhne jednotlivec bez opory ve vedení. Implementace ale bere lidem čas a mění zaběhnuté postupy — a projekt bez sponzora prohraje každý spor o priority.", out: "Cesta ven: než cokoliv kupovat, získat sponzora. Nejlepší argument je malá ukázka na reálném firemním problému + čísla: kolik hodin měsíčně proces stojí dnes." });
   if (a.ambition === "plosne" && a.rozpocet === "zadna")
     sc.push({ t: "NEUZRÁLÉ ROZHODNUTÍ", d: "Plošná ambice bez jakékoli představy o investici je signál, že padlo „chceme AI“, ne „chceme vyřešit tohle za tolik“. Rozpočet se nedá ukotvit, dokud není co měřit — a plošné nasazení bez rozpočtu se nejčastěji zastaví po prvním vyúčtování.", out: "Cesta ven: pilot na jednom procesu dodá první čísla — kolik hodin proces stojí dnes a kolik po nasazení. Z nich teprve vznikne obhajitelný rozpočet pro širší nasazení." });
-  if (a.mereni === "ne")
-    sc.push({ t: "BEZ VÝCHOZÍHO ČÍSLA", d: "Dnes neměříte, kolik vás dotčená činnost stojí — po nasazení tedy nebude s čím porovnat výsledek. Přesně na tom padá většina pilotů: nejde obhájit přínos, který nikdo nezměřil (pravidlo „100 % pilotů potřebuje metriku předem“).", out: "Cesta ven: než cokoliv spustíte, změřte výchozí stav — kolik hodin nebo korun proces dnes spotřebuje. Stačí pár týdnů sledování a jedno číslo, se kterým se po pilotu porovná." });
-  if ((a.objem === "maly" || a.objem === "nevim") && subs.some((s) => ["faktury", "reporty", "smlouvy", "kvalita", "udrzba", "planovani", "chatbot", "trideni", "crmZapisy", "nabidky"].includes(s)))
+  if (a.mereni === "ne" && hasGoal)
+    sc.push({ t: "BEZ VÝCHOZÍHO ČÍSLA", d: "Máte cíl, ale dnes neměříte, kolik vás dotčená činnost stojí — po nasazení tedy nebude s čím porovnat výsledek. Přesně na tom padá většina pilotů: nejde obhájit přínos, který nikdo nezměřil (pravidlo „100 % pilotů potřebuje metriku předem“).", out: "Cesta ven: než cokoliv spustíte, změřte výchozí stav — kolik hodin nebo korun proces dnes spotřebuje. Stačí pár týdnů sledování a jedno číslo, se kterým se po pilotu porovná." });
+  if ((a.objem === "maly" || a.objem === "nevim") && subs.some((s) => VOLUME_SENSITIVE.includes(s)))
     sc.push({ t: "NÁSTROJ BEZ OBJEMU", d: a.objem === "maly"
       ? "Vybrali jste automatizaci, která něco stojí postavit — ale objem agendy je malý. Návratnost se počítá z toho, kolik práce nástroj ušetří; při desítkách kusů měsíčně se nákladnější řešení nemusí vyplatit."
       : "Vybrali jste automatizaci, která něco stojí postavit, ale objem agendy zatím neznáte. Bez něj nejde spočítat návratnost — a to je první otázka, kterou položí každý, kdo schvaluje rozpočet.", out: "Cesta ven: spočítejte, kolik kusů měsíčně proces obnáší a kolik času každý zabere. Při malém objemu začněte levnějším nástrojem (hotová služba místo vlastního vývoje) nebo záměrem s vyšším objemem." });
@@ -439,7 +450,7 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
     sc.push({ t: "DOTACE MĚNÍ PRAVIDLA", d: a.dotace === "ano"
       ? "Počítáte s dotací (např. OP TAK, Digitální podnik) — ta má vlastní pravidla, která mění celý postup: způsobilé výdaje, povinné výběrové řízení na dodavatele, termíny navázané na výzvu a dokumentaci k vyúčtování. Nedá se prostě vybrat nástroj a koupit ho."
       : "Zvažujete dotaci (např. OP TAK, Digitální podnik). Pokud do ní půjdete, změní celý postup — způsobilé výdaje, výběrové řízení na dodavatele i termíny navázané na výzvu. Rozhodněte se dřív, než začnete vybírat nástroj.", out: "Cesta ven: zjistěte si podmínky konkrétní výzvy (způsobilé výdaje, spoluúčast, harmonogram) ještě před výběrem nástroje a počítejte s vlastním spolufinancováním — dotace nikdy nepokryje vše. U výběru dodavatele dodržte pravidla výzvy, jinak hrozí vrácení dotace." });
-  if (((a.jazyky?.length ?? 0) > 1 || (a.jazyky ?? []).includes("jine")) && subs.some((s) => ["chatbot", "texty", "smlouvy", "znalostni", "porady", "trideni", "nabidky"].includes(s)))
+  if (((a.jazyky?.length ?? 0) > 1 || (a.jazyky ?? []).includes("jine")) && subs.some((s) => ["chatbot", "texty", "smlouvy", "znalostni", "porady", "trideni", "nabidky", "emaily"].includes(s)))
     sc.push({ t: "JAZYKOVÁ PAST", d: "Komunikujete ve více jazycích a vybrané záměry pracují s textem nebo řečí. Nástroje, které v anglické ukázce září, mohou na češtině, němčině nebo méně častém jazyce výrazně ztrácet — a kvalita se liší dodavatel od dodavatele.", out: "Cesta ven: do výběru zařaďte test na vašich reálných datech ve všech jazycích, které potřebujete. Nerozhodujte podle dema v angličtině." });
   if (a.ambition === "plosne" && allSelectedSubs(a).length >= 4)
     sc.push({ t: "VŠE NAJEDNOU", d: "Plošná ambice napříč mnoha záměry znamená, že se kapacita lidí, rozpočet i pozornost vedení rozdrobí — a za rok nebude hotové nic, jen rozpracované všechno.", out: "Cesta ven: seřadit záměry podle verdiktů. Začít jedním „proveditelné hned“, dotáhnout do měřitelného výsledku, a teprve s ověřeným postupem přidávat další." });
@@ -447,5 +458,5 @@ export function buildScenarios(a: Answers, ctx: Ctx): Scenario[] {
   if (sc.length === 0)
     sc.push({ t: "„KOUPÍME NÁSTROJ A MÁME AI“", d: "Vaše odpovědi nevykazují žádnou kritickou kombinaci — o to víc hrozí podcenění. Nástroj je zhruba pětina práce; zbytek je mapování, data, změna postupů a školení.", out: "Cesta ven: držet se pravidla „nejdřív proces, pak nástroj“. Dobrá výchozí pozice se nejsnáz promrhá rychlým nákupem." });
 
-  return sc.slice(0, 4);
+  return sc.slice(0, 6);
 }
