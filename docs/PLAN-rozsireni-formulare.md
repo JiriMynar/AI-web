@@ -166,7 +166,7 @@ Volby: `hned` „Co nejdřív (do 3 měsíců)" · `letos` „Během letošního
 > pravidla výběru dodavatele i dokumentační zátěž. `rozpocet` to dnes nezachytí.
 
 Volby: `ano` „Ano, počítáme s dotací" · `zvazujeme` „Zvažujeme to" · `ne` „Ne, z vlastního" · `nevim` „Nevím"
-*Napojení:* `buildScenarios` — vázanost výběru a termínů na výzvu; interakce s `rozpocet`.
+*Napojení:* `buildScenarios` — scénář „DOTACE MĚNÍ PRAVIDLA" při `ano`/`zvazujeme` (způsobilé výdaje, výběrové řízení na dodavatele, termíny výzvy, spoluúčast). Vědomě nezasahuje do skóre.
 
 **4.2 Odbory / rada zaměstnanců** · krok **Lidé** · `Answers.odbory`
 > *Znění:* „Máte ve firmě odbory nebo radu zaměstnanců?"
@@ -174,7 +174,7 @@ Volby: `ano` „Ano, počítáme s dotací" · `zvazujeme` „Zvažujeme to" · 
 > povinný krok harmonogramu. `lide` řeší postoj, ne formální reprezentaci.
 
 Volby: `ano` „Ano" · `ne` „Ne" · `nevim` „Nevím"
-*Napojení:* `ano` + záměry dotýkající se míst (nebo `lide = odpor`) → poznámka v týmu/povinnostech o projednání.
+*Napojení:* `buildTeam` — při `ano` + práci automatizujícím záměru (nebo `lide = odpor`) se přidá role „Zástupci zaměstnanců (odbory / rada)" s upozorněním na včasné projednání.
 
 ---
 
@@ -194,7 +194,8 @@ jsou **nepovinná**, takže:
 - [x] **Fáze 1** — `systemy`, `kdeData`, `strojeData` (proveditelnostní jádro) — *hotovo, commit Fáze 1*
 - [x] **Fáze 2** — `objem`, `mereni` (návratnost a měřitelnost) — *hotovo, scénáře NÁSTROJ BEZ OBJEMU + BEZ VÝCHOZÍHO ČÍSLA*
 - [x] **Fáze 3** — `uzivatele`, `jazyky`, `horizont` (realita nasazení) — *hotovo, scénáře JAZYKOVÁ PAST / PEVNÝ TERMÍN / RYCHLE A PLOŠNĚ NARAZ + ambasadoři v týmu*
-- [ ] **Fáze 4** — `dotace`, `odbory` (české a organizační specifikum)
+- [x] **Fáze 4** — `dotace`, `odbory` (české a organizační specifikum) — *hotovo, scénář DOTACE MĚNÍ PRAVIDLA + role zástupců zaměstnanců v týmu*
 
-Doporučený start: **Fáze 1** jako jeden uzavřený celek (otázky + napojení do logiky + validace),
-ať je hned vidět dopad na verdikty proveditelnosti.
+**Stav: všechny čtyři fáze nasazené na `main`.** Formulář modulu *vedení* nově pokrývá cílový
+systém a umístění dat, strojní data, objem a měřitelnost, počet uživatelů, jazyky, časový horizont,
+dotace i odbory — každá otázka zapojená do vyhodnocení (gap, scénář nebo role v týmu).
