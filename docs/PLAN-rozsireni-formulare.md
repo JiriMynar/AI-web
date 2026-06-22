@@ -26,10 +26,13 @@ pravidel, která **platí pro každou novou otázku**:
 4. **Max 4 volby, krátký název (`t`), vysvětlení patří do `d`.** Konzistentní se stávajícími otázkami.
 5. **Žádné volné psaní.** UI je výběr karet (`OptionCard`) — vše musí jít vyjádřit volbami.
 6. **Otázky relevantní jen pro část firem zobrazujeme podmíněně.** Např. otázka na data
-   ze strojů se ukáže jen u zvolených výrobních záměrů (mechanika `visible` v `Pruvodce.tsx`,
+   ze strojů se ukáže jen u relevantních výrobních záměrů (mechanika `visible` v `Pruvodce.tsx`,
    stejně jako dnes `erpUsage` jen při `data === "erp"`).
-7. **„Nevím" nikdy není slepá ulička v logice.** Vede k doporučení „tohle si nejdřív
-   zjistěte / ověřte s dodavatelem", ne k chybě ani k falešně optimistickému verdiktu.
+7. **„Nevím" nikdy není slepá ulička v logice.** U otázek, které rozhodují o proveditelnosti
+   (systém, data, stroje, objem), vede „Nevím" k doporučení „tohle si nejdřív zjistěte / ověřte
+   s dodavatelem". U měkčích organizačních otázek (počet uživatelů, dotace, odbory) je „Nevím"
+   platná neutrální odpověď, která jen netriggeruje riziko — záměrně nepřidává šum. Nikdy nevede
+   k chybě ani k falešně optimistickému verdiktu.
 
 ---
 
@@ -78,6 +81,7 @@ Volby (jeden výběr):
 
 *Napojení:* `evalSub` — průřezová poznámka o náročnosti napojení u integračních záměrů
 (`excelnic` → napojení = zavést evidenci; `nevim` → nejdřív zjistit systém). `buildTeam` — role IT/partnera.
+Gap pro `excelnic` se nevydá, když `data=erp` — to by si protiřečilo (viz revize #1).
 *Pozn.:* doplňuje stávající `data` (stav dat), neduplikuje ho — firma může mít Pohodu a přitom hodně v Excelu.
 
 **1.2 Kde jsou e-maily a dokumenty** · krok **Profil** · `Answers.kdeData`
@@ -93,9 +97,9 @@ Volby (jeden výběr):
 *Napojení:* `evalSub` — `vlastni` → poznámka o privátním nasazení vs. vědomém puštění dat ven;
 `nevim` → gap „nejdřív zjistit, kde data leží". Interaguje s `regs` (`knowhow` + cloud → vyšší opatrnost).
 
-**1.3 Data ze strojů** · krok **Data a procesy** · `Answers.strojeData` · **jen když je zvolen výrobní záměr (`goals` obsahuje `vyrobaAI`)**
+**1.3 Data ze strojů** · krok **Data a procesy** · `Answers.strojeData` · **jen při výběru `vyrReporting`/`udrzba`**
 > *Znění:* „Sbíráte data ze strojů automaticky?"
-> *Proč:* výrobní AI (kvalita, údržba, plánování, reporting) stojí a padá na dostupnosti dat ze strojů.
+> *Proč:* výrobní AI (reporting, prediktivní údržba) stojí a padá na dostupnosti dat ze strojů.
 
 Volby (jeden výběr):
 - `ano` — „Ano, stroje posílají data do systému" — *Hodnoty z výroby se ukládají automaticky (řídicí systém, MES)*
@@ -105,12 +109,13 @@ Volby (jeden výběr):
 
 *Napojení:* dává `evalSub` skutečný OT signál pro `vyrReporting`/`udrzba` místo odvozování
 z obecného `data`; `ne`/`castecne`/`nevim` přidá strojní gap. (`kvalita` zůstává u svého kamerového gapu.)
+Zobrazuje se jen při výběru `vyrReporting`/`udrzba`, ne u celého cíle `vyrobaAI` — jinak by to byl mrtvý vstup u kvality/plánování (revize #3).
 
 ### Fáze 2 — Návratnost a měřitelnost
 
 Doplní vstupy, které report dnes vyžaduje (ROI, metrika), ale nesbírá.
 
-**2.1 Objem agendy** · krok **Data a procesy** · `Answers.objem`
+**2.1 Objem agendy** · krok **Data a procesy** · `Answers.objem` · **jen při výběru objem-citlivého záměru**
 > *Znění:* „Kolik té hlavní agendy přibližně zvládnete za měsíc?"
 > *Proč:* objem je faktor č. 1 návratnosti — vytěžování 150 vs. 15 000 dokladů jsou dva různé projekty.
 
@@ -121,7 +126,8 @@ Volby (jeden výběr):
 - `nevim` — „Nevím / těžko odhadnout"
 
 *Napojení:* `buildScenarios` — scénář „NÁSTROJ BEZ OBJEMU" při `maly`/`nevim` v kombinaci
-s nákladnou automatizací. Vědomě nezasahuje do skóre (objem je business-case, ne feasibility).
+s objem-citlivým záměrem (sdílená konstanta `VOLUME_SENSITIVE` včetně `emaily`). Otázka se zobrazuje
+jen při výběru takového záměru. Vědomě nezasahuje do skóre (objem je business-case, ne feasibility).
 
 **2.2 Měříte to dnes** · krok **Data a procesy** · `Answers.mereni`
 > *Znění:* „Víte, kolik vás ta činnost dnes stojí (čas nebo peníze)?"
@@ -132,8 +138,9 @@ Volby (jeden výběr):
 - `odhad` — „Jen odhadem" — *Přesně neměříme, ale umíme kvalifikovaně odhadnout*
 - `ne` — „Nevíme" — *Dnes nesledujeme — nemáme s čím porovnat výsledek*
 
-*Napojení:* `buildScenarios` — scénář „BEZ VÝCHOZÍHO ČÍSLA" při `ne`. Uzavírá smyčku,
-kde nástroj metriku vyžaduje („100 % pilotů potřebuje metriku předem"), ale dosud nekontroloval.
+*Napojení:* `buildScenarios` — scénář „BEZ VÝCHOZÍHO ČÍSLA" při `ne` (a zároveň zvolené vizi —
+jinak situaci pokrývá AI BEZ CÍLE, viz revize #9). Uzavírá smyčku, kde nástroj metriku vyžaduje,
+ale dosud nekontroloval.
 
 ### Fáze 3 — Realita nasazení
 
@@ -149,7 +156,7 @@ Volby: `par` „Pár lidí (do 10)" · `oddeleni` „Celé oddělení (desítky)
 > *Proč:* ovlivňuje kvalitu LLM a OCR (čeština/němčina) i volbu nástroje; dnes je jazyk jen use-case v SUBQ, ne omezení.
 
 Volby (více výběrů): `cestina` · `slovenstina` · `nemcina` · `anglictina` · `jine`
-*Napojení:* `buildScenarios` — scénář „JAZYKOVÁ PAST" při vícejazyčném provozu (nebo `jine`) v kombinaci s jazykovým záměrem (chatbot, texty, smlouvy, znalostní, porady, třídění, nabídky).
+*Napojení:* `buildScenarios` — scénář „JAZYKOVÁ PAST" při vícejazyčném provozu (nebo `jine`) v kombinaci s jazykovým záměrem (chatbot, texty, smlouvy, znalostní, porady, třídění, nabídky, e-maily).
 
 **3.3 Časový horizont** · krok **Vize** · `Answers.horizont`
 > *Znění:* „Do kdy byste chtěli první výsledek?"
@@ -199,3 +206,19 @@ jsou **nepovinná**, takže:
 **Stav: všechny čtyři fáze nasazené na `main`.** Formulář modulu *vedení* nově pokrývá cílový
 systém a umístění dat, strojní data, objem a měřitelnost, počet uživatelů, jazyky, časový horizont,
 dotace i odbory — každá otázka zapojená do vyhodnocení (gap, scénář nebo role v týmu).
+
+---
+
+## 5. Revize konzistence (po statické analýze)
+
+Po dokončení všech fází proběhla statická analýza otázek a napojení. Nálezy a jejich vyřešení:
+
+- **#1 `data` × `systemy` si mohly protiřečit** (data=erp vs systemy=excelnic → protichůdný výstup). Vyřešeno v `evalSub`: gap „nemáte ucelený systém" se nevydá, když `data=erp` (dataQ===2).
+- **#2 `emaily` chybělo v objemovém i jazykovém seznamu**, ač je objemové i jazykové. Doplněno do `VOLUME_SENSITIVE` i do seznamu pro „JAZYKOVOU PAST".
+- **#3 `strojeData` se ptalo šíř, než kam dosáhne** (zobrazeno pro celý cíl vyrobaAI, ale ovlivní jen `vyrReporting`/`udrzba`). Zobrazení zúženo na výběr `vyrReporting`/`udrzba`.
+- **#4 nové otázky byly tiché pro „čistý" profil.** Částečně řešeno: `objem` se zobrazí jen při výběru objem-citlivého záměru, `strojeData` jen při relevantním výběru. Zbytek (pozitivní potvrzení silných stránek přímo v reportu) je otevřené produktové rozhodnutí, ne bug.
+- **#5 `slice(0,4)` mohl udusit nové scénáře** (dotace, jazyky). Strop zvednut na 6.
+- **#6 „Nevím" se chovalo nejednotně.** Záměr upřesněn v zásadě č. 7: aktivní u feasibility otázek, neutrální u organizačních.
+- **#7 výrobní záměr u nevýrobní firmy podhodnocoval skóre.** Přidán bod náročnosti při výběru výrobního záměru i bez `focus=výroba`.
+- **#8 plán × kód u dotace** — nasazený stav je konzistentní (spoluúčast pokrytá; kombinaci rozpočet×dotace řeší samostatný scénář NEUZRÁLÉ ROZHODNUTÍ). Beze změny.
+- **#9 tematický překryv AI BEZ CÍLE × BEZ VÝCHOZÍHO ČÍSLA.** Scénář BEZ VÝCHOZÍHO ČÍSLA se zobrazí jen, když firma má vizi (jinak situaci pokrývá AI BEZ CÍLE).
