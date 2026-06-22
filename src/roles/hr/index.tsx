@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, Route, Routes } from "react-router-dom";
-import { Eyebrow, Lamp, Panel, Reveal } from "../../design/primitives";
+import { Eyebrow, Panel, Reveal } from "../../design/primitives";
 import { useSeo } from "../../lib/seo";
 
 /** Modul HR — náborový playbook pro AI specialistu/integrátora. Bez vazeb na ostatní role. */
