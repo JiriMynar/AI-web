@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import { Eyebrow, Panel, Reveal } from "../../design/primitives";
 import { useSeo } from "../../lib/seo";
+import JobBuilder from "./JobBuilder";
 
 /** Modul HR — náborový playbook pro AI specialistu/integrátora. Bez vazeb na ostatní role. */
 
@@ -144,6 +145,24 @@ function Guide() {
         </Reveal>
       </header>
 
+      <Reveal className="mt-10">
+        <Panel className="flex flex-col gap-3 border-l-4 border-hr px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold">Potřebujete rovnou popis pozice?</div>
+            <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-dim">
+              Interaktivní nástroj sestaví job description z reálné náplně práce — ne z buzzwordů. Nakliknete,
+              co bude člověk dělat, a vyjede popis, ze kterého je obsah práce konečně poznat.
+            </p>
+          </div>
+          <Link
+            to="/hr/popis"
+            className="flex-shrink-0 rounded-md border border-hr/50 px-4 py-2.5 font-mono text-xs font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
+          >
+            SESTAVIT POPIS POZICE →
+          </Link>
+        </Panel>
+      </Reveal>
+
       <Section
         kicker="KOHO HLEDÁTE"
         title="Tři archetypy — vyberte podle sebe, ne podle katalogu"
@@ -194,6 +213,11 @@ function Guide() {
             <p><span className="font-semibold text-ink">Koho hledáme:</span> [generalistu / specialistu — viz archetypy], ne seznam buzzwordů.</p>
           </div>
         </Panel>
+
+        <p className="mt-5 text-[14px] leading-relaxed text-dim">
+          Nechcete to skládat ručně?{" "}
+          <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">Sestavte popis pozice nástrojem →</Link>
+        </p>
       </Section>
 
       <Section
@@ -289,6 +313,7 @@ export default function HrModule() {
   return (
     <Routes>
       <Route index element={<Guide />} />
+      <Route path="popis" element={<JobBuilder />} />
       <Route path="*" element={<Guide />} />
     </Routes>
   );
