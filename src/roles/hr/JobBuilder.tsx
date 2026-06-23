@@ -9,6 +9,7 @@ type Opt = { v: string; t: string };
 
 type State = {
   archetype: string;
+  level: string;
   forma: string;
   focus: string;
   data: string;
@@ -19,12 +20,17 @@ type State = {
   cil: string;
 };
 
-type SingleKey = "archetype" | "forma" | "focus" | "data" | "it" | "cil";
+type SingleKey = "archetype" | "level" | "forma" | "focus" | "data" | "it" | "cil";
 
 const ARCHETYPY: Opt[] = [
   { v: "koordinator", t: "Interní koordinátor" },
   { v: "specialista", t: "Implementační specialista" },
   { v: "partner", t: "Externí partner" },
+];
+const LEVELY: Opt[] = [
+  { v: "junior", t: "Junior" },
+  { v: "medior", t: "Medior" },
+  { v: "senior", t: "Senior" },
 ];
 const FORMY: Opt[] = [
   { v: "full", t: "Plný úvazek" },
@@ -123,11 +129,25 @@ const TASK_LINE: Record<string, string> = {
   crm: "Zavést automatické zápisy a follow-upy do CRM ze schůzek, hovorů a e-mailů.",
 };
 
-const TITLE: Record<string, string> = {
-  koordinator: "Koordinátor zavádění AI",
-  specialista: "Specialista na zavádění AI",
-  partner: "Externí konzultant pro zavádění AI",
+/** Mapování úkolů na zaměření (specializaci) — z něj se odvodí název pozice. */
+const SPEC_OF: Record<string, string> = {
+  faktury: "automatizace", emaily: "automatizace", smlouvy: "automatizace",
+  reporty: "data", data: "data",
+  integrace: "integrace", nastroje: "integrace",
+  vyrReporting: "vyroba", kvalita: "vyroba", udrzba: "vyroba", planovani: "vyroba",
+  chatbot: "konverzace", trideni: "konverzace",
+  nabidky: "obchod", crm: "obchod",
 };
+const SPEC_TITLE: Record<string, string> = {
+  automatizace: "automatizaci procesů",
+  data: "data a reporting",
+  integrace: "integrace a nástroje",
+  vyroba: "výrobní AI",
+  konverzace: "konverzační AI",
+  obchod: "obchod a CRM",
+};
+const LEVEL_PREFIX: Record<string, string> = { junior: "junior ", medior: "", senior: "senior " };
+
 const FORMA_LABEL: Record<string, string> = {
   full: "plný úvazek",
   part: "částečný úvazek",
@@ -151,6 +171,34 @@ const FOCUS_NOUN: Record<string, string> = {
   admin: "firma",
 };
 
+function dominantSpec(tasks: string[]): string | null {
+  const counts: Record<string, number> = {};
+  tasks.forEach((t) => {
+    const sp = SPEC_OF[t];
+    if (sp) counts[sp] = (counts[sp] || 0) + 1;
+  });
+  let best: string | null = null;
+  let n = 0;
+  Object.keys(counts).forEach((k) => {
+    if (counts[k] > n) {
+      n = counts[k];
+      best = k;
+    }
+  });
+  return best;
+}
+
+function buildTitle(s: State): string {
+  const spec = dominantSpec(s.tasks);
+  let base: string;
+  if (s.archetype === "partner") base = "externí konzultant pro zavádění AI" + (FOCUS_SUFFIX[s.focus] || "");
+  else if (s.archetype === "specialista") base = spec ? `specialista na ${SPEC_TITLE[spec]}` : "specialista na zavádění AI";
+  else base = "koordinátor zavádění AI" + (FOCUS_SUFFIX[s.focus] || "");
+  const prefix = s.archetype === "partner" ? "" : LEVEL_PREFIX[s.level];
+  const full = prefix + base;
+  return full.charAt(0).toUpperCase() + full.slice(1);
+}
+
 type JD = {
   title: string;
   context: string;
@@ -163,7 +211,7 @@ type JD = {
 };
 
 function buildJD(s: State): JD {
-  const title = TITLE[s.archetype] + (FOCUS_SUFFIX[s.focus] || "");
+  const title = buildTitle(s);
   const cil = s.cil.trim();
 
   const cilText = cil
@@ -211,8 +259,12 @@ function buildJD(s: State): JD {
     const names = langs.map((j) => JAZYKY.find((x) => x.v === j)?.t ?? "").filter((n) => n).join(", ");
     must.push(`Práce s texty v dalších jazycích: ${names}.`);
   }
-  if (s.archetype === "specialista")
-    must.push("Praktická zkušenost se stavbou AI/automatizačních řešení (vyhledávání nad dokumenty, automatizace, integrace).");
+  if (s.archetype === "specialista" && s.level !== "junior")
+    must.push("Praktická zkušenost se stavbou AI/automatizačních řešení — vyhledávání nad dokumenty, automatizace, integrace.");
+  if (s.level === "junior")
+    must.push("Stačí základní praxe v jedné z oblastí výše — zbytek se doučí pod vedením zkušenějšího kolegy.");
+  else if (s.level === "senior")
+    must.push("Samostatně navrhne řešení od architektury po nasazení a vede či mentoruje ostatní.");
 
   const bonus: string[] = [
     "Konkrétní stack podle toho, co budete stavět (Python, automatizační platformy, datové nástroje) — výhoda, ne podmínka.",
@@ -312,6 +364,7 @@ export default function JobBuilder() {
   );
   const [s, setS] = useState<State>({
     archetype: "specialista",
+    level: "medior",
     forma: "full",
     focus: "admin",
     data: "excel",
@@ -329,6 +382,7 @@ export default function JobBuilder() {
 
   const jd = useMemo(() => buildJD(s), [s]);
   const text = useMemo(() => jdToText(jd), [jd]);
+  const spec = dominantSpec(s.tasks);
 
   const copy = async () => {
     try {
@@ -359,6 +413,10 @@ export default function JobBuilder() {
             konkrétní činnosti — včetně toho, co náplní <span className="text-ink">není</span>, a měřitelného
             prvního úkolu.
           </p>
+          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-dim">
+            „Specialista“ navíc není jedna pozice — záleží na <span className="text-ink">zaměření</span> (co
+            staví) a <span className="text-ink">úrovni</span> (jak hluboko). Obojí se promítne do názvu i požadavků.
+          </p>
         </Reveal>
       </header>
 
@@ -368,6 +426,11 @@ export default function JobBuilder() {
           <Field label="KOHO HLEDÁTE">
             {ARCHETYPY.map((o) => (
               <Chip key={o.v} active={s.archetype === o.v} onClick={() => set("archetype", o.v)}>{o.t}</Chip>
+            ))}
+          </Field>
+          <Field label="ÚROVEŇ (SENIORITA)">
+            {LEVELY.map((o) => (
+              <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)}>{o.t}</Chip>
             ))}
           </Field>
           <Field label="FORMA">
@@ -407,6 +470,11 @@ export default function JobBuilder() {
                 </div>
               ))}
             </div>
+            {spec && (
+              <p className="mt-3 text-[12px] leading-relaxed text-faint">
+                Z vybraných úkolů vychází zaměření: <span className="text-hr">{SPEC_TITLE[spec]}</span> — promítne se do názvu pozice.
+              </p>
+            )}
           </div>
 
           <Field label="REGULACE — CO PLATÍ">

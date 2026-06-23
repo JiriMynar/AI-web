@@ -45,7 +45,7 @@ const ARCHETYPES: { name: string; tag: string; fit: string; risk: string }[] = [
   },
   {
     name: "Implementační specialista (hands-on)",
-    tag: "Umí zmapovat proces, napojit nástroje, postavit automatizaci či vyhledávání nad firemními dokumenty a ohlídat data.",
+    tag: "Umí zmapovat proces, napojit nástroje, postavit automatizaci či vyhledávání nad firemními dokumenty a ohlídat data. Pozor: není to jedna pozice — viz níže.",
     fit: "Sedí firmám s vlastními daty a procesy, které chtějí řešení stavět, ne jen nakupovat — typicky výroba nebo silná administrativa.",
     risk: "Vzácnější a dražší. Bez opory sponzora a vyhrazeného času vlastníků procesů i ten nejlepší vyhoří nebo odejde.",
   },
@@ -55,6 +55,21 @@ const ARCHETYPES: { name: string; tag: string; fit: string; risk: string }[] = [
     fit: "Sedí firmám, které zatím nemají dost práce na plný úvazek nebo potřebují rychlý a ověřený start bez náborového rizika.",
     risk: "Hlídejte předání know-how a závislost — vyžadujte dokumentaci, export dat a možnost kdykoliv odejít. Jinak vám partner postupně začne diktovat cenu.",
   },
+];
+
+const SPECIALIZACE: string[] = [
+  "Automatizace procesů a agend — doklady, e-maily, reporty, smlouvy.",
+  "Vyhledávání nad dokumenty a znalostmi (RAG) — odpovědi nad firemními podklady.",
+  "Data a reporting — sběr, čištění, sjednocení zdrojů, dashboardy.",
+  "Integrace — napojení nástrojů na stávající systémy, přístupy, bezpečnost.",
+  "Výrobní AI a počítačové vidění — kontrola kvality, prediktivní údržba, plánování.",
+  "Konverzační AI — chatboti a asistenti pro zákazníky i interní podporu.",
+];
+
+const UROVNE: { t: string; d: string }[] = [
+  { t: "Junior", d: "Zvládne dílčí úkoly pod vedením, jednu oblast nebo nástroj. Učí se na reálné práci." },
+  { t: "Medior", d: "Samostatně dotáhne pilot v jedné specializaci od dat přes nastavení po nasazení." },
+  { t: "Senior", d: "Navrhne architekturu, vede více oblastí najednou a mentoruje ostatní. Sem míří horní pásmo mezd." },
 ];
 
 const MUST: string[] = [
@@ -180,6 +195,42 @@ function Guide() {
             </Reveal>
           ))}
         </div>
+
+        <SubHead tone="text-hr">SPECIALISTA NENÍ JEDNA POZICE</SubHead>
+        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-dim">
+          „Implementační specialista“ je zastřešující název pro celou rodinu rolí. Liší se ve dvou osách —
+          čím se zabývá (zaměření) a jak hluboko to umí (úroveň). Hledat „AI specialistu“ obecně je jako
+          hledat „inženýra“: musíte říct na co a jak seniorního.
+        </p>
+        <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div>
+            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ZAMĚŘENÍ — CO STAVÍ</div>
+            <ul className="mt-3 space-y-2">
+              {SPECIALIZACE.map((sp, i) => (
+                <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-ink">
+                  <span className="mt-px text-hr" aria-hidden>•</span>
+                  <span>{sp}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ÚROVEŇ — JAK HLUBOKO</div>
+            <div className="mt-3 space-y-3">
+              {UROVNE.map((u) => (
+                <div key={u.t}>
+                  <div className="text-[14px] font-semibold text-ink">{u.t}</div>
+                  <div className="mt-0.5 text-[13px] leading-relaxed text-dim">{u.d}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <p className="mt-6 max-w-2xl text-[14px] leading-relaxed text-ink">
+          Vyberte zaměření podle své reálné práce a úroveň podle složitosti — ne jedním inzerátem všechno.
+          Konkrétní profil i s názvem pozice vám z toho složí{" "}
+          <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěč popisu pozice</Link>.
+        </p>
       </Section>
 
       <Section
@@ -210,7 +261,7 @@ function Guide() {
             <p><span className="font-semibold text-ink">Kde jsme teď:</span> [stav dat a systémů — např. Pohoda a hodně Excelu, bez vlastního IT].</p>
             <p><span className="font-semibold text-ink">První úkol:</span> [pilot na jednom procesu s měřitelným kritériem].</p>
             <p><span className="font-semibold text-ink">Zázemí:</span> [sponzor z vedení, vyhrazený čas vlastníků procesů].</p>
-            <p><span className="font-semibold text-ink">Koho hledáme:</span> [generalistu / specialistu — viz archetypy], ne seznam buzzwordů.</p>
+            <p><span className="font-semibold text-ink">Koho hledáme:</span> [zaměření a úroveň — viz výše], ne seznam buzzwordů.</p>
           </div>
         </Panel>
 
