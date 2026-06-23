@@ -455,6 +455,12 @@ export default function Report() {
             </li>
           ))}
         </ul>
+
+        <p className="mt-9 max-w-2xl text-[14px] leading-relaxed text-dim">
+          Tohle je rozhodovací prověrka pro vedení. Detailní náborový postup — profil role, podklad pro
+          inzerát, otázky na pohovor a orientační mzdy —{" "}
+          <Link to="/hr" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">najdete v modulu HR</Link>.
+        </p>
       </Section>
 
       {/* Na co si dát pozor — scénáře */}
