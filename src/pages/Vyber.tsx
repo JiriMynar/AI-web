@@ -92,7 +92,7 @@ const ROLES: {
     text: "text-hr",
     title: "HR / nábor",
     desc: "Nesete odpovědnost za inzerci a výběr kandidátů v souladu s vizí společnosti. Tech stack AI specialistů se přitom liší pozici od pozice a přímo ovlivňuje finanční ohodnocení. Analýza vám řekne, koho přesně hledat, co napsat do inzerátu a na co se ptat.",
-    state: "VE VÝSTAVBĚ",
+    state: "PŘIPRAVEN",
   },
   {
     to: "/specialista",
