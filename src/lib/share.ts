@@ -3,8 +3,10 @@ import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from
 /**
  * Sdílitelný odkaz bez backendu: odpovědi se komprimovaně zakódují do hashe URL.
  * Formát je verzovaný, aby starší odkazy přežily budoucí změny otázek.
+ * v2: sloučení otázek „data" a „systemy" do jedné — změnil se význam polí, takže starší
+ * odkazy cíleně spadnou na „starší verze" místo chybného vykreslení.
  */
-const VERSION = 1;
+const VERSION = 2;
 
 export function encodeAnswers(answers: unknown): string {
   return compressToEncodedURIComponent(JSON.stringify({ v: VERSION, a: answers }));

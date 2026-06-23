@@ -26,7 +26,6 @@ export type Answers = {
   subs?: Record<string, string[]>;
   ambition?: string;
   horizont?: string;
-  data?: string;
   erpUsage?: string;
   strojeData?: string;
   procesy?: string;
@@ -55,8 +54,9 @@ export type Ctx = {
 
 export function buildCtx(a: Answers): Ctx {
   const regs = new Set(a.regs || []);
-  let dataQ = ({ papir: 0, excel: 1, erp: 2 } as Record<string, number>)[a.data ?? ""] ?? 0;
-  const erpFormal = a.data === "erp" && a.erpUsage === "formalne";
+  // „systemy" nese zároveň stav dat (papír/Excel/systém) i cílový systém k napojení.
+  let dataQ = ({ papir: 0, excel: 1, system: 2, nevim: 1 } as Record<string, number>)[a.systemy ?? ""] ?? 0;
+  const erpFormal = a.systemy === "system" && a.erpUsage === "formalne";
   if (erpFormal) dataQ = 1;
   return {
     dataQ,
@@ -184,12 +184,12 @@ export function evalSub(sub: string, ctx: Ctx): SubEval {
   if (regs.has("verejny") && needsIntegration.has(sub))
     gaps.push("Veřejný sektor / NIS2: výběr dodavatele a integrace podléhají přísnějšímu schvalování — počítejte s delším výběrem a požadavky na kyberbezpečnost.");
 
-  // Cílový systém — jak snadno se nový nástroj napojí.
-  // Pozn.: gap „nemáte ucelený systém" se nevydává, když data=erp (dataQ===2) — to by si
-  // odporovalo s odpovědí, že hlavní agenda běží v reálně používaném ERP.
+  // Cílový systém — jak snadno se nový nástroj napojí (ze stejné odpovědi jako stav dat).
+  // Když firma vede hlavní agendu v uceleném systému (systemy==="system"), integrační gap se nevydává —
+  // odporovalo by si s odpovědí, že agenda běží v reálně používaném systému.
   if (needsIntegration.has(sub)) {
     if (systemy === "nevim") gaps.push("Nevíte, v jakém systému tahle agenda běží — to je první věc ke zjištění (často u externího správce IT). Bez toho nejde odhadnout napojení ani jeho cenu.");
-    else if (systemy === "excelnic" && dataQ < 2) gaps.push("Bez uceleného systému (jen Excel a e-maily) se nový nástroj nemá na co napojit — napojení tu znamená nejdřív zavést evidenci, ne jen propojit dva systémy.");
+    else if (systemy === "excel" || systemy === "papir") gaps.push("Bez uceleného systému (jen Excel, e-maily nebo papír) se nový nástroj nemá na co napojit — napojení tu znamená nejdřív zavést evidenci, ne jen propojit dva systémy.");
   }
 
   // Kde leží data — smí vůbec ven?
@@ -230,7 +230,7 @@ export function score(a: Answers, ctx: Ctx): number {
   // záměry, ale focus není výroba/kombinace, přičti bod, který by jinak dalo zaměření.
   if (!(a.focus === "vyroba" || a.focus === "kombinace") && subs.some((s) => ["vyrReporting", "kvalita", "udrzba", "planovani"].includes(s.sub))) p += 1;
   if (a.ambition === "plosne") p += 2;
-  p += ({ papir: 3, excel: 1, erp: 0 } as Record<string, number>)[a.data ?? ""] ?? 0;
+  p += ({ papir: 3, excel: 1, system: 0, nevim: 1 } as Record<string, number>)[a.systemy ?? ""] ?? 0;
   if (ctx.erpFormal) p += 1;
   p += ({ ne: 2, castecne: 1, ano: 0 } as Record<string, number>)[a.procesy ?? ""] ?? 0;
   if (a.sponzor === "ne") p += 2;
@@ -379,7 +379,7 @@ export function buildTeam(a: Answers, ctx: Ctx): TeamRole[] {
   if (ctx.dataQ < 2 || a.ambition === "plosne")
     team.push({
       role: "Garant dat",
-      why: a.data === "papir"
+      why: a.systemy === "papir"
         ? "Data zatím nejsou digitální — někdo musí vést digitalizaci a určit, co se vůbec vyplatí digitalizovat."
         : ctx.erpFormal
         ? "Někdo musí vrátit systémy do hry a držet, aby data odpovídala realitě — jinak každá AI nad nimi počítá z fikce."

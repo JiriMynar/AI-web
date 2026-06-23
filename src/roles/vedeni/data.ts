@@ -15,10 +15,10 @@ export type Question = {
 export type Step = { id: string; label: string; full: string; desc: string; questions: string[] };
 
 export const STEPS: Step[] = [
-  { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření, IT zázemí a systémy určují náročnost koordinace a integrace.", questions: ["size", "focus", "it", "systemy", "kdeData", "jazyky"] },
+  { id: "profil", label: "Profil", full: "Profil firmy", desc: "V jakém prostředí se bude implementovat. Velikost, zaměření a IT zázemí určují náročnost koordinace a integrace.", questions: ["size", "focus", "it", "kdeData", "jazyky"] },
   { id: "regulace", label: "Regulace", full: "Regulace a citlivá data", desc: "Co vás omezuje a chrání. Verdikty záměrů s regulacemi počítají — drahé je zjistit omezení až po nákupu.", questions: ["regs"] },
   { id: "vize", label: "Vize", full: "Vize a záměry", desc: "Jaké číslo se má pohnout a co konkrétně od AI čekáte. Každý zvolený záměr dostane vlastní verdikt proveditelnosti.", questions: ["vize", "goals", "ambition", "horizont"] },
-  { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět a jestli se to vyplatí. Stav dat a procesů určuje proveditelnost, objem a výchozí čísla rozhodují o návratnosti.", questions: ["data", "erpUsage", "strojeData", "procesy", "objem", "mereni"] },
+  { id: "dataProc", label: "Data a procesy", full: "Data a procesy", desc: "Na čem se dá stavět a jestli se to vyplatí. V čem máte data, jak se systém reálně používá a stav procesů určují proveditelnost; objem a výchozí čísla rozhodují o návratnosti.", questions: ["systemy", "erpUsage", "strojeData", "procesy", "objem", "mereni"] },
   { id: "lide", label: "Lidé", full: "Lidé, kapacita a podpora", desc: "Kdo implementaci ponese a s jakou oporou. Kapacita a sponzor rozhodují o tempu i realističnosti ambice.", questions: ["zkusenost", "lide", "kapacita", "sponzor", "rozpocet", "uzivatele", "dotace", "odbory"] },
 ];
 
@@ -55,13 +55,13 @@ export const Q: Record<string, Question> = {
   },
   systemy: {
     key: "systemy",
-    title: "V čem vedete hlavní firemní agendu?",
-    subtitle: "Objednávky, sklad, fakturace, zakázky. Ptáme se proto, že napojení nového nástroje je u každého systému jinak snadné a drahé — je to první věc, kterou potřebuje vědět každý, kdo bude integraci dělat. Nemusíte znát detaily.",
+    title: "V čem máte hlavní firemní data a agendu?",
+    subtitle: "Objednávky, fakturace, sklad, zakázky, dokumenty. Tahle jediná odpověď říká dvě věci najednou: jak digitální vaše data jsou — a tedy z čeho může AI vůbec těžit — a na co se dá nový nástroj napojit. Nemusíte znát detaily.",
     options: [
-      { v: "velkysystem", t: "Velký podnikový systém", d: "Např. SAP, Microsoft Dynamics, Helios, K2 — ucelený systém pro celou firmu" },
-      { v: "ucetni", t: "Účetní nebo skladový program", d: "Např. Pohoda, Money, Abra, Vario — hlavně účetnictví a sklad" },
-      { v: "excelnic", t: "Hlavně Excel, e-maily a papír", d: "Žádný ucelený systém — agenda žije v tabulkách a hlavách lidí" },
-      { v: "nevim", t: "Nevím / spravuje to externí firma", d: "Systémy řeší externí dodavatel, sami do nich nevidíme" },
+      { v: "papir", t: "Hlavně papír a hlavy lidí", d: "Agenda žije na papíře a v hlavách lidí — digitální základ teprve vznikne. Není to diskvalifikace, jen delší první krok" },
+      { v: "excel", t: "Hlavně Excel, e-maily a sdílené disky", d: "Digitální, ale roztříštěné a bez uceleného systému — počítejte se sjednocováním a čištěním dat" },
+      { v: "system", t: "Ucelený systém — účetní program nebo ERP", d: "Např. Pohoda, Money, Abra, ale i SAP, Dynamics, Helios, K2 — od účetnictví a skladu po velký podnikový systém" },
+      { v: "nevim", t: "Nevím / spravuje to externí firma", d: "Systémy řeší externí dodavatel a sami do nich nevidíme — prvním krokem bude zjistit, na čem firma běží" },
     ],
   },
   kdeData: {
@@ -150,16 +150,6 @@ export const Q: Record<string, Question> = {
       { v: "letos", t: "Během letošního roku", d: "Rozumný prostor na pilot i přípravu" },
       { v: "neni", t: "Není to časově tlačené", d: "Můžete jít důkladně a po krocích" },
       { v: "termin", t: "Váže to na konkrétní termín", d: "Zakázka, audit nebo dotace s pevným datem" },
-    ],
-  },
-  data: {
-    key: "data",
-    title: "V jakém stavu jsou vaše data?",
-    subtitle: "AI je přesně tak dobrá jako data, která dostane — tady se rozhoduje většina verdiktů. Pravidlo z praxe: 60–80 % času projektu padne na data a procesy, ne na AI samotnou.",
-    options: [
-      { v: "papir", t: "Hlavně papír a hlavy lidí", d: "Před AI přijde digitalizace — není to diskvalifikace, jen delší první krok" },
-      { v: "excel", t: "Excely a sdílené disky", d: "Digitální, ale roztříštěné — počítejte se sjednocováním a čištěním" },
-      { v: "erp", t: "ERP / informační systémy", d: "Nejlepší výchozí pozice, pokud se systémy skutečně používají" },
     ],
   },
   erpUsage: {

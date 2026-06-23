@@ -88,14 +88,14 @@ export default function Pruvodce() {
     const selectedSubs = (a.goals || []).flatMap((g) => (a.subs?.[g]) || []);
     return ids.filter((id) =>
       id === "erpUsage"
-        ? a.data === "erp"
+        ? a.systemy === "system"
         : id === "strojeData"
         ? selectedSubs.some((s) => s === "vyrReporting" || s === "udrzba")
         : id === "objem"
         ? selectedSubs.some((s) => VOLUME_SENSITIVE.includes(s))
         : true
     );
-  }, [step, a.data, a.goals, a.subs]);
+  }, [step, a.systemy, a.goals, a.subs]);
 
   const stepDone = useMemo(() => {
     return visible.every((id) => {
