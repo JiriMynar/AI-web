@@ -5,7 +5,7 @@ import { useSeo } from "../../lib/seo";
 
 /** HR — interaktivní stavěč popisu pozice. Z reálné práce, ne z buzzwordů. Bez vazeb na jiné role. */
 
-type Opt = { v: string; t: string };
+type Opt = { v: string; t: string; h?: string };
 
 type State = {
   archetype: string;
@@ -47,15 +47,15 @@ const FOCUS: Opt[] = [
 const DATA: Opt[] = [
   { v: "papir", t: "Papír a hlavy lidí" },
   { v: "excel", t: "Excel a sdílené disky" },
-  { v: "system", t: "Ucelený systém / ERP" },
+  { v: "system", t: "Ucelený systém / ERP", h: "Jeden velký program, ve kterém běží hlavní firemní agenda. ERP = systém pro řízení podniku (např. SAP, Helios, Money, Pohoda)." },
 ];
 const ITO: Opt[] = [
   { v: "ano", t: "Máme vlastní IT" },
   { v: "ne", t: "Nemáme vlastní IT" },
 ];
 const REGS: Opt[] = [
-  { v: "gdpr", t: "Osobní údaje (GDPR)" },
-  { v: "aiakt", t: "AI rozhoduje o lidech (AI Act)" },
+  { v: "gdpr", t: "Osobní údaje (GDPR)", h: "Evropská pravidla ochrany osobních údajů — jména, kontakty, údaje o zákaznících a zaměstnancích." },
+  { v: "aiakt", t: "AI rozhoduje o lidech (AI Act)", h: "Evropský zákon o AI. Když AI rozhoduje o lidech (nábor, hodnocení, úvěry), platí přísnější povinnosti." },
   { v: "knowhow", t: "Citlivé know-how" },
   { v: "koncern", t: "Schvaluje matka / koncern" },
 ];
@@ -70,47 +70,47 @@ const TASK_GROUPS: { label: string; items: Opt[] }[] = [
   {
     label: "Jádro role — zavádění",
     items: [
-      { v: "proces", t: "Mapování procesů" },
-      { v: "data", t: "Příprava a čištění dat" },
-      { v: "nastroje", t: "Výběr a zavedení nástrojů" },
-      { v: "integrace", t: "Napojení na systémy" },
-      { v: "agenti", t: "Tvorba promptů a agentů" },
-      { v: "evaluace", t: "Vyhodnocování kvality výstupů" },
-      { v: "pilot", t: "Vedení pilotu a měření" },
-      { v: "skoleni", t: "Školení a adopce" },
-      { v: "regulace", t: "Hlídání regulací" },
+      { v: "proces", t: "Mapování procesů", h: "Rozkreslit, jak práce dnes reálně probíhá krok za krokem — a najít, kde se zdržuje a kde by AI pomohla." },
+      { v: "data", t: "Příprava a čištění dat", h: "Dát firemní data do pořádku (sjednotit, opravit, doplnit), aby s nimi AI vůbec mohla pracovat." },
+      { v: "nastroje", t: "Výběr a zavedení nástrojů", h: "Vybrat vhodný hotový AI nástroj, vyzkoušet ho na reálných datech a zavést do provozu." },
+      { v: "integrace", t: "Napojení na systémy", h: "Propojit AI nástroj s programy, které firma už používá (účetnictví, CRM…), aby si předávaly data." },
+      { v: "agenti", t: "Tvorba promptů a agentů", h: "Napsat AI přesné instrukce (prompty) a sestavit „agenty“ — pomocníky, kteří samostatně udělají zadaný úkol." },
+      { v: "evaluace", t: "Vyhodnocování kvality výstupů", h: "Průběžně kontrolovat, jestli AI odpovídá správně a spolehlivě, a hlídat chyby." },
+      { v: "pilot", t: "Vedení pilotu a měření", h: "Vyzkoušet AI nejdřív v malém, změřit přínos a teprve pak nasadit naplno." },
+      { v: "skoleni", t: "Školení a adopce", h: "Naučit zaměstnance nástroj používat a postarat se, aby ho opravdu používali." },
+      { v: "regulace", t: "Hlídání regulací", h: "Hlídat, že použití AI je v souladu se zákony (GDPR, AI Act) a interními pravidly." },
     ],
   },
   {
     label: "Administrativa",
     items: [
-      { v: "faktury", t: "Vytěžování dokladů" },
-      { v: "emaily", t: "Třídění e-mailů" },
-      { v: "texty", t: "Generování textů a překlady" },
-      { v: "znalosti", t: "Znalostní vyhledávání (RAG)" },
-      { v: "reporty", t: "Automatické reporty" },
-      { v: "smlouvy", t: "Analýza smluv" },
+      { v: "faktury", t: "Vytěžování dokladů", h: "Automatické přečtení údajů z faktur a dokladů (částka, dodavatel, položky) a přenos do systému — místo ručního přepisování." },
+      { v: "emaily", t: "Třídění e-mailů", h: "Automatické roztřídění příchozích e-mailů do kategorií a návrhy odpovědí." },
+      { v: "texty", t: "Generování textů a překlady", h: "AI napíše nebo přeloží texty — e-maily, popisy, dokumenty — podle zadání." },
+      { v: "znalosti", t: "Znalostní vyhledávání (RAG)", h: "AI odpovídá na otázky z vašich vlastních dokumentů — místo hledání ve složkách se zeptáte a dostanete odpověď i se zdrojem. (RAG.)" },
+      { v: "reporty", t: "Automatické reporty", h: "Pravidelné přehledy a reporty se sestaví samy z firemních dat, bez ručního skládání v Excelu." },
+      { v: "smlouvy", t: "Analýza smluv", h: "AI pročte smlouvy a dokumenty, vytáhne klíčové údaje, porovná je a upozorní na rizika." },
     ],
   },
   {
     label: "Výroba",
     items: [
-      { v: "vyrReporting", t: "Výrobní reporting" },
-      { v: "iot", t: "Sběr dat ze strojů (IoT/MES)" },
-      { v: "kvalita", t: "Vizuální kontrola kvality" },
-      { v: "udrzba", t: "Prediktivní údržba" },
-      { v: "planovani", t: "Plánování výroby" },
+      { v: "vyrReporting", t: "Výrobní reporting", h: "Přehledy o výrobě (kolik se vyrobilo, prostoje, efektivita) automaticky z dat, ne ručním přepisováním." },
+      { v: "iot", t: "Sběr dat ze strojů (IoT/MES)", h: "Sbírání dat přímo z výrobních strojů a čidel. IoT = připojené stroje a senzory, MES = systém řízení výroby." },
+      { v: "kvalita", t: "Vizuální kontrola kvality", h: "Kamera s AI kontroluje kvalitu výrobků a hlídá vady — rychleji a spolehlivěji než okem." },
+      { v: "udrzba", t: "Prediktivní údržba", h: "AI ze strojních dat předpoví, kdy se stroj blíží poruše, aby se opravil dřív, než se rozbije." },
+      { v: "planovani", t: "Plánování výroby", h: "AI pomáhá rozvrhnout zakázky, kapacity strojů a materiál efektivněji." },
     ],
   },
   {
     label: "Servis a obchod",
     items: [
-      { v: "chatbot", t: "Zákaznický chatbot" },
-      { v: "voice", t: "Hlasový asistent / přepis hovorů" },
-      { v: "trideni", t: "Třídění požadavků" },
-      { v: "nabidky", t: "Tvorba nabídek" },
-      { v: "marketing", t: "Marketingový obsah" },
-      { v: "crm", t: "Zápisy do CRM" },
+      { v: "chatbot", t: "Zákaznický chatbot", h: "Automatický asistent, který odpovídá zákazníkům na časté dotazy nad vašimi produkty a podmínkami." },
+      { v: "voice", t: "Hlasový asistent / přepis hovorů", h: "AI přepíše telefonní hovory do textu a vyhodnotí je, nebo zákazníkům odpovídá hlasem." },
+      { v: "trideni", t: "Třídění požadavků", h: "Příchozí zákaznické požadavky se automaticky roztřídí a nasměrují na správného člověka." },
+      { v: "nabidky", t: "Tvorba nabídek", h: "AI připraví cenové nabídky a kalkulace z podkladů, historie a ceníků." },
+      { v: "marketing", t: "Marketingový obsah", h: "AI tvoří texty na web, sociální sítě a kampaně — s kontrolou kvality a faktů." },
+      { v: "crm", t: "Zápisy do CRM", h: "Po schůzkách a hovorech se zápisy a úkoly samy doplní do systému pro řízení obchodu (CRM)." },
     ],
   },
 ];
@@ -145,20 +145,20 @@ const TASK_LINE: Record<string, string> = {
 };
 
 const SKILLS: Opt[] = [
-  { v: "promptai", t: "Prompt engineering / LLM" },
-  { v: "rag", t: "RAG a vektorové DB" },
-  { v: "automation", t: "Automatizační platformy" },
-  { v: "python", t: "Python / skriptování" },
-  { v: "api", t: "API a integrace" },
-  { v: "sql", t: "Data a SQL" },
-  { v: "bi", t: "Reporting / BI" },
-  { v: "vision", t: "Počítačové vidění" },
-  { v: "ml", t: "Strojové učení / data science" },
-  { v: "mlops", t: "MLOps a provoz modelů" },
-  { v: "cloud", t: "Cloud (Azure/AWS/GCP)" },
-  { v: "compliance", t: "GDPR a AI Act" },
-  { v: "procesy", t: "Procesní analýza" },
-  { v: "zmena", t: "Řízení změny a školení" },
+  { v: "promptai", t: "Prompt engineering / LLM", h: "Umí psát AI přesné instrukce (prompty), aby dávala užitečné výsledky. LLM = velký jazykový model, jádro nástrojů jako ChatGPT nebo Claude." },
+  { v: "rag", t: "RAG a vektorové DB", h: "Postaví vyhledávání odpovědí nad firemními dokumenty. Vektorová databáze = úložiště, které hledá podle významu, ne jen podle slov." },
+  { v: "automation", t: "Automatizační platformy", h: "Nástroje, které propojí aplikace a rozběhnou úkoly bez programování (Make, n8n, Power Automate, Zapier)." },
+  { v: "python", t: "Python / skriptování", h: "Programovací jazyk nejčastější v AI — pro úpravy dat a vlastní řešení tam, kde hotový nástroj nestačí." },
+  { v: "api", t: "API a integrace", h: "Umí propojit různé systémy, aby si automaticky předávaly data. API = rozhraní, přes které spolu programy „mluví“." },
+  { v: "sql", t: "Data a SQL", h: "Práce s daty v databázích — jejich příprava a dotazování. SQL = jazyk pro práci s databázemi." },
+  { v: "bi", t: "Reporting / BI", h: "Tvorba přehledů a dashboardů z dat (např. Power BI). BI = převod dat do srozumitelných přehledů." },
+  { v: "vision", t: "Počítačové vidění", h: "AI, která „vidí“ — rozpozná obsah na fotkách a videu (kontrola kvality, čtení textu z obrázků / OCR)." },
+  { v: "ml", t: "Strojové učení / data science", h: "Stavba modelů, které se učí z dat a predikují (poptávku, poruchy…). Náročnější a dražší disciplína." },
+  { v: "mlops", t: "MLOps a provoz modelů", h: "Nasazení AI modelů do provozu a jejich průběžné hlídání, aby fungovaly spolehlivě i po spuštění." },
+  { v: "cloud", t: "Cloud (Azure/AWS/GCP)", h: "Provoz řešení na pronajatých serverech velkých poskytovatelů (Microsoft Azure, Amazon AWS, Google Cloud)." },
+  { v: "compliance", t: "GDPR a AI Act", h: "Orientace v pravidlech pro osobní data (GDPR) a v evropském zákoně o AI (AI Act) — co se smí a co je povinné." },
+  { v: "procesy", t: "Procesní analýza", h: "Umí rozebrat, jak práce ve firmě probíhá, a najít, kde má AI smysl." },
+  { v: "zmena", t: "Řízení změny a školení", h: "Umí zavést novinku mezi lidi — vysvětlit, vyškolit a postarat se, aby ji opravdu používali." },
 ];
 const SKILL_LINE: Record<string, string> = {
   promptai: "Prompt engineering a práce s LLM (OpenAI, Claude apod.).",
@@ -420,18 +420,30 @@ function jdToText(jd: JD): string {
   return L.join("\n");
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
-  return (
+function Chip({ active, onClick, hint, children }: { active: boolean; onClick: () => void; hint?: string; children: ReactNode }) {
+  const button = (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      title={hint}
       className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
         active ? "border-hr bg-hr/15 text-ink" : "border-line bg-panel text-dim hover:border-faint"
       }`}
     >
       {children}
     </button>
+  );
+  if (!hint) return button;
+  return (
+    <span className="group relative inline-flex">
+      {button}
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-md border border-line bg-raised px-3 py-2 text-[12px] leading-relaxed text-dim opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+        {hint}
+      </span>
+    </span>
   );
 }
 
@@ -527,6 +539,9 @@ export default function JobBuilder() {
             „Specialista“ navíc není jedna pozice — záleží na <span className="text-ink">zaměření</span> (co
             staví) a <span className="text-ink">úrovni</span> (jak hluboko). Obojí se promítne do názvu, požadavků i mzdy.
           </p>
+          <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-faint">
+            Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení.
+          </p>
         </Reveal>
       </header>
 
@@ -535,7 +550,7 @@ export default function JobBuilder() {
         <div className="space-y-7">
           <Field label="KOHO HLEDÁTE">
             {ARCHETYPY.map((o) => (
-              <Chip key={o.v} active={s.archetype === o.v} onClick={() => set("archetype", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.archetype === o.v} onClick={() => set("archetype", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
 
@@ -543,7 +558,7 @@ export default function JobBuilder() {
             <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ÚROVEŇ (SENIORITA)</div>
             <div className="mt-2.5 flex flex-wrap gap-2">
               {LEVELY.map((o) => (
-                <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)}>{o.t}</Chip>
+                <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)} hint={o.h}>{o.t}</Chip>
               ))}
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-faint">
@@ -553,22 +568,22 @@ export default function JobBuilder() {
 
           <Field label="FORMA">
             {FORMY.map((o) => (
-              <Chip key={o.v} active={s.forma === o.v} onClick={() => set("forma", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.forma === o.v} onClick={() => set("forma", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
           <Field label="ZAMĚŘENÍ FIRMY">
             {FOCUS.map((o) => (
-              <Chip key={o.v} active={s.focus === o.v} onClick={() => set("focus", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.focus === o.v} onClick={() => set("focus", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
           <Field label="STAV DAT">
             {DATA.map((o) => (
-              <Chip key={o.v} active={s.data === o.v} onClick={() => set("data", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.data === o.v} onClick={() => set("data", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
           <Field label="VLASTNÍ IT">
             {ITO.map((o) => (
-              <Chip key={o.v} active={s.it === o.v} onClick={() => set("it", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.it === o.v} onClick={() => set("it", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
 
@@ -582,7 +597,7 @@ export default function JobBuilder() {
                   <div className="text-[12px] font-semibold text-dim">{g.label}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {g.items.map((it) => (
-                      <Chip key={it.v} active={s.tasks.includes(it.v)} onClick={() => toggle("tasks", it.v)}>{it.t}</Chip>
+                      <Chip key={it.v} active={s.tasks.includes(it.v)} onClick={() => toggle("tasks", it.v)} hint={it.h}>{it.t}</Chip>
                     ))}
                   </div>
                 </div>
@@ -597,18 +612,18 @@ export default function JobBuilder() {
 
           <Field label="CO MÁ UMĚT — DOVEDNOSTI A NÁSTROJE">
             {SKILLS.map((o) => (
-              <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
 
           <Field label="REGULACE — CO PLATÍ">
             {REGS.map((o) => (
-              <Chip key={o.v} active={s.regs.includes(o.v)} onClick={() => toggle("regs", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.regs.includes(o.v)} onClick={() => toggle("regs", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
           <Field label="JAZYKY">
             {JAZYKY.map((o) => (
-              <Chip key={o.v} active={s.jazyky.includes(o.v)} onClick={() => toggle("jazyky", o.v)}>{o.t}</Chip>
+              <Chip key={o.v} active={s.jazyky.includes(o.v)} onClick={() => toggle("jazyky", o.v)} hint={o.h}>{o.t}</Chip>
             ))}
           </Field>
 
