@@ -88,7 +88,7 @@ const BONUS: string[] = [
 ];
 
 const AD_DO: string[] = [
-  "Napište konkrétní cíl — jaké číslo chcete pohnout (např. zkrátit zpracování faktury z 8 na 3 minuty).",
+  "Napište konkrétní cíl — co se má zlepšit a o kolik (např. zkrátit zpracování faktury z 8 na 3 minuty).",
   "Popište výchozí stav — jaké systémy a data máte, jestli máte vlastní IT.",
   "Uveďte první úkol — pilot na jednom procesu s měřitelným kritériem, ne „digitální transformace firmy“.",
   "Řekněte, jaké zázemí dáte — sponzor z vedení, vyhrazený čas lidí z provozu.",
@@ -153,9 +153,9 @@ function Guide() {
             prokouknete, kolik to zhruba stojí a co má zvládnout v prvních třech měsících.
           </p>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink">
-            Jedno pravidlo platí nade vším: <strong>dobrý člověk na AI nezačíná nástrojem, ale otázkou, jaké
-            číslo chcete pohnout.</strong> Pokud ho ještě nemáte, vraťte se o krok zpět a ujasněte si cíl —
-            jinak nepoznáte, koho vlastně potřebujete.
+            Jedno pravidlo platí nade vším: <strong>dobrý člověk na AI nezačíná nástrojem, ale otázkou, co
+            konkrétně se má zlepšit a o kolik.</strong> Dokud nevíte, který výsledek chcete měřitelně posunout,
+            vraťte se o krok zpět a ujasněte si cíl — jinak nepoznáte, koho vlastně potřebujete.
           </p>
         </Reveal>
       </header>
@@ -166,7 +166,7 @@ function Guide() {
             <div className="text-sm font-semibold">Potřebujete rovnou popis pozice?</div>
             <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-dim">
               Interaktivní nástroj sestaví job description z reálné náplně práce — ne z buzzwordů. Nakliknete,
-              co bude člověk dělat, a vyjede popis, ze kterého je obsah práce konečně poznat.
+              co bude člověk dělat a umět, a vyjede popis (i s orientační mzdou), ze kterého je obsah práce konečně poznat.
             </p>
           </div>
           <Link
@@ -228,7 +228,7 @@ function Guide() {
         </div>
         <p className="mt-6 max-w-2xl text-[14px] leading-relaxed text-ink">
           Vyberte zaměření podle své reálné práce a úroveň podle složitosti — ne jedním inzerátem všechno.
-          Konkrétní profil i s názvem pozice vám z toho složí{" "}
+          Konkrétní profil i s názvem pozice a orientační mzdou vám z toho složí{" "}
           <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěč popisu pozice</Link>.
         </p>
       </Section>
@@ -309,9 +309,11 @@ function Guide() {
           ))}
         </div>
         <p className="mt-5 max-w-2xl text-[13px] leading-relaxed text-faint">
-          Mimo Prahu (Morava, menší města) počítejte typicky o 15–25 % níž. Rozpětí ověřte proti aktuálním
-          datům — ISPV a CZ-ISCO nebo platové průzkumy. Nejdražší chyba je zaplatit výzkumníka, když potřebujete
-          integrátora; druhá nejdražší je vzít nejlevnějšího a platit to časem na předělávkách.
+          Pozor na seniority v mladém oboru: „senior“ tu znamená zhruba 3–5 let s dotaženými projekty, ne 10 let —
+          roky v inzerátu nepřeceňujte. Dráž bývají zaměření na výrobní AI a vidění, data a integrace; levněji
+          administrativa a obsah. Mimo Prahu počítejte typicky o 15–25 % níž a rozpětí ověřte proti ISPV/CZ-ISCO.
+          Nejdražší chyba je zaplatit výzkumníka, když potřebujete integrátora. Odhad podle zaměření i úrovně dostanete ve{" "}
+          <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěči popisu pozice</Link>.
         </p>
       </Section>
 

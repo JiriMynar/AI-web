@@ -15,6 +15,7 @@ type State = {
   data: string;
   it: string;
   tasks: string[];
+  skills: string[];
   regs: string[];
   jazyky: string[];
   cil: string;
@@ -73,6 +74,8 @@ const TASK_GROUPS: { label: string; items: Opt[] }[] = [
       { v: "data", t: "Příprava a čištění dat" },
       { v: "nastroje", t: "Výběr a zavedení nástrojů" },
       { v: "integrace", t: "Napojení na systémy" },
+      { v: "agenti", t: "Tvorba promptů a agentů" },
+      { v: "evaluace", t: "Vyhodnocování kvality výstupů" },
       { v: "pilot", t: "Vedení pilotu a měření" },
       { v: "skoleni", t: "Školení a adopce" },
       { v: "regulace", t: "Hlídání regulací" },
@@ -83,6 +86,8 @@ const TASK_GROUPS: { label: string; items: Opt[] }[] = [
     items: [
       { v: "faktury", t: "Vytěžování dokladů" },
       { v: "emaily", t: "Třídění e-mailů" },
+      { v: "texty", t: "Generování textů a překlady" },
+      { v: "znalosti", t: "Znalostní vyhledávání (RAG)" },
       { v: "reporty", t: "Automatické reporty" },
       { v: "smlouvy", t: "Analýza smluv" },
     ],
@@ -91,6 +96,7 @@ const TASK_GROUPS: { label: string; items: Opt[] }[] = [
     label: "Výroba",
     items: [
       { v: "vyrReporting", t: "Výrobní reporting" },
+      { v: "iot", t: "Sběr dat ze strojů (IoT/MES)" },
       { v: "kvalita", t: "Vizuální kontrola kvality" },
       { v: "udrzba", t: "Prediktivní údržba" },
       { v: "planovani", t: "Plánování výroby" },
@@ -100,8 +106,10 @@ const TASK_GROUPS: { label: string; items: Opt[] }[] = [
     label: "Servis a obchod",
     items: [
       { v: "chatbot", t: "Zákaznický chatbot" },
+      { v: "voice", t: "Hlasový asistent / přepis hovorů" },
       { v: "trideni", t: "Třídění požadavků" },
       { v: "nabidky", t: "Tvorba nabídek" },
+      { v: "marketing", t: "Marketingový obsah" },
       { v: "crm", t: "Zápisy do CRM" },
     ],
   },
@@ -112,41 +120,105 @@ const TASK_LINE: Record<string, string> = {
   data: "Připravit a vyčistit data pro konkrétní použití — audit, sjednocení zdrojů, doplnění chybějícího.",
   nastroje: "Vybrat vhodné nástroje, otestovat je na reálných datech a zavést — bez zbytečného vendor lock-inu.",
   integrace: "Napojit nástroje na stávající systémy a ohlídat přístupy a bezpečnost.",
+  agenti: "Stavět a udržovat AI prompty a asistenty (agenty) pro konkrétní úlohy.",
+  evaluace: "Vyhodnocovat kvalitu a spolehlivost výstupů AI a držet je v mezích.",
   pilot: "Vést pilot na jednom procesu — dohodnout měřitelné kritérium a změřit přínos před nasazením i po něm.",
   skoleni: "Naučit lidi nástroje používat a sledovat skutečnou adopci, ne jen formální nasazení.",
   regulace: "Ohlídat GDPR, AI Act a interní pravidla — co se smí, kam smí data a kdo za to odpovídá.",
   faktury: "Zavést vytěžování dokladů (faktury, objednávky, dodací listy) rovnou do systému.",
   emaily: "Nastavit třídění a návrhy odpovědí na příchozí e-maily — kategorizace a směrování.",
+  texty: "Zavést generování textů, e-mailů a překladů s kontrolou před odesláním.",
+  znalosti: "Postavit znalostní vyhledávání nad firemními dokumenty (RAG) — odpovědi místo hledání.",
   reporty: "Postavit automatické reporty z firemních dat.",
   smlouvy: "Zavést analýzu smluv a dokumentů — kontrola, porovnání, vytažení klíčových údajů.",
   vyrReporting: "Postavit výrobní reporting a přehledy (výroba, prostoje, OEE) bez ručního přepisování.",
+  iot: "Zajistit sběr dat ze strojů (IoT, MES, čidla) jako základ pro výrobní AI.",
   kvalita: "Připravit vizuální kontrolu kvality — sběr snímků, anotace vad, kamerová kontrola.",
   udrzba: "Rozjet prediktivní údržbu ze strojních dat — sběr, párování poruch, predikce.",
   planovani: "Zlepšit plánování výroby — zakázky, kapacity, materiál.",
   chatbot: "Postavit zákaznického asistenta nad vašimi produkty a podmínkami.",
+  voice: "Nasadit hlasového asistenta nebo přepis a analýzu hovorů.",
   trideni: "Zavést automatické třídění a směrování zákaznických požadavků.",
   nabidky: "Zautomatizovat tvorbu nabídek a kalkulací z podkladů, historie a ceníků.",
+  marketing: "Zavést tvorbu marketingového obsahu a kampaní s kontrolou kvality a faktů.",
   crm: "Zavést automatické zápisy a follow-upy do CRM ze schůzek, hovorů a e-mailů.",
+};
+
+const SKILLS: Opt[] = [
+  { v: "promptai", t: "Prompt engineering / LLM" },
+  { v: "rag", t: "RAG a vektorové DB" },
+  { v: "automation", t: "Automatizační platformy" },
+  { v: "python", t: "Python / skriptování" },
+  { v: "api", t: "API a integrace" },
+  { v: "sql", t: "Data a SQL" },
+  { v: "bi", t: "Reporting / BI" },
+  { v: "vision", t: "Počítačové vidění" },
+  { v: "ml", t: "Strojové učení / data science" },
+  { v: "mlops", t: "MLOps a provoz modelů" },
+  { v: "cloud", t: "Cloud (Azure/AWS/GCP)" },
+  { v: "compliance", t: "GDPR a AI Act" },
+  { v: "procesy", t: "Procesní analýza" },
+  { v: "zmena", t: "Řízení změny a školení" },
+];
+const SKILL_LINE: Record<string, string> = {
+  promptai: "Prompt engineering a práce s LLM (OpenAI, Claude apod.).",
+  rag: "Vyhledávání nad dokumenty — RAG, vektorové databáze.",
+  automation: "Automatizační platformy (Make, n8n, Power Automate, Zapier).",
+  python: "Python / skriptování.",
+  api: "Práce s API a integrace systémů.",
+  sql: "Datová příprava a SQL.",
+  bi: "Reporting a BI (Power BI, dashboardy).",
+  vision: "Počítačové vidění — kontrola kvality, OCR.",
+  ml: "Strojové učení / datová věda.",
+  mlops: "MLOps — nasazení a provoz modelů.",
+  cloud: "Cloud (Azure, AWS nebo GCP).",
+  compliance: "GDPR a AI Act v praxi.",
+  procesy: "Procesní analýza a mapování.",
+  zmena: "Řízení změny a školení lidí.",
 };
 
 /** Mapování úkolů na zaměření (specializaci) — z něj se odvodí název pozice. */
 const SPEC_OF: Record<string, string> = {
-  faktury: "automatizace", emaily: "automatizace", smlouvy: "automatizace",
-  reporty: "data", data: "data",
+  faktury: "automatizace", emaily: "automatizace", texty: "automatizace", smlouvy: "automatizace",
+  reporty: "data", data: "data", znalosti: "data",
   integrace: "integrace", nastroje: "integrace",
-  vyrReporting: "vyroba", kvalita: "vyroba", udrzba: "vyroba", planovani: "vyroba",
-  chatbot: "konverzace", trideni: "konverzace",
-  nabidky: "obchod", crm: "obchod",
+  vyrReporting: "vyroba", iot: "vyroba", kvalita: "vyroba", udrzba: "vyroba", planovani: "vyroba",
+  chatbot: "konverzace", voice: "konverzace", trideni: "konverzace",
+  nabidky: "obchod", marketing: "obchod", crm: "obchod",
 };
 const SPEC_TITLE: Record<string, string> = {
   automatizace: "automatizaci procesů",
   data: "data a reporting",
-  integrace: "integrace a nástroje",
-  vyroba: "výrobní AI",
-  konverzace: "konverzační AI",
-  obchod: "obchod a CRM",
+  integrace: "integrace a napojení systémů",
+  vyroba: "AI ve výrobě",
+  konverzace: "konverzační AI a chatboty",
+  obchod: "AI v obchodu",
+};
+const SPEC_ALIASES: Record<string, string> = {
+  automatizace: "AI automatizér, automation engineer, AI konzultant",
+  data: "datový/AI specialista, data engineer, BI specialista",
+  integrace: "integrační specialista, AI engineer, solutions engineer",
+  vyroba: "specialista na výrobní AI, ML/vision engineer",
+  konverzace: "chatbot specialista, conversational AI engineer",
+  obchod: "AI specialista pro obchod, RevOps/CRM specialista",
 };
 const LEVEL_PREFIX: Record<string, string> = { junior: "junior ", medior: "", senior: "senior " };
+
+/** Orientační hrubá mzda (tis. Kč/měs., Morava) podle úrovně; zaměření přidává bonus. */
+const LEVEL_SALARY: Record<string, [number, number]> = {
+  junior: [40, 65],
+  medior: [65, 100],
+  senior: [95, 160],
+};
+const HOURLY: Record<string, [number, number]> = {
+  junior: [800, 1200],
+  medior: [1200, 1800],
+  senior: [1800, 2800],
+};
+const SPEC_BONUS: Record<string, number> = {
+  automatizace: 0, konverzace: 0, obchod: 0,
+  data: 10, integrace: 10, vyroba: 15,
+};
 
 const FORMA_LABEL: Record<string, string> = {
   full: "plný úvazek",
@@ -188,8 +260,7 @@ function dominantSpec(tasks: string[]): string | null {
   return best;
 }
 
-function buildTitle(s: State): string {
-  const spec = dominantSpec(s.tasks);
+function buildTitle(s: State, spec: string | null): string {
   let base: string;
   if (s.archetype === "partner") base = "externí konzultant pro zavádění AI" + (FOCUS_SUFFIX[s.focus] || "");
   else if (s.archetype === "specialista") base = spec ? `specialista na ${SPEC_TITLE[spec]}` : "specialista na zavádění AI";
@@ -199,21 +270,45 @@ function buildTitle(s: State): string {
   return full.charAt(0).toUpperCase() + full.slice(1);
 }
 
+function buildSalary(s: State, spec: string | null): string {
+  const caveat =
+    "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Ověřte proti ISPV/CZ-ISCO.";
+  if (s.forma === "ext") {
+    const h = HOURLY[s.level];
+    return `Externě orientačně ${h[0]}–${h[1]} Kč/h (Morava; Praha výš). ${caveat}`;
+  }
+  const base = LEVEL_SALARY[s.level];
+  const bonus = spec ? (SPEC_BONUS[spec] ?? 0) : 0;
+  const lo = base[0] + bonus;
+  const hi = base[1] + bonus;
+  const tier = spec
+    ? `Zaměření „${SPEC_TITLE[spec]}“ patří k ${bonus >= 15 ? "dráž" : bonus > 0 ? "mírně dráž" : "běžně"} placeným. `
+    : "";
+  return `Orientačně ${lo}–${hi} tis. Kč hrubého/měs. (Morava; Praha +15–25 %). ${tier}${caveat}`;
+}
+
 type JD = {
   title: string;
+  aliases: string;
   context: string;
   napln: string[];
   neni: string[];
   must: string[];
+  skills: string[];
+  skillsNote: string;
+  salary: string;
   bonus: string[];
   prvni: string;
   forma: string;
 };
 
 function buildJD(s: State): JD {
-  const title = buildTitle(s);
-  const cil = s.cil.trim();
+  const spec = dominantSpec(s.tasks);
+  const title = buildTitle(s, spec);
+  let aliases = "";
+  if (s.archetype === "specialista" && spec) aliases = SPEC_ALIASES[spec];
 
+  const cil = s.cil.trim();
   const cilText = cil
     ? `chceme ${cil}`
     : "chceme [doplňte konkrétní měřitelný cíl — např. zkrátit zpracování faktur z 8 na 3 minuty]";
@@ -226,7 +321,7 @@ function buildJD(s: State): JD {
   TASK_GROUPS.forEach((g) => g.items.forEach((it) => { if (s.tasks.includes(it.v)) order.push(it.v); }));
   const napln = order.map((v) => TASK_LINE[v]);
 
-  const heavyVyroba = s.tasks.some((t) => ["kvalita", "udrzba", "vyrReporting", "planovani"].includes(t));
+  const heavyVyroba = s.tasks.some((t) => ["kvalita", "udrzba", "vyrReporting", "planovani", "iot"].includes(t));
 
   const neni: string[] = [];
   if (s.archetype !== "partner")
@@ -266,12 +361,17 @@ function buildJD(s: State): JD {
   else if (s.level === "senior")
     must.push("Samostatně navrhne řešení od architektury po nasazení a vede či mentoruje ostatní.");
 
+  const skills = SKILLS.filter((k) => s.skills.includes(k.v)).map((k) => SKILL_LINE[k.v]);
+  const skillsNote = s.level === "junior" ? "U juniora berte technické dovednosti spíš jako výhodu než tvrdou podmínku." : "";
+
   const bonus: string[] = [
     "Konkrétní stack podle toho, co budete stavět (Python, automatizační platformy, datové nástroje) — výhoda, ne podmínka.",
     "Zkušenost z vašeho oboru nebo s podobně velkou firmou.",
   ];
   if (!s.regs.includes("aiakt") && !s.regs.includes("gdpr")) bonus.push("Přehled v GDPR a AI Actu.");
   if (s.archetype === "koordinator") bonus.push("Zkušenost s vedením změny a školením lidí.");
+
+  const salary = buildSalary(s, spec);
 
   const prvni = cil
     ? `Do 3 měsíců: ${cil}. Konkrétně dotáhnout jeden pilot na jednom procesu s předem dohodnutým měřitelným kritériem a změřeným výchozím stavem.`
@@ -282,12 +382,13 @@ function buildJD(s: State): JD {
     (s.it === "ano" ? ", spolupráce s interním IT" : ", externí IT partner na integrace") +
     ".";
 
-  return { title, context, napln, neni, must, bonus, prvni, forma };
+  return { title, aliases, context, napln, neni, must, skills, skillsNote, salary, bonus, prvni, forma };
 }
 
 function jdToText(jd: JD): string {
   const L: string[] = [];
   L.push(jd.title.toUpperCase());
+  if (jd.aliases) L.push("(jiné běžné názvy: " + jd.aliases + ")");
   L.push("");
   L.push("PROČ POZICI OTEVÍRÁME");
   L.push(jd.context);
@@ -300,9 +401,17 @@ function jdToText(jd: JD): string {
   L.push("");
   L.push("CO MUSÍTE UMĚT");
   jd.must.forEach((l) => L.push("• " + l));
+  if (jd.skills.length) {
+    L.push("");
+    L.push("TECHNICKÉ DOVEDNOSTI" + (jd.skillsNote ? " — " + jd.skillsNote : ""));
+    jd.skills.forEach((l) => L.push("• " + l));
+  }
   L.push("");
   L.push("VÝHODOU");
   jd.bonus.forEach((l) => L.push("• " + l));
+  L.push("");
+  L.push("ORIENTAČNÍ MZDA");
+  L.push(jd.salary);
   L.push("");
   L.push("PRVNÍ ÚKOL / JAK POZNÁME ÚSPĚCH");
   L.push(jd.prvni);
@@ -370,6 +479,7 @@ export default function JobBuilder() {
     data: "excel",
     it: "ano",
     tasks: [],
+    skills: [],
     regs: [],
     jazyky: ["cestina"],
     cil: "",
@@ -377,7 +487,7 @@ export default function JobBuilder() {
   const [copied, setCopied] = useState(false);
 
   const set = (k: SingleKey, v: string) => setS((p) => ({ ...p, [k]: v }));
-  const toggle = (k: "tasks" | "regs" | "jazyky", v: string) =>
+  const toggle = (k: "tasks" | "skills" | "regs" | "jazyky", v: string) =>
     setS((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
 
   const jd = useMemo(() => buildJD(s), [s]);
@@ -415,7 +525,7 @@ export default function JobBuilder() {
           </p>
           <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-dim">
             „Specialista“ navíc není jedna pozice — záleží na <span className="text-ink">zaměření</span> (co
-            staví) a <span className="text-ink">úrovni</span> (jak hluboko). Obojí se promítne do názvu i požadavků.
+            staví) a <span className="text-ink">úrovni</span> (jak hluboko). Obojí se promítne do názvu, požadavků i mzdy.
           </p>
         </Reveal>
       </header>
@@ -428,11 +538,19 @@ export default function JobBuilder() {
               <Chip key={o.v} active={s.archetype === o.v} onClick={() => set("archetype", o.v)}>{o.t}</Chip>
             ))}
           </Field>
-          <Field label="ÚROVEŇ (SENIORITA)">
-            {LEVELY.map((o) => (
-              <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)}>{o.t}</Chip>
-            ))}
-          </Field>
+
+          <div>
+            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ÚROVEŇ (SENIORITA)</div>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              {LEVELY.map((o) => (
+                <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)}>{o.t}</Chip>
+              ))}
+            </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-faint">
+              V mladém oboru „senior“ ≠ 10 let praxe — rozhoduje hloubka a dotažené projekty, ne roky.
+            </p>
+          </div>
+
           <Field label="FORMA">
             {FORMY.map((o) => (
               <Chip key={o.v} active={s.forma === o.v} onClick={() => set("forma", o.v)}>{o.t}</Chip>
@@ -472,10 +590,16 @@ export default function JobBuilder() {
             </div>
             {spec && (
               <p className="mt-3 text-[12px] leading-relaxed text-faint">
-                Z vybraných úkolů vychází zaměření: <span className="text-hr">{SPEC_TITLE[spec]}</span> — promítne se do názvu pozice.
+                Z vybraných úkolů vychází zaměření: <span className="text-hr">{SPEC_TITLE[spec]}</span> — promítne se do názvu pozice i mzdy.
               </p>
             )}
           </div>
+
+          <Field label="CO MÁ UMĚT — DOVEDNOSTI A NÁSTROJE">
+            {SKILLS.map((o) => (
+              <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)}>{o.t}</Chip>
+            ))}
+          </Field>
 
           <Field label="REGULACE — CO PLATÍ">
             {REGS.map((o) => (
@@ -516,6 +640,9 @@ export default function JobBuilder() {
           </div>
 
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-ink">{jd.title}</h2>
+          {jd.aliases && (
+            <p className="mt-1.5 text-[12px] leading-relaxed text-faint">Jiné běžné názvy téže role: {jd.aliases}.</p>
+          )}
 
           <PreviewBlock label="PROČ POZICI OTEVÍRÁME">
             <p className="text-[14px] leading-relaxed text-dim">{jd.context}</p>
@@ -537,8 +664,19 @@ export default function JobBuilder() {
             <Bullets items={jd.must} />
           </PreviewBlock>
 
+          {jd.skills.length > 0 && (
+            <PreviewBlock label="TECHNICKÉ DOVEDNOSTI">
+              {jd.skillsNote && <p className="mb-2 text-[12px] italic leading-relaxed text-faint">{jd.skillsNote}</p>}
+              <Bullets items={jd.skills} />
+            </PreviewBlock>
+          )}
+
           <PreviewBlock label="VÝHODOU">
             <Bullets items={jd.bonus} />
+          </PreviewBlock>
+
+          <PreviewBlock label="ORIENTAČNÍ MZDA">
+            <p className="text-[14px] leading-relaxed text-ink">{jd.salary}</p>
           </PreviewBlock>
 
           <PreviewBlock label="PRVNÍ ÚKOL / JAK POZNÁME ÚSPĚCH">
