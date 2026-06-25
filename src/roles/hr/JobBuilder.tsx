@@ -178,6 +178,39 @@ const SKILL_LINE: Record<string, string> = {
   zmena: "Řízení změny a školení lidí.",
 };
 
+/**
+ * Metadata dovedností — kterým zaměřením je dovednost vlastní (specs) a jak je
+ * na trhu drahá/náročná (adv = příplatek v tis. Kč; 0 = běžná). Slouží k validaci
+ * profilu a k výpočtu mzdy. Univerzální dovednosti (procesy, řízení změny, GDPR,
+ * prompt engineering) mají všechna zaměření — nehlásí se jako mimo profil.
+ */
+const ALL_SPECS = ["automatizace", "data", "integrace", "vyroba", "konverzace", "obchod"];
+const SKILL_META: Record<string, { specs: string[]; adv: number }> = {
+  promptai: { specs: ALL_SPECS, adv: 0 },
+  rag: { specs: ["data", "konverzace", "automatizace"], adv: 3 },
+  automation: { specs: ["automatizace", "obchod", "konverzace"], adv: 0 },
+  python: { specs: ["data", "integrace", "vyroba"], adv: 4 },
+  api: { specs: ["integrace", "automatizace", "obchod"], adv: 3 },
+  sql: { specs: ["data", "obchod"], adv: 0 },
+  bi: { specs: ["data", "obchod"], adv: 0 },
+  vision: { specs: ["vyroba"], adv: 8 },
+  ml: { specs: ["vyroba", "data"], adv: 8 },
+  mlops: { specs: ["vyroba", "data"], adv: 6 },
+  cloud: { specs: ["integrace", "vyroba", "data"], adv: 4 },
+  compliance: { specs: ALL_SPECS, adv: 0 },
+  procesy: { specs: ALL_SPECS, adv: 0 },
+  zmena: { specs: ALL_SPECS, adv: 0 },
+};
+/** Co se k danému zaměření obvykle hodí — pro doporučení (ne tvrdé omezení). */
+const SPEC_CORE_SKILLS: Record<string, string[]> = {
+  automatizace: ["automation", "promptai", "api"],
+  data: ["sql", "bi", "rag", "python"],
+  integrace: ["api", "python", "cloud"],
+  vyroba: ["vision", "ml", "mlops", "python"],
+  konverzace: ["promptai", "rag"],
+  obchod: ["automation", "bi", "api"],
+};
+
 /** Mapování úkolů na zaměření (specializaci) — z něj se odvodí název pozice. */
 const SPEC_OF: Record<string, string> = {
   faktury: "automatizace", emaily: "automatizace", texty: "automatizace", smlouvy: "automatizace",
@@ -271,6 +304,10 @@ function dominantSpec(tasks: string[]): string | null {
   return best;
 }
 
+function skillLabels(values: string[]): string {
+  return values.map((v) => SKILLS.find((k) => k.v === v)?.t ?? v).join(", ");
+}
+
 function buildTitle(s: State, spec: string | null): string {
   let base: string;
   if (s.archetype === "partner") base = "externí konzultant pro zavádění AI" + (FOCUS_SUFFIX[s.focus] || "");
@@ -283,6 +320,12 @@ function buildTitle(s: State, spec: string | null): string {
 
 const LEVEL_LABEL: Record<string, string> = { junior: "junior", medior: "medior", senior: "senior" };
 const ARCH_LABEL: Record<string, string> = { koordinator: "koordinátor", specialista: "specialista", partner: "externí partner" };
+
+/** Příplatek za náročné/drahé dovednosti (tis. Kč), zastropovaný. */
+function advPremium(skills: string[]): number {
+  const sum = skills.reduce((acc, v) => acc + (SKILL_META[v] ? SKILL_META[v].adv : 0), 0);
+  return Math.min(sum, 25);
+}
 
 type SalaryStep = { label: string; value: string; why: string };
 type Salary = {
@@ -299,22 +342,40 @@ type Salary = {
 function buildSalary(s: State, spec: string | null): Salary {
   const caveat =
     "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Čísla jsou orientační, ověřte proti ISPV/CZ-ISCO.";
+  const premium = advPremium(s.skills);
   const hourly = s.archetype === "partner" || s.forma === "ext";
 
   if (hourly) {
     const h = ARCH_HOURLY[s.archetype][s.level];
+    const steps: SalaryStep[] = [];
+    steps.push({
+      label: `Základní sazba — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
+      value: `${h[0]}–${h[1]} Kč/h`,
+      why: "Tržní hodinová sazba pro tuhle roli a senioritu (ISPV/CZ-ISCO a trh). Externí kapacita kryje i režii, daně a nárazovost, proto není 1:1 přepočet mzdy.",
+    });
+    let lo = h[0];
+    let hi = h[1];
+    const premH = premium * 12;
+    if (premH > 0) {
+      lo += premH;
+      hi += premH;
+      steps.push({
+        label: "Příplatek za náročné dovednosti",
+        value: `+${premH} Kč/h`,
+        why: "Mezi požadovanými dovednostmi jsou na trhu výrazně dražší (ML, MLOps, vidění, cloud, Python…). Čím víc jich vyžaduješ, tím výš.",
+      });
+    }
     const method =
-      "Postup: hodinová sazba podle role a seniority (kalibrace ISPV/CZ-ISCO a trh), upravená podle regionu. Externí kapacita se nepřepočítává na úvazek 1:1.";
+      "Postup: základní hodinová sazba podle role a seniority, příplatek za náročnější dovednosti, úprava podle regionu. Externí kapacita se nepřepočítává na úvazek 1:1.";
     const formaNote =
       s.archetype === "partner"
         ? "Externí partner na kontrakt → fakturace za hodinu, ne mzda."
         : "Externí spolupráce → fakturace za hodinu (Kč/h), ne měsíční mzda.";
     return {
-      steps: [],
-      resultLabel: `Hodinová sazba — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
-      resultValue: `${h[0]}–${h[1]} Kč/h`,
-      resultWhy:
-        "Externí kapacita — sazba kryje i režii, daně a nárazovost, proto je výš než přepočet hrubé mzdy na hodinu.",
+      steps,
+      resultLabel: "Sazba (Morava)",
+      resultValue: `${lo}–${hi} Kč/h`,
+      resultWhy: "",
       region: "Praha a nadnárodní firmy výš; Morava spíš spodní hranice.",
       formaNote,
       method,
@@ -323,24 +384,24 @@ function buildSalary(s: State, spec: string | null): Salary {
   }
 
   const base = ARCH_SALARY[s.archetype][s.level];
-  const bonus = s.archetype === "specialista" && spec ? (SPEC_BONUS[spec] ?? 0) : 0;
-  const lo = base[0] + bonus;
-  const hi = base[1] + bonus;
+  const specBonus = s.archetype === "specialista" && spec ? (SPEC_BONUS[spec] ?? 0) : 0;
+  const lo = base[0] + specBonus + premium;
+  const hi = base[1] + specBonus + premium;
 
   const steps: SalaryStep[] = [];
   steps.push({
     label: `Základní pásmo — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
     value: `${base[0]}–${base[1]} tis.`,
-    why: "Tržní pásmo pro tuhle roli a senioritu na Moravě (kalibrace ISPV/CZ-ISCO). Senior je výš než junior, protože odřídí víc sám.",
+    why: "Tržní pásmo pro tuhle roli a senioritu na Moravě (kalibrace ISPV/CZ-ISCO). Senior je výš, protože víc odřídí sám.",
   });
   if (s.archetype === "koordinator") {
     steps.push({ label: "Příplatek za zaměření", value: "+0", why: "Koordinátor je generalista — konkrétní zaměření mzdu nemění." });
-  } else if (bonus > 0 && spec) {
+  } else if (specBonus > 0 && spec) {
     steps.push({
       label: `Příplatek za zaměření — ${SPEC_TITLE[spec]}`,
-      value: `+${bonus} tis.`,
+      value: `+${specBonus} tis.`,
       why:
-        bonus >= 15
+        specBonus >= 15
           ? "Výrobní AI a počítačové vidění patří k nejvzácnějším a nejdráž placeným zaměřením — málo lidí to umí."
           : "Data a integrace jsou hůř k sehnání než běžná administrativa, proto příplatek.",
     });
@@ -351,9 +412,16 @@ function buildSalary(s: State, spec: string | null): Salary {
       why: "Automatizace, konverzace a obchod jsou na základní úrovni — bez příplatku.",
     });
   }
+  if (premium > 0) {
+    steps.push({
+      label: "Příplatek za náročné dovednosti",
+      value: `+${premium} tis.`,
+      why: "Mezi požadovanými dovednostmi jsou na trhu výrazně dražší (ML, MLOps, vidění, cloud, Python…). Čím víc jich vyžaduješ, tím výš.",
+    });
+  }
 
   const method =
-    "Postup: (1) základní pásmo podle role a seniority, (2) příplatek za vzácnější zaměření, (3) úprava podle regionu a formy. Pásma jsou kalibrovaná na ISPV/CZ-ISCO a trh.";
+    "Postup: (1) základní pásmo podle role a seniority, (2) příplatek za vzácnější zaměření, (3) příplatek za náročné dovednosti, (4) úprava podle regionu a formy. Kalibrace ISPV/CZ-ISCO.";
   const formaNote =
     s.forma === "part" ? "Částečný úvazek → poměrná část měsíční mzdy." : "Plný úvazek → měsíční hrubá mzda.";
 
@@ -367,6 +435,41 @@ function buildSalary(s: State, spec: string | null): Salary {
     method,
     caveat,
   };
+}
+
+/** Kontrola profilu — hlásí nesedící kombinace, ale neblokuje (hybridní pozice jsou OK). */
+function buildWarnings(s: State, spec: string | null): string[] {
+  const w: string[] = [];
+  const sel = s.skills;
+
+  if (!spec && sel.length > 0)
+    w.push("Vybral jsi dovednosti, ale žádné úkoly v „Co bude dělat“. Doplň úkoly, ať je jasné, na co ty dovednosti jsou — jinak název ani mzda nesedí na obsah.");
+
+  if (spec) {
+    const off = sel.filter((v) => SKILL_META[v] && SKILL_META[v].adv > 0 && !SKILL_META[v].specs.includes(spec));
+    if (off.length)
+      w.push(`Dovednosti „${skillLabels(off)}“ obvykle nepatří k zaměření „${SPEC_TITLE[spec]}“. Buď je to záměrně křížená (hybridní) pozice — pak v pořádku — nebo je zvaž odebrat.`);
+  }
+
+  if (s.level === "junior") {
+    const heavy = sel.filter((v) => SKILL_META[v] && SKILL_META[v].adv >= 6);
+    if (heavy.length)
+      w.push(`U juniora požaduješ náročné dovednosti („${skillLabels(heavy)}“). To je spíš medior/senior — zvaž vyšší úroveň. Mzda už příplatek za tyhle dovednosti počítá.`);
+  }
+
+  if (s.archetype === "koordinator") {
+    const build = sel.filter((v) => SKILL_META[v] && SKILL_META[v].adv >= 4);
+    if (build.length)
+      w.push(`Koordinátor je generalista, ale požaduješ hloubkové dovednosti („${skillLabels(build)}“). To je spíš implementační specialista — zvaž změnu v „Koho hledáte“.`);
+  }
+
+  if (s.archetype === "specialista" && sel.length === 0 && s.tasks.length > 0)
+    w.push("Nevybral jsi žádné technické dovednosti — u implementačního specialisty obvykle nějaké technické jádro být má (aspoň prompt engineering nebo automatizační platformy).");
+
+  if (spec === "vyroba" && s.focus === "obchod")
+    w.push("Úkoly vychází na výrobní AI, ale firmu jsi označil jako obchodní. Zkontroluj úkoly nebo zaměření firmy, ať si neodporují.");
+
+  return w;
 }
 
 type Line = { key: string; text: string };
@@ -384,6 +487,7 @@ type JD = {
   bonus: string[];
   prvni: string;
   forma: string;
+  warnings: string[];
 };
 
 function buildJD(s: State): JD {
@@ -482,6 +586,7 @@ function buildJD(s: State): JD {
   if (!s.regs.includes("aiakt") && !s.regs.includes("gdpr")) bonus.push("Přehled v GDPR a AI Actu.");
 
   const salary = buildSalary(s, spec);
+  const warnings = buildWarnings(s, spec);
 
   let prvni: string;
   if (s.archetype === "partner") {
@@ -499,7 +604,7 @@ function buildJD(s: State): JD {
     (s.it === "ano" ? ", spolupráce s interním IT" : ", externí IT partner na integrace") +
     ".";
 
-  return { title, aliases, context, napln, neni, must, skills, skillsNote, salary, bonus, prvni, forma };
+  return { title, aliases, context, napln, neni, must, skills, skillsNote, salary, bonus, prvni, forma, warnings };
 }
 
 function jdToText(jd: JD): string {
@@ -649,6 +754,7 @@ export default function JobBuilder() {
   const jd = useMemo(() => buildJD(s), [s]);
   const text = useMemo(() => jdToText(jd), [jd]);
   const spec = dominantSpec(s.tasks);
+  const recommended = spec ? (SPEC_CORE_SKILLS[spec] ?? []).map((v) => SKILLS.find((k) => k.v === v)?.t).filter(Boolean).join(", ") : "";
 
   const copy = async () => {
     try {
@@ -685,6 +791,7 @@ export default function JobBuilder() {
           </p>
           <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-faint">
             Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení.
+            Pokud se dovednosti a role neslučují, nahoře v náhledu vás na to upozorní „Kontrola profilu“.
           </p>
         </Reveal>
       </header>
@@ -754,11 +861,22 @@ export default function JobBuilder() {
             )}
           </div>
 
-          <Field label="CO MÁ UMĚT — DOVEDNOSTI A NÁSTROJE">
-            {SKILLS.map((o) => (
-              <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
+          <div>
+            <Field label="CO MÁ UMĚT — DOVEDNOSTI A NÁSTROJE">
+              {SKILLS.map((o) => (
+                <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+            {recommended ? (
+              <p className="mt-2 text-[12px] leading-relaxed text-faint">
+                Pro zaměření <span className="text-hr">{SPEC_TITLE[spec as string]}</span> se obvykle hodí: {recommended}. Jiné dovednosti klidně přidej — z pozice se pak stane křížená (a mzda i kontrola profilu to zohlední).
+              </p>
+            ) : (
+              <p className="mt-2 text-[12px] leading-relaxed text-faint">
+                Doporučené dovednosti se ukážou, jakmile vyberete aspoň jeden úkol v „Co bude dělat“.
+              </p>
+            )}
+          </div>
 
           <Field label="REGULACE — CO PLATÍ">
             {REGS.map((o) => (
@@ -797,6 +915,29 @@ export default function JobBuilder() {
               {copied ? "✓ ZKOPÍROVÁNO" : "ZKOPÍROVAT"}
             </button>
           </div>
+
+          {/* Kontrola profilu — validační banner */}
+          {jd.warnings.length > 0 ? (
+            <div className="mt-4 rounded-md border border-warn/40 bg-warn/5 px-3.5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-warn" aria-hidden>▲</span>
+                <span className="font-mono text-[11px] font-semibold tracking-label text-warn">KONTROLA PROFILU · {jd.warnings.length}</span>
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {jd.warnings.map((wn, i) => (
+                  <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-dim">
+                    <span className="mt-px text-warn" aria-hidden>•</span>
+                    <span>{wn}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="mt-4 flex items-center gap-2 rounded-md border border-ok/30 bg-ok/5 px-3.5 py-2">
+              <span className="text-ok" aria-hidden>✓</span>
+              <span className="text-[12px] text-dim">Profil je konzistentní — dovednosti i mzda sedí k roli.</span>
+            </div>
+          )}
 
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-ink">{jd.title}</h2>
           {jd.aliases && (
