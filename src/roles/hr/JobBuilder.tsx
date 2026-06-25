@@ -249,7 +249,12 @@ const ARCH_LEAD: Record<string, string> = {
   partner: "Hledáme externího partnera na konkrétní záměr — rychlý a ověřený start bez náborového rizika a s povinným předáním know-how.",
 };
 
-/** Orientační mzda podle profilu (Morava). Měsíčně v tis. Kč; pro externí/partnera hodinově v Kč. */
+/**
+ * Orientační mzda podle profilu (Morava). Měsíčně v tis. Kč; pro externí/partnera
+ * hodinově v Kč. POZOR: tahle čísla jsou prozatímní odhad z veřejných platových
+ * přehledů a inzerce — NE oficiální statistika (AI implementační role zatím nemají
+ * vlastní kód v CZ-ISCO). Budou nahrazena hodnotami z reálného mzdového průvodce.
+ */
 const ARCH_SALARY: Record<string, Record<string, [number, number]>> = {
   koordinator: { junior: [38, 58], medior: [55, 82], senior: [78, 115] },
   specialista: { junior: [45, 70], medior: [68, 105], senior: [98, 160] },
@@ -341,7 +346,7 @@ type Salary = {
 
 function buildSalary(s: State, spec: string | null): Salary {
   const caveat =
-    "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Čísla jsou orientační, ověřte proti ISPV/CZ-ISCO.";
+    "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Všechna čísla jsou orientační odhad — ber je jako vodítko k jednání, ne jako tabulkovou mzdu.";
   const premium = advPremium(s.skills);
   const hourly = s.archetype === "partner" || s.forma === "ext";
 
@@ -351,7 +356,7 @@ function buildSalary(s: State, spec: string | null): Salary {
     steps.push({
       label: `Základní sazba — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
       value: `${h[0]}–${h[1]} Kč/h`,
-      why: "Tržní hodinová sazba pro tuhle roli a senioritu (ISPV/CZ-ISCO a trh). Externí kapacita kryje i režii, daně a nárazovost, proto není 1:1 přepočet mzdy.",
+      why: "Orientační hodinová sazba pro tuhle roli a senioritu — odhad z veřejných přehledů a inzerce. Externí kapacita kryje i režii, daně a nárazovost, proto není 1:1 přepočet mzdy.",
     });
     let lo = h[0];
     let hi = h[1];
@@ -366,7 +371,7 @@ function buildSalary(s: State, spec: string | null): Salary {
       });
     }
     const method =
-      "Postup: základní hodinová sazba podle role a seniority, příplatek za náročnější dovednosti, úprava podle regionu. Externí kapacita se nepřepočítává na úvazek 1:1.";
+      "Postup: základní hodinová sazba podle role a seniority, příplatek za náročnější dovednosti, úprava podle regionu. Čísla jsou orientační odhad z veřejných přehledů a inzerce, ne oficiální statistika — AI role zatím nemají vlastní kód v CZ-ISCO.";
     const formaNote =
       s.archetype === "partner"
         ? "Externí partner na kontrakt → fakturace za hodinu, ne mzda."
@@ -392,7 +397,7 @@ function buildSalary(s: State, spec: string | null): Salary {
   steps.push({
     label: `Základní pásmo — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
     value: `${base[0]}–${base[1]} tis.`,
-    why: "Tržní pásmo pro tuhle roli a senioritu na Moravě (kalibrace ISPV/CZ-ISCO). Senior je výš, protože víc odřídí sám.",
+    why: "Orientační tržní pásmo pro tuhle roli a senioritu na Moravě — odhad z veřejných platových přehledů a inzerce. Senior je výš, protože víc odřídí sám.",
   });
   if (s.archetype === "koordinator") {
     steps.push({ label: "Příplatek za zaměření", value: "+0", why: "Koordinátor je generalista — konkrétní zaměření mzdu nemění." });
@@ -421,7 +426,7 @@ function buildSalary(s: State, spec: string | null): Salary {
   }
 
   const method =
-    "Postup: (1) základní pásmo podle role a seniority, (2) příplatek za vzácnější zaměření, (3) příplatek za náročné dovednosti, (4) úprava podle regionu a formy. Kalibrace ISPV/CZ-ISCO.";
+    "Postup: (1) základní pásmo podle role a seniority, (2) příplatek za vzácnější zaměření, (3) příplatek za náročné dovednosti, (4) úprava podle regionu a formy. Čísla jsou orientační odhad z veřejných přehledů a inzerce, ne oficiální statistika — AI implementační role zatím nemají vlastní kód v CZ-ISCO.";
   const formaNote =
     s.forma === "part" ? "Částečný úvazek → poměrná část měsíční mzdy." : "Plný úvazek → měsíční hrubá mzda.";
 
@@ -647,6 +652,99 @@ function jdToText(jd: JD): string {
   return L.join("\n");
 }
 
+/* ---- Výstupy: celkový náhled (HTML „papír“), Word a předání AI asistentovi ---- */
+
+function esc(t: string): string {
+  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function htmlList(items: string[], mark: string, markColor: string, textColor: string): string {
+  return (
+    `<ul style="margin:6px 0 0;padding:0;list-style:none">` +
+    items
+      .map(
+        (x) =>
+          `<li style="margin:5px 0;padding-left:16px;position:relative;color:${textColor};font-size:14px;line-height:1.55"><span style="position:absolute;left:0;color:${markColor}">${mark}</span>${esc(x)}</li>`
+      )
+      .join("") +
+    `</ul>`
+  );
+}
+
+function jdToHtml(jd: JD): string {
+  const H2 = (t: string) =>
+    `<div style="font:600 11px/1.2 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#999;margin:20px 0 0;padding-bottom:5px;border-bottom:1px solid #e6e6e6">${esc(t)}</div>`;
+  const P = (t: string, color: string) => `<p style="margin:7px 0 0;font-size:14px;line-height:1.55;color:${color}">${esc(t)}</p>`;
+
+  let html = "";
+  html += `<h1 style="margin:0;font:700 22px/1.25 Arial,sans-serif;color:#111">${esc(jd.title)}</h1>`;
+  if (jd.aliases) html += `<p style="margin:5px 0 0;font-size:12px;color:#888">Jiné běžné názvy téže role: ${esc(jd.aliases)}.</p>`;
+
+  html += H2("Proč pozici otevíráme") + P(jd.context, "#333");
+
+  html += H2("Co budete dělat");
+  html += jd.napln.length ? htmlList(jd.napln.map((x) => x.text), "•", "#c0405a", "#222") : P("[Vyberte úkoly v nástroji.]", "#999");
+
+  html += H2("Co musíte umět") + htmlList(jd.must, "•", "#c0405a", "#222");
+
+  if (jd.skills.length) {
+    html += H2("Technické dovednosti");
+    if (jd.skillsNote) html += P(jd.skillsNote, "#888");
+    html += htmlList(jd.skills.map((x) => x.text), "•", "#c0405a", "#222");
+  }
+
+  html += H2("Výhodou") + htmlList(jd.bonus, "•", "#c0405a", "#222");
+
+  html += H2("Orientační mzda (dle profilu)");
+  html += `<table style="border-collapse:collapse;width:100%;margin-top:6px;font-size:13px">`;
+  jd.salary.steps.forEach((st) => {
+    html +=
+      `<tr><td style="border:1px solid #e2e2e2;padding:6px 9px;vertical-align:top;color:#222">${esc(st.label)}` +
+      (st.why ? `<div style="color:#888;font-size:11px;margin-top:2px;line-height:1.4">${esc(st.why)}</div>` : "") +
+      `</td><td style="border:1px solid #e2e2e2;padding:6px 9px;text-align:right;white-space:nowrap;color:#222;font-family:Consolas,monospace">${esc(st.value)}</td></tr>`;
+  });
+  html += `<tr><td style="border:1px solid #e2e2e2;padding:6px 9px;font-weight:bold;background:#f6f6f6;color:#111">${esc(jd.salary.resultLabel)}</td><td style="border:1px solid #e2e2e2;padding:6px 9px;text-align:right;white-space:nowrap;font-weight:bold;background:#f6f6f6;color:#111;font-family:Consolas,monospace">${esc(jd.salary.resultValue)}</td></tr>`;
+  html += `</table>`;
+  html += `<p style="margin:7px 0 0;font-size:11px;line-height:1.5;color:#888"><strong>Jak se počítá:</strong> ${esc(jd.salary.method)}<br><strong>Region:</strong> ${esc(jd.salary.region)}<br><strong>Forma:</strong> ${esc(jd.salary.formaNote)}<br>${esc(jd.salary.caveat)}</p>`;
+
+  html += H2("První úkol / jak poznáme úspěch") + P(jd.prvni, "#222");
+  html += P(jd.forma, "#555");
+
+  html += `<div style="font:600 11px/1.2 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#bbb;margin:22px 0 0;padding-bottom:5px;border-bottom:1px dashed #e2e2e2">Mimo rozsah — co do role nepatří</div>`;
+  html += htmlList(jd.neni, "✕", "#caa", "#888");
+
+  html += `<hr style="border:none;border-top:1px solid #e6e6e6;margin:22px 0 0">`;
+  html += `<p style="margin:8px 0 0;font-size:11px;line-height:1.5;color:#999">Orientační výstup nástroje Velín — slouží jako podklad, nenahrazuje oficiální mzdovou statistiku ani právní či personální posouzení. Mzdová čísla jsou odhad z veřejných platových přehledů a inzerce; AI implementační role zatím nemají vlastní kód v CZ-ISCO.</p>`;
+
+  return html;
+}
+
+function aiHandoffText(jd: JD): string {
+  return [
+    "Tohle je návrh popisu pracovní pozice pro zavádění AI v naší firmě (sestaveno nástrojem, čísla jsou orientační).",
+    "Pomoz mi ho posoudit a vylepšit: na co si dát pozor, co chybí nebo přebývá, jestli požadavky sedí k senioritě a mzdě, a jestli text nepůsobí jako hon na jednorožce. Drž se reálné náplně práce, ne buzzwordů.",
+    "",
+    "---",
+    "",
+    jdToText(jd),
+  ].join("\n");
+}
+
+function downloadWord(jd: JD) {
+  const doc =
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(jd.title)}</title></head>` +
+    `<body style="font-family:Calibri,Arial,sans-serif;color:#222;max-width:720px;margin:0 auto">${jdToHtml(jd)}</body></html>`;
+  const blob = new Blob(["\ufeff", doc], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "popis-pozice.doc";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function Chip({ active, onClick, hint, children }: { active: boolean; onClick: () => void; hint?: string; children: ReactNode }) {
   const button = (
     <button
@@ -746,6 +844,8 @@ export default function JobBuilder() {
     cil: "",
   });
   const [copied, setCopied] = useState(false);
+  const [copiedAi, setCopiedAi] = useState(false);
+  const [showFull, setShowFull] = useState(false);
 
   const set = (k: SingleKey, v: string) => setS((p) => ({ ...p, [k]: v }));
   const toggle = (k: "tasks" | "skills" | "regs" | "jazyky", v: string) =>
@@ -765,9 +865,18 @@ export default function JobBuilder() {
       window.prompt("Zkopírujte popis ručně:", text);
     }
   };
+  const copyAi = async () => {
+    try {
+      await navigator.clipboard.writeText(aiHandoffText(jd));
+      setCopiedAi(true);
+      setTimeout(() => setCopiedAi(false), 2200);
+    } catch {
+      window.prompt("Zkopírujte pro AI asistenta ručně:", aiHandoffText(jd));
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-12 sm:py-16">
+    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
       <header>
         <div className="mb-8 flex items-center justify-between gap-3">
           <Eyebrow tone="text-hr">MODUL 02 · HR · POPIS POZICE</Eyebrow>
@@ -791,12 +900,12 @@ export default function JobBuilder() {
           </p>
           <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-faint">
             Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení.
-            Pokud se dovednosti a role neslučují, nahoře v náhledu vás na to upozorní „Kontrola profilu“.
+            Hotový popis si nahoře u náhledu zobrazíte celý, stáhnete do Wordu nebo pošlete svému AI asistentovi.
           </p>
         </Reveal>
       </header>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+      <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Levý sloupec — požadavky */}
         <div className="space-y-7">
           <Field label="KOHO HLEDÁTE">
@@ -907,13 +1016,22 @@ export default function JobBuilder() {
         <Panel className="self-start px-6 py-6 lg:sticky lg:top-6">
           <div className="flex items-center justify-between gap-3">
             <div className="font-mono text-[11px] tracking-label text-faint">NÁHLED POPISU POZICE</div>
-            <button
-              type="button"
-              onClick={copy}
-              className="flex-shrink-0 rounded-md border border-hr/50 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
-            >
-              {copied ? "✓ ZKOPÍROVÁNO" : "ZKOPÍROVAT"}
-            </button>
+            <div className="flex flex-shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFull(true)}
+                className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+              >
+                CELÝ POPIS ↗
+              </button>
+              <button
+                type="button"
+                onClick={copy}
+                className="rounded-md border border-hr/50 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
+              >
+                {copied ? "✓ ZKOPÍROVÁNO" : "ZKOPÍROVAT"}
+              </button>
+            </div>
           </div>
 
           {/* Kontrola profilu — validační banner */}
@@ -1043,6 +1161,56 @@ export default function JobBuilder() {
           JIŘÍ MYNÁŘ — LINKEDIN
         </a>
       </p>
+
+      {/* Celkový náhled CV + export */}
+      {showFull && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/75 px-4 py-6 sm:px-8"
+          onClick={() => setShowFull(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="mx-auto w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[11px] tracking-label text-ink">CELÝ POPIS POZICE · NÁHLED A EXPORT</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={copy}
+                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+                >
+                  {copied ? "✓ TEXT" : "KOPÍROVAT TEXT"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadWord(jd)}
+                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+                >
+                  STÁHNOUT WORD
+                </button>
+                <button
+                  type="button"
+                  onClick={copyAi}
+                  className="rounded-md border border-hr/50 bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
+                >
+                  {copiedAi ? "✓ PRO AI" : "PRO AI ASISTENTA"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFull(false)}
+                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+                >
+                  ZAVŘÍT ✕
+                </button>
+              </div>
+            </div>
+            <div className="rounded-md bg-white p-7 shadow-2xl sm:p-9" dangerouslySetInnerHTML={{ __html: jdToHtml(jd) }} />
+            <p className="mt-3 text-center font-mono text-[10px] leading-relaxed tracking-label text-faint">
+              „PRO AI ASISTENTA“ ZKOPÍRUJE POPIS I S POKYNEM — VLOŽTE HO DO CHATGPT/CLAUDE A PROBERTE HO · CO VIDÍTE = CO SE STÁHNE DO WORDU
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
