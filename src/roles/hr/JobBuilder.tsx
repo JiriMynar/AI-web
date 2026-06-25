@@ -331,115 +331,92 @@ function advPremium(skills: string[]): number {
   const sum = skills.reduce((acc, v) => acc + (SKILL_META[v] ? SKILL_META[v].adv : 0), 0);
   return Math.min(sum, 25);
 }
+/** Rozpis příplatku po jednotlivých dovednostech (pro detailní kalkulaci). */
+function advItemsNote(skills: string[]): string {
+  const items = skills
+    .filter((v) => SKILL_META[v] && SKILL_META[v].adv > 0)
+    .map((v) => `${SKILLS.find((k) => k.v === v)?.t ?? v} +${SKILL_META[v].adv}`);
+  if (!items.length) return "";
+  const sum = skills.reduce((a, v) => a + (SKILL_META[v] ? SKILL_META[v].adv : 0), 0);
+  return items.join(", ") + (sum > 25 ? " (sečteno, strop +25)" : "");
+}
 
-type SalaryStep = { label: string; value: string; why: string };
+function rng(lo: number, hi: number, unit: string): string {
+  return `${lo}–${hi} ${unit}`;
+}
+
+type SalaryRow = { label: string; value: string; note?: string; strong?: boolean };
 type Salary = {
-  steps: SalaryStep[];
-  resultLabel: string;
-  resultValue: string;
-  resultWhy: string;
-  region: string;
-  formaNote: string;
+  headlineLabel: string;
+  headlineValue: string;
+  rows: SalaryRow[];
   method: string;
+  formaNote: string;
   caveat: string;
 };
 
 function buildSalary(s: State, spec: string | null): Salary {
   const caveat =
-    "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Všechna čísla jsou orientační odhad — ber je jako vodítko k jednání, ne jako tabulkovou mzdu.";
+    "Všechna čísla jsou orientační odhad z veřejných platových přehledů a inzerce, ne oficiální statistika — AI implementační role zatím nemají vlastní kód v CZ-ISCO. Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let. Ber to jako vodítko k jednání, ne jako tabulkovou mzdu.";
   const premium = advPremium(s.skills);
+  const premNote = advItemsNote(s.skills);
   const hourly = s.archetype === "partner" || s.forma === "ext";
+  const rows: SalaryRow[] = [];
 
   if (hourly) {
     const h = ARCH_HOURLY[s.archetype][s.level];
-    const steps: SalaryStep[] = [];
-    steps.push({
+    rows.push({
       label: `Základní sazba — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
-      value: `${h[0]}–${h[1]} Kč/h`,
-      why: "Orientační hodinová sazba pro tuhle roli a senioritu — odhad z veřejných přehledů a inzerce. Externí kapacita kryje i režii, daně a nárazovost, proto není 1:1 přepočet mzdy.",
+      value: rng(h[0], h[1], "Kč/h"),
+      note: "Externí kapacita kryje i režii, daně a nárazovost — proto není 1:1 přepočet mzdy.",
     });
-    let lo = h[0];
-    let hi = h[1];
     const premH = premium * 12;
-    if (premH > 0) {
-      lo += premH;
-      hi += premH;
-      steps.push({
-        label: "Příplatek za náročné dovednosti",
-        value: `+${premH} Kč/h`,
-        why: "Mezi požadovanými dovednostmi jsou na trhu výrazně dražší (ML, MLOps, vidění, cloud, Python…). Čím víc jich vyžaduješ, tím výš.",
-      });
-    }
-    const method =
-      "Postup: základní hodinová sazba podle role a seniority, příplatek za náročnější dovednosti, úprava podle regionu. Čísla jsou orientační odhad z veřejných přehledů a inzerce, ne oficiální statistika — AI role zatím nemají vlastní kód v CZ-ISCO.";
+    if (premH > 0) rows.push({ label: "Příplatek za náročné dovednosti", value: `+${premH} Kč/h`, note: premNote });
+    const lo = h[0] + premH;
+    const hi = h[1] + premH;
+    rows.push({ label: "Sazba — Morava", value: rng(lo, hi, "Kč/h"), strong: true });
+    const pLo = Math.round((lo * 1.1) / 50) * 50;
+    const pHi = Math.round((hi * 1.2) / 50) * 50;
+    rows.push({ label: "Praha a nadnárodní firmy (+10–20 %)", value: rng(pLo, pHi, "Kč/h"), note: "Vyšší konkurence o lidi i náklady." });
     const formaNote =
       s.archetype === "partner"
         ? "Externí partner na kontrakt → fakturace za hodinu, ne mzda."
         : "Externí spolupráce → fakturace za hodinu (Kč/h), ne měsíční mzda.";
-    return {
-      steps,
-      resultLabel: "Sazba (Morava)",
-      resultValue: `${lo}–${hi} Kč/h`,
-      resultWhy: "",
-      region: "Praha a nadnárodní firmy výš; Morava spíš spodní hranice.",
-      formaNote,
-      method,
-      caveat,
-    };
+    const method =
+      "Postup: základní hodinová sazba podle role a seniority → příplatek za náročnější dovednosti → úprava podle regionu.";
+    return { headlineLabel: "Externí sazba, Morava / hodinově", headlineValue: rng(lo, hi, "Kč/h"), rows, method, formaNote, caveat };
   }
 
   const base = ARCH_SALARY[s.archetype][s.level];
   const specBonus = s.archetype === "specialista" && spec ? (SPEC_BONUS[spec] ?? 0) : 0;
-  const lo = base[0] + specBonus + premium;
-  const hi = base[1] + specBonus + premium;
-
-  const steps: SalaryStep[] = [];
-  steps.push({
+  rows.push({
     label: `Základní pásmo — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
-    value: `${base[0]}–${base[1]} tis.`,
-    why: "Orientační tržní pásmo pro tuhle roli a senioritu na Moravě — odhad z veřejných platových přehledů a inzerce. Senior je výš, protože víc odřídí sám.",
+    value: rng(base[0], base[1], "tis."),
+    note: "Tržní pásmo pro tuhle roli a senioritu (Morava). Senior je výš, protože víc odřídí sám.",
   });
   if (s.archetype === "koordinator") {
-    steps.push({ label: "Příplatek za zaměření", value: "+0", why: "Koordinátor je generalista — konkrétní zaměření mzdu nemění." });
+    rows.push({ label: "Příplatek za zaměření", value: "+0 tis.", note: "Koordinátor je generalista — konkrétní zaměření mzdu nemění." });
   } else if (specBonus > 0 && spec) {
-    steps.push({
+    rows.push({
       label: `Příplatek za zaměření — ${SPEC_TITLE[spec]}`,
       value: `+${specBonus} tis.`,
-      why:
-        specBonus >= 15
-          ? "Výrobní AI a počítačové vidění patří k nejvzácnějším a nejdráž placeným zaměřením — málo lidí to umí."
-          : "Data a integrace jsou hůř k sehnání než běžná administrativa, proto příplatek.",
+      note: specBonus >= 15 ? "Výrobní AI a vidění patří k nejvzácnějším a nejdráž placeným." : "Data a integrace jsou hůř k sehnání než běžná administrativa.",
     });
   } else if (spec) {
-    steps.push({
-      label: `Zaměření — ${SPEC_TITLE[spec]}`,
-      value: "+0",
-      why: "Automatizace, konverzace a obchod jsou na základní úrovni — bez příplatku.",
-    });
+    rows.push({ label: `Zaměření — ${SPEC_TITLE[spec]}`, value: "+0 tis.", note: "Automatizace, konverzace a obchod jsou na základní úrovni." });
   }
-  if (premium > 0) {
-    steps.push({
-      label: "Příplatek za náročné dovednosti",
-      value: `+${premium} tis.`,
-      why: "Mezi požadovanými dovednostmi jsou na trhu výrazně dražší (ML, MLOps, vidění, cloud, Python…). Čím víc jich vyžaduješ, tím výš.",
-    });
-  }
+  if (premium > 0) rows.push({ label: "Příplatek za náročné dovednosti", value: `+${premium} tis.`, note: premNote });
+  const lo = base[0] + specBonus + premium;
+  const hi = base[1] + specBonus + premium;
+  rows.push({ label: "Mezisoučet — Morava", value: rng(lo, hi, "tis. Kč / měs."), strong: true });
+  const pLo = Math.round(lo * 1.15);
+  const pHi = Math.round(hi * 1.25);
+  rows.push({ label: "Praha a nadnárodní firmy (+15–25 %)", value: rng(pLo, pHi, "tis."), note: "Vyšší náklady i konkurence o lidi." });
 
+  const formaNote = s.forma === "part" ? "Částečný úvazek → poměrná část měsíční mzdy." : "Plný úvazek → měsíční hrubá mzda.";
   const method =
-    "Postup: (1) základní pásmo podle role a seniority, (2) příplatek za vzácnější zaměření, (3) příplatek za náročné dovednosti, (4) úprava podle regionu a formy. Čísla jsou orientační odhad z veřejných přehledů a inzerce, ne oficiální statistika — AI implementační role zatím nemají vlastní kód v CZ-ISCO.";
-  const formaNote =
-    s.forma === "part" ? "Částečný úvazek → poměrná část měsíční mzdy." : "Plný úvazek → měsíční hrubá mzda.";
-
-  return {
-    steps,
-    resultLabel: "Výsledek (Morava)",
-    resultValue: `${lo}–${hi} tis. Kč / měs.`,
-    resultWhy: "",
-    region: "Praha a nadnárodní firmy +15–25 %; menší města a Morava spíš spodní hranice.",
-    formaNote,
-    method,
-    caveat,
-  };
+    "Postup: základní pásmo podle role a seniority → příplatek za vzácnější zaměření → příplatek za náročné dovednosti → úprava podle regionu a formy.";
+  return { headlineLabel: "Orientačně, Morava / měsíčně", headlineValue: rng(lo, hi, "tis. Kč / měs."), rows, method, formaNote, caveat };
 }
 
 /** Kontrola profilu — hlásí nesedící kombinace, ale neblokuje (hybridní pozice jsou OK). */
@@ -635,10 +612,8 @@ function jdToText(jd: JD): string {
   jd.bonus.forEach((l) => L.push("• " + l));
   L.push("");
   L.push("ORIENTAČNÍ MZDA (DLE PROFILU)");
-  jd.salary.steps.forEach((st) => L.push(`- ${st.label}: ${st.value}` + (st.why ? " — " + st.why : "")));
-  L.push(`= ${jd.salary.resultLabel}: ${jd.salary.resultValue}` + (jd.salary.resultWhy ? " — " + jd.salary.resultWhy : ""));
+  jd.salary.rows.forEach((r) => L.push(`- ${r.label}: ${r.value}` + (r.note ? " — " + r.note : "")));
   L.push("Jak se počítá: " + jd.salary.method);
-  L.push("Region: " + jd.salary.region);
   L.push("Forma: " + jd.salary.formaNote);
   L.push(jd.salary.caveat);
   L.push("");
@@ -673,11 +648,11 @@ function htmlList(items: string[], mark: string, markColor: string, textColor: s
 
 function jdToHtml(jd: JD): string {
   const H2 = (t: string) =>
-    `<div style="font:600 11px/1.2 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#999;margin:20px 0 0;padding-bottom:5px;border-bottom:1px solid #e6e6e6">${esc(t)}</div>`;
+    `<div style="font:700 12px/1.2 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#c0405a;margin:22px 0 0;padding-bottom:5px;border-bottom:2px solid #f0d7dc">${esc(t)}</div>`;
   const P = (t: string, color: string) => `<p style="margin:7px 0 0;font-size:14px;line-height:1.55;color:${color}">${esc(t)}</p>`;
 
   let html = "";
-  html += `<h1 style="margin:0;font:700 22px/1.25 Arial,sans-serif;color:#111">${esc(jd.title)}</h1>`;
+  html += `<h1 style="margin:0;font:700 23px/1.25 Arial,sans-serif;color:#111">${esc(jd.title)}</h1>`;
   if (jd.aliases) html += `<p style="margin:5px 0 0;font-size:12px;color:#888">Jiné běžné názvy téže role: ${esc(jd.aliases)}.</p>`;
 
   html += H2("Proč pozici otevíráme") + P(jd.context, "#333");
@@ -697,20 +672,20 @@ function jdToHtml(jd: JD): string {
 
   html += H2("Orientační mzda (dle profilu)");
   html += `<table style="border-collapse:collapse;width:100%;margin-top:6px;font-size:13px">`;
-  jd.salary.steps.forEach((st) => {
+  jd.salary.rows.forEach((r) => {
+    const strong = r.strong ? "font-weight:bold;background:#f6f6f6;" : "";
     html +=
-      `<tr><td style="border:1px solid #e2e2e2;padding:6px 9px;vertical-align:top;color:#222">${esc(st.label)}` +
-      (st.why ? `<div style="color:#888;font-size:11px;margin-top:2px;line-height:1.4">${esc(st.why)}</div>` : "") +
-      `</td><td style="border:1px solid #e2e2e2;padding:6px 9px;text-align:right;white-space:nowrap;color:#222;font-family:Consolas,monospace">${esc(st.value)}</td></tr>`;
+      `<tr><td style="border:1px solid #e2e2e2;padding:6px 9px;vertical-align:top;color:#111;${strong}">${esc(r.label)}` +
+      (r.note ? `<div style="color:#888;font-size:11px;margin-top:2px;line-height:1.4;font-weight:normal">${esc(r.note)}</div>` : "") +
+      `</td><td style="border:1px solid #e2e2e2;padding:6px 9px;text-align:right;white-space:nowrap;color:#111;font-family:Consolas,monospace;${strong}">${esc(r.value)}</td></tr>`;
   });
-  html += `<tr><td style="border:1px solid #e2e2e2;padding:6px 9px;font-weight:bold;background:#f6f6f6;color:#111">${esc(jd.salary.resultLabel)}</td><td style="border:1px solid #e2e2e2;padding:6px 9px;text-align:right;white-space:nowrap;font-weight:bold;background:#f6f6f6;color:#111;font-family:Consolas,monospace">${esc(jd.salary.resultValue)}</td></tr>`;
   html += `</table>`;
-  html += `<p style="margin:7px 0 0;font-size:11px;line-height:1.5;color:#888"><strong>Jak se počítá:</strong> ${esc(jd.salary.method)}<br><strong>Region:</strong> ${esc(jd.salary.region)}<br><strong>Forma:</strong> ${esc(jd.salary.formaNote)}<br>${esc(jd.salary.caveat)}</p>`;
+  html += `<p style="margin:7px 0 0;font-size:11px;line-height:1.5;color:#888"><strong>Jak se počítá:</strong> ${esc(jd.salary.method)}<br><strong>Forma:</strong> ${esc(jd.salary.formaNote)}<br>${esc(jd.salary.caveat)}</p>`;
 
   html += H2("První úkol / jak poznáme úspěch") + P(jd.prvni, "#222");
   html += P(jd.forma, "#555");
 
-  html += `<div style="font:600 11px/1.2 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#bbb;margin:22px 0 0;padding-bottom:5px;border-bottom:1px dashed #e2e2e2">Mimo rozsah — co do role nepatří</div>`;
+  html += `<div style="font:700 12px/1.2 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin:22px 0 0;padding-bottom:5px;border-bottom:1px dashed #e2e2e2">Mimo rozsah — co do role nepatří</div>`;
   html += htmlList(jd.neni, "✕", "#caa", "#888");
 
   html += `<hr style="border:none;border-top:1px solid #e6e6e6;margin:22px 0 0">`;
@@ -772,11 +747,34 @@ function Chip({ active, onClick, hint, children }: { active: boolean; onClick: (
   );
 }
 
+/** Skupina polí ve formuláři — jasný nadpis s korálovým proužkem, ať se sloupec nečte jako zeď. */
+function FieldGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <div className="mb-5 flex items-center gap-2.5 border-b border-line pb-2.5">
+        <span className="h-4 w-1 rounded-full bg-hr" aria-hidden />
+        <h3 className="text-[13px] font-semibold uppercase tracking-wide2 text-ink">{title}</h3>
+      </div>
+      <div className="space-y-6">{children}</div>
+    </section>
+  );
+}
+
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <div className="font-mono text-[11px] font-semibold tracking-label text-faint">{label}</div>
+      <div className="font-mono text-[11px] font-semibold tracking-label text-dim">{label}</div>
       <div className="mt-2.5 flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+/** Nadpis sekce v náhledu — korálová značka + světlý popisek, aby se odlišil od textu. */
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="h-3 w-[3px] rounded-full bg-hr" aria-hidden />
+      <span className="font-mono text-[11px] font-semibold uppercase tracking-label text-dim">{children}</span>
     </div>
   );
 }
@@ -818,9 +816,9 @@ function MotionBullets({
 
 function PreviewBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="mt-6">
-      <div className="font-mono text-[10px] font-semibold tracking-label text-faint">{label}</div>
-      <div className="mt-2">{children}</div>
+    <div className="mt-7 border-t border-line/60 pt-5">
+      <SectionLabel>{label}</SectionLabel>
+      <div className="mt-2.5">{children}</div>
     </div>
   );
 }
@@ -846,6 +844,7 @@ export default function JobBuilder() {
   const [copied, setCopied] = useState(false);
   const [copiedAi, setCopiedAi] = useState(false);
   const [showFull, setShowFull] = useState(false);
+  const [showSalary, setShowSalary] = useState(false);
 
   const set = (k: SingleKey, v: string) => setS((p) => ({ ...p, [k]: v }));
   const toggle = (k: "tasks" | "skills" | "regs" | "jazyky", v: string) =>
@@ -893,11 +892,6 @@ export default function JobBuilder() {
             ten člověk bude doopravdy dělat a v jakém prostředí, a vpravo se skládá popis — každý zatržený řádek
             do něj vjede, takže rovnou vidíte, co která volba přidá.
           </p>
-          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-dim">
-            „Specialista“ navíc není jedna pozice — záleží na <span className="text-ink">zaměření</span> (co
-            staví) a <span className="text-ink">úrovni</span> (jak hluboko). A na tom, koho hledáte: koordinátor,
-            specialista a externí partner mají jiné požadavky, jinou náplň i jinou mzdu.
-          </p>
           <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-faint">
             Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení.
             Hotový popis si nahoře u náhledu zobrazíte celý, stáhnete do Wordu nebo pošlete svému AI asistentovi.
@@ -906,110 +900,116 @@ export default function JobBuilder() {
       </header>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:gap-12">
-        {/* Levý sloupec — požadavky */}
-        <div className="space-y-7">
-          <Field label="KOHO HLEDÁTE">
-            {ARCHETYPY.map((o) => (
-              <Chip key={o.v} active={s.archetype === o.v} onClick={() => set("archetype", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-
-          <div>
-            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ÚROVEŇ (SENIORITA)</div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {LEVELY.map((o) => (
-                <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)} hint={o.h}>{o.t}</Chip>
-              ))}
-            </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-faint">
-              V mladém oboru „senior“ ≠ 10 let praxe — rozhoduje hloubka a dotažené projekty, ne roky.
-            </p>
-          </div>
-
-          <Field label="FORMA">
-            {FORMY.map((o) => (
-              <Chip key={o.v} active={s.forma === o.v} onClick={() => set("forma", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-          <Field label="ZAMĚŘENÍ FIRMY">
-            {FOCUS.map((o) => (
-              <Chip key={o.v} active={s.focus === o.v} onClick={() => set("focus", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-          <Field label="STAV DAT">
-            {DATA.map((o) => (
-              <Chip key={o.v} active={s.data === o.v} onClick={() => set("data", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-          <Field label="VLASTNÍ IT">
-            {ITO.map((o) => (
-              <Chip key={o.v} active={s.it === o.v} onClick={() => set("it", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-
-          <div>
-            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">
-              CO BUDE DĚLAT <span className="text-hr">· vyberte konkrétní práci</span>
-            </div>
-            <div className="mt-3 space-y-4">
-              {TASK_GROUPS.map((g) => (
-                <div key={g.label}>
-                  <div className="text-[12px] font-semibold text-dim">{g.label}</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {g.items.map((it) => (
-                      <Chip key={it.v} active={s.tasks.includes(it.v)} onClick={() => toggle("tasks", it.v)} hint={it.h}>{it.t}</Chip>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {s.archetype === "specialista" && spec && (
-              <p className="mt-3 text-[12px] leading-relaxed text-faint">
-                Z vybraných úkolů vychází zaměření: <span className="text-hr">{SPEC_TITLE[spec]}</span> — promítne se do názvu pozice i mzdy.
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Field label="CO MÁ UMĚT — DOVEDNOSTI A NÁSTROJE">
-              {SKILLS.map((o) => (
-                <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)} hint={o.h}>{o.t}</Chip>
+        {/* Levý sloupec — požadavky, rozdělené do skupin */}
+        <div className="space-y-12">
+          <FieldGroup title="Role a forma">
+            <Field label="KOHO HLEDÁTE">
+              {ARCHETYPY.map((o) => (
+                <Chip key={o.v} active={s.archetype === o.v} onClick={() => set("archetype", o.v)} hint={o.h}>{o.t}</Chip>
               ))}
             </Field>
-            {recommended ? (
+            <div>
+              <div className="font-mono text-[11px] font-semibold tracking-label text-dim">ÚROVEŇ (SENIORITA)</div>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {LEVELY.map((o) => (
+                  <Chip key={o.v} active={s.level === o.v} onClick={() => set("level", o.v)} hint={o.h}>{o.t}</Chip>
+                ))}
+              </div>
               <p className="mt-2 text-[12px] leading-relaxed text-faint">
-                Pro zaměření <span className="text-hr">{SPEC_TITLE[spec as string]}</span> se obvykle hodí: {recommended}. Jiné dovednosti klidně přidej — z pozice se pak stane křížená (a mzda i kontrola profilu to zohlední).
+                V mladém oboru „senior“ ≠ 10 let praxe — rozhoduje hloubka a dotažené projekty, ne roky.
               </p>
-            ) : (
+            </div>
+            <Field label="FORMA">
+              {FORMY.map((o) => (
+                <Chip key={o.v} active={s.forma === o.v} onClick={() => set("forma", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+          </FieldGroup>
+
+          <FieldGroup title="Firma a prostředí">
+            <Field label="ZAMĚŘENÍ FIRMY">
+              {FOCUS.map((o) => (
+                <Chip key={o.v} active={s.focus === o.v} onClick={() => set("focus", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+            <Field label="STAV DAT">
+              {DATA.map((o) => (
+                <Chip key={o.v} active={s.data === o.v} onClick={() => set("data", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+            <Field label="VLASTNÍ IT">
+              {ITO.map((o) => (
+                <Chip key={o.v} active={s.it === o.v} onClick={() => set("it", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+          </FieldGroup>
+
+          <FieldGroup title="Náplň a dovednosti">
+            <div>
+              <div className="font-mono text-[11px] font-semibold tracking-label text-dim">
+                CO BUDE DĚLAT <span className="text-hr">· vyberte konkrétní práci</span>
+              </div>
+              <div className="mt-3 space-y-4">
+                {TASK_GROUPS.map((g) => (
+                  <div key={g.label}>
+                    <div className="text-[12px] font-semibold text-dim">{g.label}</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {g.items.map((it) => (
+                        <Chip key={it.v} active={s.tasks.includes(it.v)} onClick={() => toggle("tasks", it.v)} hint={it.h}>{it.t}</Chip>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {s.archetype === "specialista" && spec && (
+                <p className="mt-3 text-[12px] leading-relaxed text-faint">
+                  Z vybraných úkolů vychází zaměření: <span className="text-hr">{SPEC_TITLE[spec]}</span> — promítne se do názvu pozice i mzdy.
+                </p>
+              )}
+            </div>
+            <div>
+              <div className="font-mono text-[11px] font-semibold tracking-label text-dim">CO MÁ UMĚT — DOVEDNOSTI A NÁSTROJE</div>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {SKILLS.map((o) => (
+                  <Chip key={o.v} active={s.skills.includes(o.v)} onClick={() => toggle("skills", o.v)} hint={o.h}>{o.t}</Chip>
+                ))}
+              </div>
+              {recommended ? (
+                <p className="mt-2 text-[12px] leading-relaxed text-faint">
+                  Pro zaměření <span className="text-hr">{SPEC_TITLE[spec as string]}</span> se obvykle hodí: {recommended}. Jiné dovednosti klidně přidej — z pozice se pak stane křížená (a mzda i kontrola profilu to zohlední).
+                </p>
+              ) : (
+                <p className="mt-2 text-[12px] leading-relaxed text-faint">
+                  Doporučené dovednosti se ukážou, jakmile vyberete aspoň jeden úkol v „Co bude dělat“.
+                </p>
+              )}
+            </div>
+          </FieldGroup>
+
+          <FieldGroup title="Detaily a cíl">
+            <Field label="REGULACE — CO PLATÍ">
+              {REGS.map((o) => (
+                <Chip key={o.v} active={s.regs.includes(o.v)} onClick={() => toggle("regs", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+            <Field label="JAZYKY">
+              {JAZYKY.map((o) => (
+                <Chip key={o.v} active={s.jazyky.includes(o.v)} onClick={() => toggle("jazyky", o.v)} hint={o.h}>{o.t}</Chip>
+              ))}
+            </Field>
+            <div>
+              <div className="font-mono text-[11px] font-semibold tracking-label text-dim">MĚŘITELNÝ CÍL (PRVNÍ ÚKOL)</div>
+              <input
+                value={s.cil}
+                onChange={(e) => set("cil", e.target.value)}
+                placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
+                className="mt-2.5 w-full rounded-md border border-line bg-panel px-3.5 py-2.5 text-[14px] text-ink placeholder:text-faint focus:border-hr focus:outline-none"
+              />
               <p className="mt-2 text-[12px] leading-relaxed text-faint">
-                Doporučené dovednosti se ukážou, jakmile vyberete aspoň jeden úkol v „Co bude dělat“.
+                Tohle z popisů obvykle chybí — a přitom dělá obsah práce čitelným. Bez něj zůstane v náhledu závorka k doplnění.
               </p>
-            )}
-          </div>
-
-          <Field label="REGULACE — CO PLATÍ">
-            {REGS.map((o) => (
-              <Chip key={o.v} active={s.regs.includes(o.v)} onClick={() => toggle("regs", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-          <Field label="JAZYKY">
-            {JAZYKY.map((o) => (
-              <Chip key={o.v} active={s.jazyky.includes(o.v)} onClick={() => toggle("jazyky", o.v)} hint={o.h}>{o.t}</Chip>
-            ))}
-          </Field>
-
-          <div>
-            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">MĚŘITELNÝ CÍL (PRVNÍ ÚKOL)</div>
-            <input
-              value={s.cil}
-              onChange={(e) => set("cil", e.target.value)}
-              placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
-              className="mt-2.5 w-full rounded-md border border-line bg-panel px-3.5 py-2.5 text-[14px] text-ink placeholder:text-faint focus:border-hr focus:outline-none"
-            />
-            <p className="mt-2 text-[12px] leading-relaxed text-faint">
-              Tohle z popisů obvykle chybí — a přitom dělá obsah práce čitelným. Bez něj zůstane v náhledu závorka k doplnění.
-            </p>
-          </div>
+            </div>
+          </FieldGroup>
         </div>
 
         {/* Pravý sloupec — živý náhled */}
@@ -1057,13 +1057,13 @@ export default function JobBuilder() {
             </div>
           )}
 
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-ink">{jd.title}</h2>
+          <h2 className="mt-5 text-2xl font-semibold leading-snug tracking-tight text-ink">{jd.title}</h2>
           {jd.aliases && (
             <p className="mt-1.5 text-[12px] leading-relaxed text-faint">Jiné běžné názvy téže role: {jd.aliases}.</p>
           )}
 
           <PreviewBlock label="PROČ POZICI OTEVÍRÁME">
-            <p className="text-[14px] leading-relaxed text-dim">{jd.context}</p>
+            <p className="text-[14px] leading-relaxed text-ink">{jd.context}</p>
           </PreviewBlock>
 
           <PreviewBlock label="CO BUDETE DĚLAT">
@@ -1089,30 +1089,19 @@ export default function JobBuilder() {
             <MotionBullets items={jd.bonus.map((l) => ({ key: l, text: l }))} />
           </PreviewBlock>
 
-          <PreviewBlock label="ORIENTAČNÍ MZDA (DLE PROFILU)">
-            <div className="overflow-hidden rounded-md border border-line">
-              {jd.salary.steps.map((st, i) => (
-                <div key={i} className="border-b border-line px-3 py-2">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[13px] text-ink">{st.label}</span>
-                    <span className="flex-shrink-0 font-mono text-[13px] text-dim">{st.value}</span>
-                  </div>
-                  {st.why && <p className="mt-0.5 text-[11px] leading-relaxed text-faint">{st.why}</p>}
-                </div>
-              ))}
-              <div className="bg-raised px-3 py-2.5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-mono text-[11px] tracking-label text-faint">{jd.salary.resultLabel.toUpperCase()}</span>
-                  <span className="flex-shrink-0 font-mono text-[15px] font-semibold text-hr">{jd.salary.resultValue}</span>
-                </div>
-                {jd.salary.resultWhy && <p className="mt-1 text-[11px] leading-relaxed text-faint">{jd.salary.resultWhy}</p>}
+          <PreviewBlock label="ORIENTAČNÍ MZDA">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <div className="font-mono text-[26px] font-semibold leading-none text-hr">{jd.salary.headlineValue}</div>
+                <div className="mt-1.5 text-[11px] text-faint">{jd.salary.headlineLabel}</div>
               </div>
-            </div>
-            <div className="mt-3 space-y-1.5 text-[11px] leading-relaxed text-faint">
-              <p><span className="text-dim">Jak se počítá: </span>{jd.salary.method}</p>
-              <p><span className="text-dim">Region: </span>{jd.salary.region}</p>
-              <p><span className="text-dim">Forma: </span>{jd.salary.formaNote}</p>
-              <p>{jd.salary.caveat}</p>
+              <button
+                type="button"
+                onClick={() => setShowSalary(true)}
+                className="rounded-md border border-hr/50 px-3 py-2 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
+              >
+                DETAILNÍ KALKULACE →
+              </button>
             </div>
           </PreviewBlock>
 
@@ -1161,6 +1150,58 @@ export default function JobBuilder() {
           JIŘÍ MYNÁŘ — LINKEDIN
         </a>
       </p>
+
+      {/* Detailní kalkulace mzdy */}
+      {showSalary && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/75 px-4 py-6 sm:px-8"
+          onClick={() => setShowSalary(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="mx-auto w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
+            <Panel className="px-6 py-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <SectionLabel>Kalkulace mzdy</SectionLabel>
+                  <h3 className="mt-2 text-lg font-semibold leading-snug text-ink">{jd.title}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSalary(false)}
+                  className="flex-shrink-0 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+                >
+                  ZAVŘÍT ✕
+                </button>
+              </div>
+
+              <div className="mt-5 overflow-hidden rounded-md border border-line">
+                <table className="w-full text-[13px]">
+                  <tbody>
+                    {jd.salary.rows.map((r, i) => (
+                      <tr key={i} className={r.strong ? "bg-raised" : ""}>
+                        <td className="border-b border-line px-3.5 py-2.5 align-top">
+                          <div className={`text-[13px] ${r.strong ? "font-semibold text-ink" : "text-ink"}`}>{r.label}</div>
+                          {r.note && <div className="mt-1 text-[11px] leading-relaxed text-faint">{r.note}</div>}
+                        </td>
+                        <td className={`whitespace-nowrap border-b border-line px-3.5 py-2.5 text-right align-top font-mono ${r.strong ? "text-[14px] font-semibold text-hr" : "text-[13px] text-dim"}`}>
+                          {r.value}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 space-y-2 text-[12px] leading-relaxed text-faint">
+                <p><span className="font-semibold text-dim">Jak se počítá: </span>{jd.salary.method}</p>
+                <p><span className="font-semibold text-dim">Forma: </span>{jd.salary.formaNote}</p>
+                <p>{jd.salary.caveat}</p>
+              </div>
+            </Panel>
+          </div>
+        </div>
+      )}
 
       {/* Celkový náhled CV + export */}
       {showFull && (
