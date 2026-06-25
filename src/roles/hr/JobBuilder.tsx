@@ -281,28 +281,92 @@ function buildTitle(s: State, spec: string | null): string {
   return full.charAt(0).toUpperCase() + full.slice(1);
 }
 
-type Salary = { range: string; region: string; note: string; caveat: string };
+const LEVEL_LABEL: Record<string, string> = { junior: "junior", medior: "medior", senior: "senior" };
+const ARCH_LABEL: Record<string, string> = { koordinator: "koordinátor", specialista: "specialista", partner: "externí partner" };
+
+type SalaryStep = { label: string; value: string; why: string };
+type Salary = {
+  steps: SalaryStep[];
+  resultLabel: string;
+  resultValue: string;
+  resultWhy: string;
+  region: string;
+  formaNote: string;
+  method: string;
+  caveat: string;
+};
 
 function buildSalary(s: State, spec: string | null): Salary {
   const caveat =
-    "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Ověřte proti ISPV/CZ-ISCO.";
+    "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Čísla jsou orientační, ověřte proti ISPV/CZ-ISCO.";
   const hourly = s.archetype === "partner" || s.forma === "ext";
+
   if (hourly) {
     const h = ARCH_HOURLY[s.archetype][s.level];
-    const note =
+    const method =
+      "Postup: hodinová sazba podle role a seniority (kalibrace ISPV/CZ-ISCO a trh), upravená podle regionu. Externí kapacita se nepřepočítává na úvazek 1:1.";
+    const formaNote =
       s.archetype === "partner"
-        ? "Externí kapacita na kontrakt — fakturace za hodinu, ne mzda."
-        : "Externí spolupráce — fakturace za hodinu.";
-    return { range: `${h[0]}–${h[1]} Kč/h`, region: "Morava; Praha výš", note, caveat };
+        ? "Externí partner na kontrakt → fakturace za hodinu, ne mzda."
+        : "Externí spolupráce → fakturace za hodinu (Kč/h), ne měsíční mzda.";
+    return {
+      steps: [],
+      resultLabel: `Hodinová sazba — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
+      resultValue: `${h[0]}–${h[1]} Kč/h`,
+      resultWhy:
+        "Externí kapacita — sazba kryje i režii, daně a nárazovost, proto je výš než přepočet hrubé mzdy na hodinu.",
+      region: "Praha a nadnárodní firmy výš; Morava spíš spodní hranice.",
+      formaNote,
+      method,
+      caveat,
+    };
   }
+
   const base = ARCH_SALARY[s.archetype][s.level];
   const bonus = s.archetype === "specialista" && spec ? (SPEC_BONUS[spec] ?? 0) : 0;
   const lo = base[0] + bonus;
   const hi = base[1] + bonus;
-  let note = "";
-  if (s.archetype === "koordinator") note = "Generalista — adopce a koordinace, ne hloubkový build.";
-  else note = spec ? `Specialista na ${SPEC_TITLE[spec]}${bonus > 0 ? " — dráž placené zaměření." : "."}` : "Hands-on specialista.";
-  return { range: `${lo}–${hi} tis. Kč / měs.`, region: "Morava; Praha +15–25 %", note, caveat };
+
+  const steps: SalaryStep[] = [];
+  steps.push({
+    label: `Základní pásmo — ${LEVEL_LABEL[s.level]} ${ARCH_LABEL[s.archetype]}`,
+    value: `${base[0]}–${base[1]} tis.`,
+    why: "Tržní pásmo pro tuhle roli a senioritu na Moravě (kalibrace ISPV/CZ-ISCO). Senior je výš než junior, protože odřídí víc sám.",
+  });
+  if (s.archetype === "koordinator") {
+    steps.push({ label: "Příplatek za zaměření", value: "+0", why: "Koordinátor je generalista — konkrétní zaměření mzdu nemění." });
+  } else if (bonus > 0 && spec) {
+    steps.push({
+      label: `Příplatek za zaměření — ${SPEC_TITLE[spec]}`,
+      value: `+${bonus} tis.`,
+      why:
+        bonus >= 15
+          ? "Výrobní AI a počítačové vidění patří k nejvzácnějším a nejdráž placeným zaměřením — málo lidí to umí."
+          : "Data a integrace jsou hůř k sehnání než běžná administrativa, proto příplatek.",
+    });
+  } else if (spec) {
+    steps.push({
+      label: `Zaměření — ${SPEC_TITLE[spec]}`,
+      value: "+0",
+      why: "Automatizace, konverzace a obchod jsou na základní úrovni — bez příplatku.",
+    });
+  }
+
+  const method =
+    "Postup: (1) základní pásmo podle role a seniority, (2) příplatek za vzácnější zaměření, (3) úprava podle regionu a formy. Pásma jsou kalibrovaná na ISPV/CZ-ISCO a trh.";
+  const formaNote =
+    s.forma === "part" ? "Částečný úvazek → poměrná část měsíční mzdy." : "Plný úvazek → měsíční hrubá mzda.";
+
+  return {
+    steps,
+    resultLabel: "Výsledek (Morava)",
+    resultValue: `${lo}–${hi} tis. Kč / měs.`,
+    resultWhy: "",
+    region: "Praha a nadnárodní firmy +15–25 %; menší města a Morava spíš spodní hranice.",
+    formaNote,
+    method,
+    caveat,
+  };
 }
 
 type Line = { key: string; text: string };
@@ -461,9 +525,11 @@ function jdToText(jd: JD): string {
   jd.bonus.forEach((l) => L.push("• " + l));
   L.push("");
   L.push("ORIENTAČNÍ MZDA (DLE PROFILU)");
-  L.push("Rozpětí: " + jd.salary.range);
+  jd.salary.steps.forEach((st) => L.push(`- ${st.label}: ${st.value}` + (st.why ? " — " + st.why : "")));
+  L.push(`= ${jd.salary.resultLabel}: ${jd.salary.resultValue}` + (jd.salary.resultWhy ? " — " + jd.salary.resultWhy : ""));
+  L.push("Jak se počítá: " + jd.salary.method);
   L.push("Region: " + jd.salary.region);
-  if (jd.salary.note) L.push("Profil: " + jd.salary.note);
+  L.push("Forma: " + jd.salary.formaNote);
   L.push(jd.salary.caveat);
   L.push("");
   L.push("PRVNÍ ÚKOL / JAK POZNÁME ÚSPĚCH");
@@ -766,26 +832,29 @@ export default function JobBuilder() {
 
           <PreviewBlock label="ORIENTAČNÍ MZDA (DLE PROFILU)">
             <div className="overflow-hidden rounded-md border border-line">
-              <table className="w-full text-[13px]">
-                <tbody>
-                  <tr className="border-b border-line">
-                    <td className="px-3 py-2 align-top text-faint">Rozpětí</td>
-                    <td className="px-3 py-2 text-right font-mono font-semibold text-hr">{jd.salary.range}</td>
-                  </tr>
-                  <tr className={jd.salary.note ? "border-b border-line" : ""}>
-                    <td className="px-3 py-2 align-top text-faint">Region</td>
-                    <td className="px-3 py-2 text-right text-dim">{jd.salary.region}</td>
-                  </tr>
-                  {jd.salary.note && (
-                    <tr>
-                      <td className="px-3 py-2 align-top text-faint">Profil</td>
-                      <td className="px-3 py-2 text-right text-dim">{jd.salary.note}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              {jd.salary.steps.map((st, i) => (
+                <div key={i} className="border-b border-line px-3 py-2">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[13px] text-ink">{st.label}</span>
+                    <span className="flex-shrink-0 font-mono text-[13px] text-dim">{st.value}</span>
+                  </div>
+                  {st.why && <p className="mt-0.5 text-[11px] leading-relaxed text-faint">{st.why}</p>}
+                </div>
+              ))}
+              <div className="bg-raised px-3 py-2.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-mono text-[11px] tracking-label text-faint">{jd.salary.resultLabel.toUpperCase()}</span>
+                  <span className="flex-shrink-0 font-mono text-[15px] font-semibold text-hr">{jd.salary.resultValue}</span>
+                </div>
+                {jd.salary.resultWhy && <p className="mt-1 text-[11px] leading-relaxed text-faint">{jd.salary.resultWhy}</p>}
+              </div>
             </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-faint">{jd.salary.caveat}</p>
+            <div className="mt-3 space-y-1.5 text-[11px] leading-relaxed text-faint">
+              <p><span className="text-dim">Jak se počítá: </span>{jd.salary.method}</p>
+              <p><span className="text-dim">Region: </span>{jd.salary.region}</p>
+              <p><span className="text-dim">Forma: </span>{jd.salary.formaNote}</p>
+              <p>{jd.salary.caveat}</p>
+            </div>
           </PreviewBlock>
 
           <PreviewBlock label="PRVNÍ ÚKOL / JAK POZNÁME ÚSPĚCH">
