@@ -1,5 +1,6 @@
 import { ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { Eyebrow, Panel, Reveal } from "../../design/primitives";
 import { useSeo } from "../../lib/seo";
 
@@ -24,9 +25,9 @@ type State = {
 type SingleKey = "archetype" | "level" | "forma" | "focus" | "data" | "it" | "cil";
 
 const ARCHETYPY: Opt[] = [
-  { v: "koordinator", t: "Interní koordinátor" },
-  { v: "specialista", t: "Implementační specialista" },
-  { v: "partner", t: "Externí partner" },
+  { v: "koordinator", t: "Interní koordinátor", h: "Generalista, který táhne adopci a koordinuje. Vybírá hotové nástroje, vede piloty; hloubkový vývoj si přizve zvenčí." },
+  { v: "specialista", t: "Implementační specialista", h: "Hands-on člověk, který řešení reálně staví — mapuje, připraví data, postaví automatizaci či vyhledávání a napojí systémy." },
+  { v: "partner", t: "Externí partner", h: "Koupená kapacita na kontrakt — konzultant nebo dodavatel, ne zaměstnanec. Ohraničená spolupráce s předáním know-how." },
 ];
 const LEVELY: Opt[] = [
   { v: "junior", t: "Junior" },
@@ -204,16 +205,26 @@ const SPEC_ALIASES: Record<string, string> = {
 };
 const LEVEL_PREFIX: Record<string, string> = { junior: "junior ", medior: "", senior: "senior " };
 
-/** Orientační hrubá mzda (tis. Kč/měs., Morava) podle úrovně; zaměření přidává bonus. */
-const LEVEL_SALARY: Record<string, [number, number]> = {
-  junior: [40, 65],
-  medior: [65, 100],
-  senior: [95, 160],
+/** Archetyp mění víc než název — kontext, alternativní názvy, pásmo mzdy. */
+const ARCH_ALIASES: Record<string, string> = {
+  koordinator: "AI koordinátor, AI champion, interní AI lead",
+  partner: "AI konzultant, externí AI dodavatel, AI integrátor na kontrakt",
 };
-const HOURLY: Record<string, [number, number]> = {
-  junior: [800, 1200],
-  medior: [1200, 1800],
-  senior: [1800, 2800],
+const ARCH_LEAD: Record<string, string> = {
+  koordinator: "Hledáme člověka, který zavádění AI povede a zkoordinuje — rozhýbe lidi, vybere hotové nástroje a dotáhne piloty; hloubkový vývoj si v případě potřeby přizve zvenčí.",
+  specialista: "Hledáme člověka, který řešení reálně postaví — od mapování přes data a nástroje až k tomu, aby výsledek lidé používali.",
+  partner: "Hledáme externího partnera na konkrétní záměr — rychlý a ověřený start bez náborového rizika a s povinným předáním know-how.",
+};
+
+/** Orientační mzda podle profilu (Morava). Měsíčně v tis. Kč; pro externí/partnera hodinově v Kč. */
+const ARCH_SALARY: Record<string, Record<string, [number, number]>> = {
+  koordinator: { junior: [38, 58], medior: [55, 82], senior: [78, 115] },
+  specialista: { junior: [45, 70], medior: [68, 105], senior: [98, 160] },
+};
+const ARCH_HOURLY: Record<string, Record<string, [number, number]>> = {
+  koordinator: { junior: [650, 1000], medior: [950, 1450], senior: [1350, 2000] },
+  specialista: { junior: [850, 1250], medior: [1250, 1850], senior: [1750, 2700] },
+  partner: { junior: [1000, 1500], medior: [1500, 2200], senior: [2000, 3200] },
 };
 const SPEC_BONUS: Record<string, number> = {
   automatizace: 0, konverzace: 0, obchod: 0,
@@ -270,33 +281,42 @@ function buildTitle(s: State, spec: string | null): string {
   return full.charAt(0).toUpperCase() + full.slice(1);
 }
 
-function buildSalary(s: State, spec: string | null): string {
+type Salary = { range: string; region: string; note: string; caveat: string };
+
+function buildSalary(s: State, spec: string | null): Salary {
   const caveat =
     "Seniorita se v mladém oboru počítá podle dotažených projektů (typicky 3–5 let), ne podle 10 let praxe. Ověřte proti ISPV/CZ-ISCO.";
-  if (s.forma === "ext") {
-    const h = HOURLY[s.level];
-    return `Externě orientačně ${h[0]}–${h[1]} Kč/h (Morava; Praha výš). ${caveat}`;
+  const hourly = s.archetype === "partner" || s.forma === "ext";
+  if (hourly) {
+    const h = ARCH_HOURLY[s.archetype][s.level];
+    const note =
+      s.archetype === "partner"
+        ? "Externí kapacita na kontrakt — fakturace za hodinu, ne mzda."
+        : "Externí spolupráce — fakturace za hodinu.";
+    return { range: `${h[0]}–${h[1]} Kč/h`, region: "Morava; Praha výš", note, caveat };
   }
-  const base = LEVEL_SALARY[s.level];
-  const bonus = spec ? (SPEC_BONUS[spec] ?? 0) : 0;
+  const base = ARCH_SALARY[s.archetype][s.level];
+  const bonus = s.archetype === "specialista" && spec ? (SPEC_BONUS[spec] ?? 0) : 0;
   const lo = base[0] + bonus;
   const hi = base[1] + bonus;
-  const tier = spec
-    ? `Zaměření „${SPEC_TITLE[spec]}“ patří k ${bonus >= 15 ? "dráž" : bonus > 0 ? "mírně dráž" : "běžně"} placeným. `
-    : "";
-  return `Orientačně ${lo}–${hi} tis. Kč hrubého/měs. (Morava; Praha +15–25 %). ${tier}${caveat}`;
+  let note = "";
+  if (s.archetype === "koordinator") note = "Generalista — adopce a koordinace, ne hloubkový build.";
+  else note = spec ? `Specialista na ${SPEC_TITLE[spec]}${bonus > 0 ? " — dráž placené zaměření." : "."}` : "Hands-on specialista.";
+  return { range: `${lo}–${hi} tis. Kč / měs.`, region: "Morava; Praha +15–25 %", note, caveat };
 }
+
+type Line = { key: string; text: string };
 
 type JD = {
   title: string;
   aliases: string;
   context: string;
-  napln: string[];
+  napln: Line[];
   neni: string[];
   must: string[];
-  skills: string[];
+  skills: Line[];
   skillsNote: string;
-  salary: string;
+  salary: Salary;
   bonus: string[];
   prvni: string;
   forma: string;
@@ -306,39 +326,54 @@ function buildJD(s: State): JD {
   const spec = dominantSpec(s.tasks);
   const title = buildTitle(s, spec);
   let aliases = "";
-  if (s.archetype === "specialista" && spec) aliases = SPEC_ALIASES[spec];
+  if (s.archetype === "specialista") aliases = spec ? SPEC_ALIASES[spec] : "";
+  else aliases = ARCH_ALIASES[s.archetype];
 
   const cil = s.cil.trim();
   const cilText = cil
     ? `chceme ${cil}`
     : "chceme [doplňte konkrétní měřitelný cíl — např. zkrátit zpracování faktur z 8 na 3 minuty]";
-  const context =
-    `Jsme ${FOCUS_NOUN[s.focus]} a ${cilText}. Dnes ${DATA_PHRASE[s.data]}` +
-    (s.it === "ne" ? " a nemáme vlastní IT oddělení" : "") +
-    ". Hledáme člověka, který tenhle posun dotáhne od mapování přes data a nástroje až k tomu, aby výsledek lidé reálně používali.";
+  const itClause = s.it === "ne" ? " a nemáme vlastní IT oddělení" : "";
+  const context = `Jsme ${FOCUS_NOUN[s.focus]} a ${cilText}. Dnes ${DATA_PHRASE[s.data]}${itClause}. ${ARCH_LEAD[s.archetype]}`;
 
   const order: string[] = [];
   TASK_GROUPS.forEach((g) => g.items.forEach((it) => { if (s.tasks.includes(it.v)) order.push(it.v); }));
-  const napln = order.map((v) => TASK_LINE[v]);
+  const napln: Line[] = order.map((v) => ({ key: v, text: TASK_LINE[v] }));
 
   const heavyVyroba = s.tasks.some((t) => ["kvalita", "udrzba", "vyrReporting", "planovani", "iot"].includes(t));
 
+  // Co do role nepatří — podle archetypu
   const neni: string[] = [];
-  if (s.archetype !== "partner")
-    neni.push("Výzkum a trénink vlastních AI modelů od nuly — pracujete s hotovými nástroji a jejich napojením.");
+  if (s.archetype === "koordinator")
+    neni.push("Nestaví sám složité integrace ani vlastní modely — na hloubkový vývoj si přizve specialistu nebo externího partnera.");
+  else if (s.archetype === "partner")
+    neni.push("Není to dlouhodobý úvazek — jde o ohraničenou spolupráci s povinným předáním know-how, dat a přístupů.");
   else
-    neni.push("Není to dlouhodobý úvazek — jde o ohraničenou spolupráci s povinným předáním know-how.");
+    neni.push("Výzkum a trénink vlastních AI modelů od nuly — pracujete s hotovými nástroji a jejich napojením.");
   if (!s.tasks.includes("integrace") && s.it === "ano")
     neni.push("Správa serverů a síťové infrastruktury — to zůstává na IT oddělení.");
   if (!heavyVyroba)
-    neni.push("Vývoj pokročilé výrobní AI (strojové vidění, prediktivní údržba) — to je samostatný, výrazně dražší typ projektu mimo tuhle roli.");
+    neni.push("Vývoj pokročilé výrobní AI (strojové vidění, prediktivní údržba) — samostatný, výrazně dražší typ projektu mimo tuhle roli.");
   neni.push("Není to „samostatný projekt stranou“ — role stojí a padá se zapojením vlastníků procesů a vedení.");
 
-  const must: string[] = [
-    "Procesní myšlení — umí vzít činnost, popsat ji a najít číslo, které se má zlepšit.",
-    "Práce s daty — pozná, jestli jsou data použitelná, a ví, co s nimi udělat.",
-    "Srozumitelná komunikace — vysvětlí věc majiteli i člověku z provozu bez žargonu.",
-  ];
+  // Co musí umět — základ podle archetypu + podmíněné
+  const must: string[] = [];
+  if (s.archetype === "koordinator") {
+    must.push("Procesní myšlení — umí vzít činnost, popsat ji a najít číslo, které se má zlepšit.");
+    must.push("Vedení změny a adopce — rozhýbe lidi a dotáhne, aby nástroj opravdu používali.");
+    must.push("Pragmatický výběr hotových nástrojů — koupí, když to stačí, nestaví vše od nuly.");
+    must.push("Srozumitelná komunikace — vysvětlí věc majiteli i člověku z provozu bez žargonu.");
+  } else if (s.archetype === "partner") {
+    must.push("Doložitelné dodávky podobných projektů — reference a konkrétní výsledky, ne jen sliby.");
+    must.push("Práce s daty a hotovými nástroji rychle a bez zbytečného vendor lock-inu.");
+    must.push("Disciplína předání — dokumentace, export dat a přístupů, zaškolení interního týmu.");
+    must.push("Srozumitelná komunikace s majitelem i provozem.");
+  } else {
+    must.push("Procesní myšlení — umí vzít činnost, popsat ji a najít číslo, které se má zlepšit.");
+    must.push("Práce s daty — pozná, jestli jsou data použitelná, a ví, co s nimi udělat.");
+    must.push("Stavba řešení z hotových nástrojů — automatizace, vyhledávání nad dokumenty, napojení.");
+    must.push("Srozumitelná komunikace — vysvětlí věc majiteli i člověku z provozu bez žargonu.");
+  }
   if (s.tasks.includes("integrace") || s.it === "ne")
     must.push("Orientace v napojování nástrojů na systémy (API, import a export dat).");
   if (s.data === "papir" || s.data === "excel")
@@ -354,28 +389,46 @@ function buildJD(s: State): JD {
     const names = langs.map((j) => JAZYKY.find((x) => x.v === j)?.t ?? "").filter((n) => n).join(", ");
     must.push(`Práce s texty v dalších jazycích: ${names}.`);
   }
-  if (s.archetype === "specialista" && s.level !== "junior")
-    must.push("Praktická zkušenost se stavbou AI/automatizačních řešení — vyhledávání nad dokumenty, automatizace, integrace.");
-  if (s.level === "junior")
-    must.push("Stačí základní praxe v jedné z oblastí výše — zbytek se doučí pod vedením zkušenějšího kolegy.");
-  else if (s.level === "senior")
-    must.push("Samostatně navrhne řešení od architektury po nasazení a vede či mentoruje ostatní.");
+  if (s.archetype === "specialista") {
+    if (s.level === "junior") must.push("Stačí základní praxe v jedné z oblastí výše — zbytek se doučí pod vedením zkušenějšího kolegy.");
+    else if (s.level === "senior") must.push("Samostatně navrhne řešení od architektury po nasazení a vede či mentoruje ostatní.");
+    else must.push("Praktická zkušenost se stavbou AI/automatizačních řešení — automatizace, vyhledávání nad dokumenty, integrace.");
+  } else if (s.archetype === "koordinator") {
+    if (s.level === "junior") must.push("Stačí základní praxe a chuť učit se — vede menší piloty pod dohledem.");
+    else if (s.level === "senior") must.push("Samostatně vede více iniciativ najednou a koordinuje i externí dodavatele.");
+  } else {
+    if (s.level === "senior") must.push("Samostatně odřídí celý záměr od návrhu po předání internímu týmu.");
+  }
 
-  const skills = SKILLS.filter((k) => s.skills.includes(k.v)).map((k) => SKILL_LINE[k.v]);
+  const skills: Line[] = SKILLS.filter((k) => s.skills.includes(k.v)).map((k) => ({ key: k.v, text: SKILL_LINE[k.v] }));
   const skillsNote = s.level === "junior" ? "U juniora berte technické dovednosti spíš jako výhodu než tvrdou podmínku." : "";
 
-  const bonus: string[] = [
-    "Konkrétní stack podle toho, co budete stavět (Python, automatizační platformy, datové nástroje) — výhoda, ne podmínka.",
-    "Zkušenost z vašeho oboru nebo s podobně velkou firmou.",
-  ];
+  // Výhodou — podle archetypu
+  const bonus: string[] = [];
+  if (s.archetype === "koordinator") {
+    bonus.push("Zkušenost s vedením změny a školením lidí.");
+    bonus.push("Přehled v hotových AI nástrojích na trhu a jejich limitech.");
+  } else if (s.archetype === "partner") {
+    bonus.push("Zkušenost s nasazením u firem podobné velikosti.");
+    bonus.push("Schopnost zaškolit interní tým na převzetí provozu.");
+  } else {
+    bonus.push("Konkrétní stack podle toho, co budete stavět (Python, automatizační platformy, datové nástroje) — výhoda, ne podmínka.");
+    bonus.push("Zkušenost z vašeho oboru nebo s podobně velkou firmou.");
+  }
   if (!s.regs.includes("aiakt") && !s.regs.includes("gdpr")) bonus.push("Přehled v GDPR a AI Actu.");
-  if (s.archetype === "koordinator") bonus.push("Zkušenost s vedením změny a školením lidí.");
 
   const salary = buildSalary(s, spec);
 
-  const prvni = cil
-    ? `Do 3 měsíců: ${cil}. Konkrétně dotáhnout jeden pilot na jednom procesu s předem dohodnutým měřitelným kritériem a změřeným výchozím stavem.`
-    : "Do 3 měsíců dotáhnout jeden pilot na jednom procesu — s předem dohodnutým měřitelným kritériem a změřeným výchozím stavem. [Doplňte konkrétní cíl v poli vlevo.]";
+  let prvni: string;
+  if (s.archetype === "partner") {
+    prvni = cil
+      ? `Ohraničený pilot s cílem „${cil}“ a měřitelným kritériem — a předání dokumentace, dat a přístupů internímu týmu.`
+      : "Ohraničený pilot na jednom procesu s měřitelným kritériem — a předání dokumentace, dat a přístupů internímu týmu. [Doplňte konkrétní cíl v poli vlevo.]";
+  } else {
+    prvni = cil
+      ? `Do 3 měsíců: ${cil}. Konkrétně dotáhnout jeden pilot na jednom procesu s předem dohodnutým měřitelným kritériem a změřeným výchozím stavem.`
+      : "Do 3 měsíců dotáhnout jeden pilot na jednom procesu — s předem dohodnutým měřitelným kritériem a změřeným výchozím stavem. [Doplňte konkrétní cíl v poli vlevo.]";
+  }
 
   const forma =
     `Forma: ${FORMA_LABEL[s.forma]}. Zázemí: sponzor z vedení, vyhrazený čas vlastníků procesů` +
@@ -394,29 +447,32 @@ function jdToText(jd: JD): string {
   L.push(jd.context);
   L.push("");
   L.push("CO BUDETE DĚLAT");
-  (jd.napln.length ? jd.napln : ["[Vyberte úkoly v nástroji.]"]).forEach((l) => L.push("• " + l));
-  L.push("");
-  L.push("CO NENÍ NÁPLNÍ");
-  jd.neni.forEach((l) => L.push("• " + l));
+  (jd.napln.length ? jd.napln.map((x) => x.text) : ["[Vyberte úkoly v nástroji.]"]).forEach((l) => L.push("• " + l));
   L.push("");
   L.push("CO MUSÍTE UMĚT");
   jd.must.forEach((l) => L.push("• " + l));
   if (jd.skills.length) {
     L.push("");
     L.push("TECHNICKÉ DOVEDNOSTI" + (jd.skillsNote ? " — " + jd.skillsNote : ""));
-    jd.skills.forEach((l) => L.push("• " + l));
+    jd.skills.forEach((l) => L.push("• " + l.text));
   }
   L.push("");
   L.push("VÝHODOU");
   jd.bonus.forEach((l) => L.push("• " + l));
   L.push("");
-  L.push("ORIENTAČNÍ MZDA");
-  L.push(jd.salary);
+  L.push("ORIENTAČNÍ MZDA (DLE PROFILU)");
+  L.push("Rozpětí: " + jd.salary.range);
+  L.push("Region: " + jd.salary.region);
+  if (jd.salary.note) L.push("Profil: " + jd.salary.note);
+  L.push(jd.salary.caveat);
   L.push("");
   L.push("PRVNÍ ÚKOL / JAK POZNÁME ÚSPĚCH");
   L.push(jd.prvni);
   L.push("");
   L.push(jd.forma);
+  L.push("");
+  L.push("MIMO ROZSAH — CO DO ROLE NEPATŘÍ");
+  jd.neni.forEach((l) => L.push("✕ " + l));
   return L.join("\n");
 }
 
@@ -456,15 +512,37 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Bullets({ items }: { items: string[] }) {
+/** Animovaný seznam — položka vjede (fade + sjetí + krátké zvýraznění) a při odebrání vyjede. */
+function MotionBullets({
+  items,
+  marker = "•",
+  tone = "text-hr",
+  dim = false,
+  flash = "rgba(255,136,150,0.14)",
+}: {
+  items: Line[];
+  marker?: string;
+  tone?: string;
+  dim?: boolean;
+  flash?: string;
+}) {
   return (
-    <ul className="space-y-2">
-      {items.map((l, i) => (
-        <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-ink">
-          <span className="mt-px text-hr" aria-hidden>•</span>
-          <span>{l}</span>
-        </li>
-      ))}
+    <ul>
+      <AnimatePresence initial={false}>
+        {items.map((it) => (
+          <motion.li
+            key={it.key}
+            initial={{ opacity: 0, height: 0, x: -8, backgroundColor: flash }}
+            animate={{ opacity: 1, height: "auto", x: 0, backgroundColor: "rgba(0,0,0,0)" }}
+            exit={{ opacity: 0, height: 0, x: -8 }}
+            transition={{ duration: 0.22, ease: "easeOut", backgroundColor: { duration: 0.7, ease: "easeOut" } }}
+            className={`flex gap-2.5 overflow-hidden rounded px-1 pb-2 text-[14px] leading-relaxed ${dim ? "text-dim" : "text-ink"}`}
+          >
+            <span className={`mt-px ${tone}`} aria-hidden>{marker}</span>
+            <span>{it.text}</span>
+          </motion.li>
+        ))}
+      </AnimatePresence>
     </ul>
   );
 }
@@ -531,13 +609,13 @@ export default function JobBuilder() {
           </h1>
           <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-dim">
             Z běžného inzerátu nejde poznat, co je vlastně náplň práce. Tady to jde obráceně: nakliknete, co
-            ten člověk bude doopravdy dělat a v jakém prostředí, a vznikne popis, kde každý řádek odpovídá
-            konkrétní činnosti — včetně toho, co náplní <span className="text-ink">není</span>, a měřitelného
-            prvního úkolu.
+            ten člověk bude doopravdy dělat a v jakém prostředí, a vpravo se skládá popis — každý zatržený řádek
+            do něj vjede, takže rovnou vidíte, co která volba přidá.
           </p>
           <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-dim">
             „Specialista“ navíc není jedna pozice — záleží na <span className="text-ink">zaměření</span> (co
-            staví) a <span className="text-ink">úrovni</span> (jak hluboko). Obojí se promítne do názvu, požadavků i mzdy.
+            staví) a <span className="text-ink">úrovni</span> (jak hluboko). A na tom, koho hledáte: koordinátor,
+            specialista a externí partner mají jiné požadavky, jinou náplň i jinou mzdu.
           </p>
           <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-faint">
             Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení.
@@ -603,7 +681,7 @@ export default function JobBuilder() {
                 </div>
               ))}
             </div>
-            {spec && (
+            {s.archetype === "specialista" && spec && (
               <p className="mt-3 text-[12px] leading-relaxed text-faint">
                 Z vybraných úkolů vychází zaměření: <span className="text-hr">{SPEC_TITLE[spec]}</span> — promítne se do názvu pozice i mzdy.
               </p>
@@ -665,33 +743,49 @@ export default function JobBuilder() {
 
           <PreviewBlock label="CO BUDETE DĚLAT">
             {jd.napln.length ? (
-              <Bullets items={jd.napln} />
+              <MotionBullets items={jd.napln} />
             ) : (
-              <p className="text-[14px] italic leading-relaxed text-faint">Vyberte vlevo aspoň jeden úkol — náplň se sem propíše.</p>
+              <p className="text-[14px] italic leading-relaxed text-faint">Vyberte vlevo aspoň jeden úkol — náplň sem vjede.</p>
             )}
           </PreviewBlock>
 
-          <PreviewBlock label="CO NENÍ NÁPLNÍ">
-            <Bullets items={jd.neni} />
-          </PreviewBlock>
-
           <PreviewBlock label="CO MUSÍTE UMĚT">
-            <Bullets items={jd.must} />
+            <MotionBullets items={jd.must.map((l) => ({ key: l, text: l }))} />
           </PreviewBlock>
 
           {jd.skills.length > 0 && (
             <PreviewBlock label="TECHNICKÉ DOVEDNOSTI">
               {jd.skillsNote && <p className="mb-2 text-[12px] italic leading-relaxed text-faint">{jd.skillsNote}</p>}
-              <Bullets items={jd.skills} />
+              <MotionBullets items={jd.skills} />
             </PreviewBlock>
           )}
 
           <PreviewBlock label="VÝHODOU">
-            <Bullets items={jd.bonus} />
+            <MotionBullets items={jd.bonus.map((l) => ({ key: l, text: l }))} />
           </PreviewBlock>
 
-          <PreviewBlock label="ORIENTAČNÍ MZDA">
-            <p className="text-[14px] leading-relaxed text-ink">{jd.salary}</p>
+          <PreviewBlock label="ORIENTAČNÍ MZDA (DLE PROFILU)">
+            <div className="overflow-hidden rounded-md border border-line">
+              <table className="w-full text-[13px]">
+                <tbody>
+                  <tr className="border-b border-line">
+                    <td className="px-3 py-2 align-top text-faint">Rozpětí</td>
+                    <td className="px-3 py-2 text-right font-mono font-semibold text-hr">{jd.salary.range}</td>
+                  </tr>
+                  <tr className={jd.salary.note ? "border-b border-line" : ""}>
+                    <td className="px-3 py-2 align-top text-faint">Region</td>
+                    <td className="px-3 py-2 text-right text-dim">{jd.salary.region}</td>
+                  </tr>
+                  {jd.salary.note && (
+                    <tr>
+                      <td className="px-3 py-2 align-top text-faint">Profil</td>
+                      <td className="px-3 py-2 text-right text-dim">{jd.salary.note}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-faint">{jd.salary.caveat}</p>
           </PreviewBlock>
 
           <PreviewBlock label="PRVNÍ ÚKOL / JAK POZNÁME ÚSPĚCH">
@@ -699,6 +793,23 @@ export default function JobBuilder() {
           </PreviewBlock>
 
           <p className="mt-6 border-t border-line pt-4 text-[13px] leading-relaxed text-faint">{jd.forma}</p>
+
+          {/* Mimo rozsah — odlišený blok dole, ať je jasné, že tohle do role nepatří */}
+          <div className="mt-6 rounded-md border border-dashed border-line bg-bg/40 px-4 py-3">
+            <div className="font-mono text-[10px] font-semibold tracking-label text-faint">MIMO ROZSAH · CO DO ROLE NEPATŘÍ</div>
+            <div className="mt-2">
+              <MotionBullets
+                items={jd.neni.map((l) => ({ key: l, text: l }))}
+                marker="✕"
+                tone="text-stop"
+                dim
+                flash="rgba(146,166,187,0.12)"
+              />
+            </div>
+            <p className="mt-1 text-[11px] italic leading-relaxed text-faint">
+              Tyhle body píšeme do popisu schválně — aby bylo jasné, co po člověku nečekat.
+            </p>
+          </div>
         </Panel>
       </div>
 
