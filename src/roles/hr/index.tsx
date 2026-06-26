@@ -1,26 +1,14 @@
 import { ReactNode } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import { Eyebrow, Panel, Reveal } from "../../design/primitives";
+import { Accordion, AccordionItemData } from "../../design/Accordion";
 import { useSeo } from "../../lib/seo";
 import JobBuilder from "./JobBuilder";
 
 /** Modul HR — náborový playbook pro AI specialistu/integrátora. Bez vazeb na ostatní role. */
 
-function Section({ kicker, title, intro, children }: {
-  kicker: string; title: string; intro?: string; children: ReactNode;
-}) {
-  return (
-    <section className="mt-16 border-t border-line pt-10">
-      <Eyebrow tone="text-hr">{kicker}</Eyebrow>
-      <h2 className="mt-2.5 text-2xl font-semibold tracking-tight sm:text-[28px]">{title}</h2>
-      {intro && <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-dim">{intro}</p>}
-      <div className="mt-8">{children}</div>
-    </section>
-  );
-}
-
 function SubHead({ children, tone = "text-faint" }: { children: ReactNode; tone?: string }) {
-  return <h3 className={`mt-12 font-mono text-[11px] font-semibold tracking-label ${tone}`}>{children}</h3>;
+  return <h3 className={`mt-10 font-mono text-[11px] font-semibold tracking-label ${tone}`}>{children}</h3>;
 }
 
 function CheckList({ items, marker, tone }: { items: string[]; marker: string; tone: string }) {
@@ -136,6 +124,176 @@ function Guide() {
     "HR / nábor — koho hledat na AI a jak ho poznat | Velín",
     "Náborový playbook: koho vlastně hledat na AI, co musí umět, co psát a nepsat do inzerátu, jak vést pohovor, orientační mzdy v ČR a prvních 90 dní."
   );
+
+  const sections: AccordionItemData[] = [
+    {
+      id: "archetypy",
+      kicker: "KOHO HLEDÁTE",
+      title: "Tři archetypy — vyberte podle sebe, ne podle katalogu",
+      teaser: "„Člověk na AI“ není jedna profese. Pro menší a střední firmu dávají smysl tři různé typy — a volba mezi nimi je nejdůležitější náborové rozhodnutí.",
+      content: (
+        <>
+          <div className="space-y-7">
+            {ARCHETYPES.map((ar) => (
+              <div key={ar.name} className="border-l-2 border-hr pl-4">
+                <h4 className="text-[15px] font-semibold text-ink">{ar.name}</h4>
+                <p className="mt-1 text-[14px] leading-relaxed text-dim">{ar.tag}</p>
+                <p className="mt-2 text-[14px] leading-relaxed text-ink"><span className="font-semibold text-ok">Kdy sedí — </span>{ar.fit}</p>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-faint">{ar.risk}</p>
+              </div>
+            ))}
+          </div>
+
+          <SubHead tone="text-hr">SPECIALISTA NENÍ JEDNA POZICE</SubHead>
+          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-dim">
+            „Implementační specialista“ je zastřešující název pro celou rodinu rolí. Liší se ve dvou osách —
+            čím se zabývá (zaměření) a jak hluboko to umí (úroveň). Hledat „AI specialistu“ obecně je jako
+            hledat „inženýra“: musíte říct na co a jak seniorního.
+          </p>
+          <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+            <div>
+              <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ZAMĚŘENÍ — CO STAVÍ</div>
+              <ul className="mt-3 space-y-2">
+                {SPECIALIZACE.map((sp, i) => (
+                  <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-ink">
+                    <span className="mt-px text-hr" aria-hidden>•</span>
+                    <span>{sp}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ÚROVEŇ — JAK HLUBOKO</div>
+              <div className="mt-3 space-y-3">
+                {UROVNE.map((u) => (
+                  <div key={u.t}>
+                    <div className="text-[14px] font-semibold text-ink">{u.t}</div>
+                    <div className="mt-0.5 text-[13px] leading-relaxed text-dim">{u.d}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="mt-6 max-w-2xl text-[14px] leading-relaxed text-ink">
+            Vyberte zaměření podle své reálné práce a úroveň podle složitosti — ne jedním inzerátem všechno.
+            Konkrétní profil i s názvem pozice a orientační mzdou vám z toho složí{" "}
+            <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěč popisu pozice</Link>.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "co-musi-umet",
+      kicker: "CO MUSÍ UMĚT",
+      title: "Schopnosti, ne tituly",
+      teaser: "Na nasazení hotových AI nástrojů nepotřebujete ML výzkumníka s doktorátem. Potřebujete procesní myšlení, práci s daty a řeč s lidmi. Stack je až bonus.",
+      content: (
+        <>
+          <SubHead tone="text-hr">MUSÍ MÍT</SubHead>
+          <CheckList items={MUST} marker="✓" tone="text-hr" />
+          <SubHead>BONUS PODLE VAŠICH ZÁMĚRŮ</SubHead>
+          <CheckList items={BONUS} marker="+" tone="text-faint" />
+        </>
+      ),
+    },
+    {
+      id: "inzerat",
+      kicker: "INZERÁT",
+      title: "Co do inzerátu napsat — a co ne",
+      teaser: "Dobrý inzerát přitáhne realisty s praxí a odradí blufaře. Špatný dělá pravý opak. Rozdíl není v délce, ale v konkrétnosti.",
+      content: (
+        <>
+          <SubHead tone="text-ok">NAPIŠTE KONKRÉTNĚ</SubHead>
+          <CheckList items={AD_DO} marker="✓" tone="text-ok" />
+          <SubHead tone="text-stop">NEPOŽADUJTE</SubHead>
+          <CheckList items={AD_DONT} marker="✕" tone="text-stop" />
+
+          <Panel className="mt-10 px-5 py-4">
+            <div className="font-mono text-[11px] tracking-label text-faint">KOSTRA INZERÁTU</div>
+            <div className="mt-3 space-y-2.5 text-[14px] leading-relaxed text-dim">
+              <p><span className="font-semibold text-ink">Co řešíme:</span> [váš cíl jednou větou — např. zkrátit zpracování faktur z 8 na 3 minuty].</p>
+              <p><span className="font-semibold text-ink">Kde jsme teď:</span> [stav dat a systémů — např. Pohoda a hodně Excelu, bez vlastního IT].</p>
+              <p><span className="font-semibold text-ink">První úkol:</span> [pilot na jednom procesu s měřitelným kritériem].</p>
+              <p><span className="font-semibold text-ink">Zázemí:</span> [sponzor z vedení, vyhrazený čas vlastníků procesů].</p>
+              <p><span className="font-semibold text-ink">Koho hledáme:</span> [zaměření a úroveň — viz výše], ne seznam buzzwordů.</p>
+            </div>
+          </Panel>
+
+          <p className="mt-5 text-[14px] leading-relaxed text-dim">
+            Nechcete to skládat ručně?{" "}
+            <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">Sestavte popis pozice nástrojem →</Link>
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "pohovor",
+      kicker: "POHOVOR",
+      title: "Otázky, na kterých poznáte praxi od prezentace",
+      teaser: "U každé otázky je odpověď, kterou chcete slyšet, a varovný signál. Nejde o znalostní kvíz — jde o způsob myšlení.",
+      content: (
+        <>
+          <div className="space-y-6">
+            {INTERVIEW.map((item, i) => (
+              <div key={i} className="border-l-2 border-hr pl-4">
+                <p className="text-[15px] font-semibold leading-snug text-ink">„{item.q}“</p>
+                <p className="mt-2 text-[14px] leading-relaxed text-ink"><span className="font-semibold text-ok">Chcete slyšet — </span>{item.good}</p>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-dim"><span className="font-semibold text-stop">Varovný signál — </span>{item.flag}</p>
+              </div>
+            ))}
+          </div>
+
+          <SubHead tone="text-stop">ČERVENÉ VLAJKY U KANDIDÁTA</SubHead>
+          <CheckList items={CANDIDATE_FLAGS} marker="✕" tone="text-stop" />
+        </>
+      ),
+    },
+    {
+      id: "mzdy",
+      kicker: "KOLIK TO STOJÍ",
+      title: "Orientační mzdová rozpětí (ČR)",
+      teaser: "Hrubá měsíční mzda podle typu role. Vodítko, ne tabulka — názvy se liší firma od firmy a rozhoduje seniorita, region i obor.",
+      content: (
+        <>
+          <div className="divide-y divide-line border-y border-line">
+            {SALARY.map((sal) => (
+              <div key={sal.role} className="grid grid-cols-1 gap-x-6 gap-y-1 py-4 sm:grid-cols-[1fr_auto]">
+                <div>
+                  <div className="text-[14px] font-semibold text-ink">{sal.role}</div>
+                  <div className="mt-1 text-[13px] leading-relaxed text-dim">{sal.note}</div>
+                </div>
+                <div className="font-mono text-[15px] font-semibold text-hr sm:text-right">{sal.range}</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 max-w-2xl text-[13px] leading-relaxed text-faint">
+            Pozor na seniority v mladém oboru: „senior“ tu znamená zhruba 3–5 let s dotaženými projekty, ne 10 let —
+            roky v inzerátu nepřeceňujte. Dráž bývají zaměření na výrobní AI a vidění, data a integrace; levněji
+            administrativa a obsah. Mimo Prahu počítejte typicky o 15–25 % níž a rozpětí ověřte proti ISPV/CZ-ISCO.
+            Nejdražší chyba je zaplatit výzkumníka, když potřebujete integrátora. Odhad podle zaměření i úrovně dostanete ve{" "}
+            <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěči popisu pozice</Link>.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "prvnich-90-dni",
+      kicker: "PRVNÍCH 90 DNÍ",
+      title: "Co má nový člověk zvládnout — a co po něm nečekat",
+      teaser: "Nejčastější chyba po nástupu je čekat nasazený nástroj do měsíce. Dobrý začátek: nejdřív pochopit, pak měřit, pak teprve stavět.",
+      content: (
+        <div className="space-y-7">
+          {ONBOARDING.map((o) => (
+            <div key={o.title} className="border-l-2 border-hr pl-4">
+              <h4 className="text-[15px] font-semibold text-ink">{o.title}</h4>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-dim">{o.body}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
       <header>
@@ -178,161 +336,15 @@ function Guide() {
         </Panel>
       </Reveal>
 
-      <Section
-        kicker="KOHO HLEDÁTE"
-        title="Tři archetypy — vyberte podle sebe, ne podle katalogu"
-        intro="„Člověk na AI“ není jedna profese. Pro menší a střední firmu dávají smysl tři různé typy — a volba mezi nimi je tím nejdůležitějším náborovým rozhodnutím."
-      >
-        <div className="space-y-7">
-          {ARCHETYPES.map((ar, i) => (
-            <Reveal key={ar.name} delay={i * 0.03}>
-              <div className="border-l-2 border-hr pl-4">
-                <h4 className="text-[15px] font-semibold text-ink">{ar.name}</h4>
-                <p className="mt-1 text-[14px] leading-relaxed text-dim">{ar.tag}</p>
-                <p className="mt-2 text-[14px] leading-relaxed text-ink"><span className="font-semibold text-ok">Kdy sedí — </span>{ar.fit}</p>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-faint">{ar.risk}</p>
-              </div>
-            </Reveal>
-          ))}
+      <Reveal className="mt-12">
+        <div className="mb-5">
+          <h2 className="text-[15px] font-semibold tracking-tight text-ink">Vyberte si, co vás zajímá</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-faint">
+            Klikněte na sekci a rozbalí se. Otevřená je vždy jedna, ať se z příručky nestane dlouhý text.
+          </p>
         </div>
-
-        <SubHead tone="text-hr">SPECIALISTA NENÍ JEDNA POZICE</SubHead>
-        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-dim">
-          „Implementační specialista“ je zastřešující název pro celou rodinu rolí. Liší se ve dvou osách —
-          čím se zabývá (zaměření) a jak hluboko to umí (úroveň). Hledat „AI specialistu“ obecně je jako
-          hledat „inženýra“: musíte říct na co a jak seniorního.
-        </p>
-        <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-          <div>
-            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ZAMĚŘENÍ — CO STAVÍ</div>
-            <ul className="mt-3 space-y-2">
-              {SPECIALIZACE.map((sp, i) => (
-                <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-ink">
-                  <span className="mt-px text-hr" aria-hidden>•</span>
-                  <span>{sp}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <div className="font-mono text-[11px] font-semibold tracking-label text-faint">ÚROVEŇ — JAK HLUBOKO</div>
-            <div className="mt-3 space-y-3">
-              {UROVNE.map((u) => (
-                <div key={u.t}>
-                  <div className="text-[14px] font-semibold text-ink">{u.t}</div>
-                  <div className="mt-0.5 text-[13px] leading-relaxed text-dim">{u.d}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <p className="mt-6 max-w-2xl text-[14px] leading-relaxed text-ink">
-          Vyberte zaměření podle své reálné práce a úroveň podle složitosti — ne jedním inzerátem všechno.
-          Konkrétní profil i s názvem pozice a orientační mzdou vám z toho složí{" "}
-          <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěč popisu pozice</Link>.
-        </p>
-      </Section>
-
-      <Section
-        kicker="CO MUSÍ UMĚT"
-        title="Schopnosti, ne tituly"
-        intro="Na nasazení hotových AI nástrojů nepotřebujete ML výzkumníka s doktorátem. Potřebujete někoho, kdo myslí v procesech a datech a umí mluvit s lidmi. Specifický stack je až bonus."
-      >
-        <SubHead tone="text-hr">MUSÍ MÍT</SubHead>
-        <CheckList items={MUST} marker="✓" tone="text-hr" />
-        <SubHead>BONUS PODLE VAŠICH ZÁMĚRŮ</SubHead>
-        <CheckList items={BONUS} marker="+" tone="text-faint" />
-      </Section>
-
-      <Section
-        kicker="INZERÁT"
-        title="Co do inzerátu napsat — a co ne"
-        intro="Dobrý inzerát přitáhne realisty s praxí a odradí blufaře. Špatný dělá pravý opak. Rozdíl není v délce, ale v konkrétnosti."
-      >
-        <SubHead tone="text-ok">NAPIŠTE KONKRÉTNĚ</SubHead>
-        <CheckList items={AD_DO} marker="✓" tone="text-ok" />
-        <SubHead tone="text-stop">NEPOŽADUJTE</SubHead>
-        <CheckList items={AD_DONT} marker="✕" tone="text-stop" />
-
-        <Panel className="mt-10 px-5 py-4">
-          <div className="font-mono text-[11px] tracking-label text-faint">KOSTRA INZERÁTU</div>
-          <div className="mt-3 space-y-2.5 text-[14px] leading-relaxed text-dim">
-            <p><span className="font-semibold text-ink">Co řešíme:</span> [váš cíl jednou větou — např. zkrátit zpracování faktur z 8 na 3 minuty].</p>
-            <p><span className="font-semibold text-ink">Kde jsme teď:</span> [stav dat a systémů — např. Pohoda a hodně Excelu, bez vlastního IT].</p>
-            <p><span className="font-semibold text-ink">První úkol:</span> [pilot na jednom procesu s měřitelným kritériem].</p>
-            <p><span className="font-semibold text-ink">Zázemí:</span> [sponzor z vedení, vyhrazený čas vlastníků procesů].</p>
-            <p><span className="font-semibold text-ink">Koho hledáme:</span> [zaměření a úroveň — viz výše], ne seznam buzzwordů.</p>
-          </div>
-        </Panel>
-
-        <p className="mt-5 text-[14px] leading-relaxed text-dim">
-          Nechcete to skládat ručně?{" "}
-          <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">Sestavte popis pozice nástrojem →</Link>
-        </p>
-      </Section>
-
-      <Section
-        kicker="POHOVOR"
-        title="Otázky, na kterých poznáte praxi od prezentace"
-        intro="U každé otázky je odpověď, kterou chcete slyšet, a varovný signál. Nejde o znalostní kvíz — jde o způsob myšlení."
-      >
-        <div className="space-y-6">
-          {INTERVIEW.map((item, i) => (
-            <Reveal key={i} delay={i * 0.02}>
-              <div className="border-l-2 border-hr pl-4">
-                <p className="text-[15px] font-semibold leading-snug text-ink">„{item.q}“</p>
-                <p className="mt-2 text-[14px] leading-relaxed text-ink"><span className="font-semibold text-ok">Chcete slyšet — </span>{item.good}</p>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-dim"><span className="font-semibold text-stop">Varovný signál — </span>{item.flag}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        <SubHead tone="text-stop">ČERVENÉ VLAJKY U KANDIDÁTA</SubHead>
-        <CheckList items={CANDIDATE_FLAGS} marker="✕" tone="text-stop" />
-      </Section>
-
-      <Section
-        kicker="KOLIK TO STOJÍ"
-        title="Orientační mzdová rozpětí (ČR)"
-        intro="Hrubá měsíční mzda podle typu role. Čísla berte jako vodítko, ne jako tabulku — názvy pozic se liší firma od firmy a rozhoduje seniorita, region i obor."
-      >
-        <div className="divide-y divide-line border-y border-line">
-          {SALARY.map((s) => (
-            <div key={s.role} className="grid grid-cols-1 gap-x-6 gap-y-1 py-4 sm:grid-cols-[1fr_auto]">
-              <div>
-                <div className="text-[14px] font-semibold text-ink">{s.role}</div>
-                <div className="mt-1 text-[13px] leading-relaxed text-dim">{s.note}</div>
-              </div>
-              <div className="font-mono text-[15px] font-semibold text-hr sm:text-right">{s.range}</div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-5 max-w-2xl text-[13px] leading-relaxed text-faint">
-          Pozor na seniority v mladém oboru: „senior“ tu znamená zhruba 3–5 let s dotaženými projekty, ne 10 let —
-          roky v inzerátu nepřeceňujte. Dráž bývají zaměření na výrobní AI a vidění, data a integrace; levněji
-          administrativa a obsah. Mimo Prahu počítejte typicky o 15–25 % níž a rozpětí ověřte proti ISPV/CZ-ISCO.
-          Nejdražší chyba je zaplatit výzkumníka, když potřebujete integrátora. Odhad podle zaměření i úrovně dostanete ve{" "}
-          <Link to="/hr/popis" className="font-semibold text-hr underline decoration-hr/40 underline-offset-4 hover:text-ink">stavěči popisu pozice</Link>.
-        </p>
-      </Section>
-
-      <Section
-        kicker="PRVNÍCH 90 DNÍ"
-        title="Co má nový člověk zvládnout — a co po něm nečekat"
-        intro="Nejčastější chyba po nástupu je čekat nasazený nástroj do měsíce. Dobrý začátek vypadá jinak: nejdřív pochopit, pak měřit, pak teprve stavět."
-      >
-        <div className="space-y-7">
-          {ONBOARDING.map((o, i) => (
-            <Reveal key={o.title} delay={i * 0.03}>
-              <div className="border-l-2 border-hr pl-4">
-                <h4 className="text-[15px] font-semibold text-ink">{o.title}</h4>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-dim">{o.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </Section>
+        <Accordion title="OBSAH PŘÍRUČKY" items={sections} accentClass="bg-hr" />
+      </Reveal>
 
       <Reveal className="mt-16">
         <Panel className="flex flex-col gap-3 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
