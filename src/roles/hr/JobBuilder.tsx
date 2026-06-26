@@ -22,7 +22,7 @@ type State = {
   cil: string;
 };
 
-type SingleKey = "archetype" | "level" | "forma" | "focus" | "data" | "it" | "cil";
+type SingleKey = "archetype" | "level" | "forma" | "focus" | "it" | "cil" | "data";
 
 const ARCHETYPY: Opt[] = [
   { v: "koordinator", t: "Interní koordinátor", h: "Generalista, který táhne adopci a koordinuje. Vybírá hotové nástroje, vede piloty; hloubkový vývoj si přizve zvenčí." },
@@ -720,6 +720,125 @@ function downloadWord(jd: JD) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/* ---- Hotový inzerát k zveřejnění — pro uchazeče, bez interních poznámek ---- */
+
+type Posting = {
+  title: string;
+  subtitle: string;
+  intro: string;
+  doing: string[];
+  want: string[];
+  wantTech: string[];
+  wantNote: string;
+  bonus: string[];
+  offer: string[];
+  firstGoal: string;
+  apply: string;
+};
+
+function buildPosting(jd: JD, s: State): Posting {
+  const doing = jd.napln.length
+    ? jd.napln.map((x) => x.text)
+    : ["[Doplňte konkrétní úkoly — zatrhněte vlevo práci, kterou bude člověk dělat.]"];
+
+  const offer: string[] = [];
+  offer.push(`Mzdové rozpětí ${jd.salary.headlineValue} podle zkušeností a seniority.`);
+  offer.push(`Forma spolupráce: ${FORMA_LABEL[s.forma]}.`);
+  offer.push("Přímou podporu vedení a vyhrazený čas lidí z provozu — žádný „projekt do šuplíku“.");
+  offer.push("Reálný dopad a prostor učit se: zavádíte AI tam, kde má měřitelný smysl.");
+  offer.push("[Doplňte konkrétní benefity — např. home office, vzdělávací rozpočet, flexibilní dobu, firemní akce.]");
+
+  const apply =
+    "Zaujala vás pozice? Pošlete nám pár vět o tom, co jste reálně postavili nebo zlepšili — klidně i odkaz na ukázku nebo portfolio. Konkrétní praxe a způsob přemýšlení nás zajímají víc než tituly. [Doplňte kontakt nebo odkaz pro odpověď.]";
+
+  return {
+    title: jd.title,
+    subtitle: "[Doplňte název firmy a lokalitu]",
+    intro: jd.context,
+    doing,
+    want: jd.must,
+    wantTech: jd.skills.map((x) => x.text),
+    wantNote: jd.skillsNote,
+    bonus: jd.bonus,
+    offer,
+    firstGoal: jd.prvni,
+    apply,
+  };
+}
+
+function postingToText(p: Posting): string {
+  const L: string[] = [];
+  L.push(p.title.toUpperCase());
+  L.push(p.subtitle);
+  L.push("");
+  L.push(p.intro);
+  L.push("");
+  L.push("CO U NÁS BUDETE DĚLAT");
+  p.doing.forEach((x) => L.push("• " + x));
+  L.push("");
+  L.push("KOHO HLEDÁME");
+  p.want.forEach((x) => L.push("• " + x));
+  if (p.wantTech.length) {
+    L.push("");
+    L.push("Technicky se bude hodit" + (p.wantNote ? " (" + p.wantNote + ")" : "") + ":");
+    p.wantTech.forEach((x) => L.push("• " + x));
+  }
+  if (p.bonus.length) {
+    L.push("");
+    L.push("VÝHODOU");
+    p.bonus.forEach((x) => L.push("• " + x));
+  }
+  L.push("");
+  L.push("CO NABÍZÍME");
+  p.offer.forEach((x) => L.push("• " + x));
+  L.push("");
+  L.push("VÁŠ PRVNÍ CÍL");
+  L.push(p.firstGoal);
+  L.push("");
+  L.push("JAK SE PŘIHLÁSIT");
+  L.push(p.apply);
+  return L.join("\n");
+}
+
+function postingToHtml(p: Posting): string {
+  const H2 = (t: string) =>
+    `<div style="font:700 12px/1.2 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#c0405a;margin:22px 0 0;padding-bottom:5px;border-bottom:2px solid #f0d7dc">${esc(t)}</div>`;
+  const P = (t: string, color: string) => `<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${color}">${esc(t)}</p>`;
+
+  let html = "";
+  html += `<h1 style="margin:0;font:700 24px/1.25 Arial,sans-serif;color:#111">${esc(p.title)}</h1>`;
+  html += `<p style="margin:5px 0 0;font-size:13px;color:#888">${esc(p.subtitle)}</p>`;
+  html += P(p.intro, "#333");
+  html += H2("Co u nás budete dělat") + htmlList(p.doing, "•", "#c0405a", "#222");
+  html += H2("Koho hledáme") + htmlList(p.want, "•", "#c0405a", "#222");
+  if (p.wantTech.length) {
+    html += `<p style="margin:14px 0 0;font-size:13px;font-weight:bold;color:#444">Technicky se bude hodit${p.wantNote ? ` <span style="font-weight:normal;color:#888">(${esc(p.wantNote)})</span>` : ""}:</p>`;
+    html += htmlList(p.wantTech, "•", "#c0405a", "#222");
+  }
+  if (p.bonus.length) html += H2("Výhodou") + htmlList(p.bonus, "•", "#c0405a", "#222");
+  html += H2("Co nabízíme") + htmlList(p.offer, "•", "#c0405a", "#222");
+  html += H2("Váš první cíl") + P(p.firstGoal, "#222");
+  html += H2("Jak se přihlásit") + P(p.apply, "#333");
+  html += `<hr style="border:none;border-top:1px solid #e6e6e6;margin:22px 0 0">`;
+  html += `<p style="margin:8px 0 0;font-size:11px;line-height:1.5;color:#aaa">Doplňte texty v hranatých závorkách a inzerát je připravený ke zveřejnění.</p>`;
+  return html;
+}
+
+function downloadPostingWord(p: Posting) {
+  const doc =
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(p.title)}</title></head>` +
+    `<body style="font-family:Calibri,Arial,sans-serif;color:#222;max-width:720px;margin:0 auto">${postingToHtml(p)}</body></html>`;
+  const blob = new Blob(["\ufeff", doc], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "inzerat-pozice.doc";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function Chip({ active, onClick, hint, children }: { active: boolean; onClick: () => void; hint?: string; children: ReactNode }) {
   const button = (
     <button
@@ -843,8 +962,10 @@ export default function JobBuilder() {
   });
   const [copied, setCopied] = useState(false);
   const [copiedAi, setCopiedAi] = useState(false);
+  const [copiedPosting, setCopiedPosting] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [showSalary, setShowSalary] = useState(false);
+  const [showPosting, setShowPosting] = useState(false);
 
   const set = (k: SingleKey, v: string) => setS((p) => ({ ...p, [k]: v }));
   const toggle = (k: "tasks" | "skills" | "regs" | "jazyky", v: string) =>
@@ -852,6 +973,7 @@ export default function JobBuilder() {
 
   const jd = useMemo(() => buildJD(s), [s]);
   const text = useMemo(() => jdToText(jd), [jd]);
+  const posting = useMemo(() => buildPosting(jd, s), [jd, s]);
   const spec = dominantSpec(s.tasks);
   const recommended = spec ? (SPEC_CORE_SKILLS[spec] ?? []).map((v) => SKILLS.find((k) => k.v === v)?.t).filter(Boolean).join(", ") : "";
 
@@ -873,6 +995,15 @@ export default function JobBuilder() {
       window.prompt("Zkopírujte pro AI asistenta ručně:", aiHandoffText(jd));
     }
   };
+  const copyPosting = async () => {
+    try {
+      await navigator.clipboard.writeText(postingToText(posting));
+      setCopiedPosting(true);
+      setTimeout(() => setCopiedPosting(false), 2200);
+    } catch {
+      window.prompt("Zkopírujte inzerát ručně:", postingToText(posting));
+    }
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
@@ -892,9 +1023,14 @@ export default function JobBuilder() {
             ten člověk bude doopravdy dělat a v jakém prostředí, a vpravo se skládá popis — každý zatržený řádek
             do něj vjede, takže rovnou vidíte, co která volba přidá.
           </p>
+          <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-dim">
+            „Specialista“ navíc není jedna pozice — záleží na <span className="text-ink">zaměření</span> (co
+            staví) a <span className="text-ink">úrovni</span> (jak hluboko). A na tom, koho hledáte: koordinátor,
+            specialista a externí partner mají jiné požadavky, jinou náplň i jinou mzdu.
+          </p>
           <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-faint">
-            Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení.
-            Hotový popis si nahoře u náhledu zobrazíte celý, stáhnete do Wordu nebo pošlete svému AI asistentovi.
+            Nevíte, co některé technické pojmy znamenají? Najeďte myší na tlačítko a vyskočí vysvětlení. Až bude
+            popis hotový, tlačítkem „Vygenerovat inzerát“ z něj dostanete čistý inzerát k zveřejnění (Word i kopie).
           </p>
         </Reveal>
       </header>
@@ -1014,9 +1150,16 @@ export default function JobBuilder() {
 
         {/* Pravý sloupec — živý náhled */}
         <Panel className="self-start px-6 py-6 lg:sticky lg:top-6">
-          <div className="flex items-center justify-between gap-3">
+          <div>
             <div className="font-mono text-[11px] tracking-label text-faint">NÁHLED POPISU POZICE</div>
-            <div className="flex flex-shrink-0 gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPosting(true)}
+                className="rounded-md border border-hr/50 bg-hr/10 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/20"
+              >
+                VYGENEROVAT INZERÁT →
+              </button>
               <button
                 type="button"
                 onClick={() => setShowFull(true)}
@@ -1027,9 +1170,9 @@ export default function JobBuilder() {
               <button
                 type="button"
                 onClick={copy}
-                className="rounded-md border border-hr/50 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
+                className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
               >
-                {copied ? "✓ ZKOPÍROVÁNO" : "ZKOPÍROVAT"}
+                {copied ? "✓ ZKOPÍROVÁNO" : "ZKOPÍROVAT TEXT"}
               </button>
             </div>
           </div>
@@ -1124,7 +1267,7 @@ export default function JobBuilder() {
               />
             </div>
             <p className="mt-1 text-[11px] italic leading-relaxed text-faint">
-              Tyhle body píšeme do popisu schválně — aby bylo jasné, co po člověku nečekat.
+              Tyhle body píšeme do popisu schválně — aby bylo jasné, co po člověku nečekat. (Do zveřejněného inzerátu se nedávají.)
             </p>
           </div>
         </Panel>
@@ -1150,6 +1293,49 @@ export default function JobBuilder() {
           JIŘÍ MYNÁŘ — LINKEDIN
         </a>
       </p>
+
+      {/* Hotový inzerát k zveřejnění */}
+      {showPosting && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/75 px-4 py-6 sm:px-8"
+          onClick={() => setShowPosting(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="mx-auto w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className="font-mono text-[11px] tracking-label text-ink">HOTOVÝ INZERÁT · K ZVEŘEJNĚNÍ</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={copyPosting}
+                  className="rounded-md border border-hr/50 bg-hr/10 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/20"
+                >
+                  {copiedPosting ? "✓ ZKOPÍROVÁNO" : "KOPÍROVAT INZERÁT"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadPostingWord(posting)}
+                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+                >
+                  STÁHNOUT WORD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPosting(false)}
+                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
+                >
+                  ZAVŘÍT ✕
+                </button>
+              </div>
+            </div>
+            <div className="rounded-md bg-white p-7 shadow-2xl sm:p-9" dangerouslySetInnerHTML={{ __html: postingToHtml(posting) }} />
+            <p className="mt-3 text-center font-mono text-[10px] leading-relaxed tracking-label text-faint">
+              HOTOVÝ INZERÁT BEZ INTERNÍCH POZNÁMEK — STAČÍ DOPLNIT [ZÁVORKY] A ZVEŘEJNIT · CO VIDÍTE = CO SE STÁHNE
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Detailní kalkulace mzdy */}
       {showSalary && (
@@ -1213,7 +1399,7 @@ export default function JobBuilder() {
         >
           <div className="mx-auto w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-[11px] tracking-label text-ink">CELÝ POPIS POZICE · NÁHLED A EXPORT</span>
+              <span className="font-mono text-[11px] tracking-label text-ink">CELÝ POPIS POZICE · PRACOVNÍ DOKUMENT</span>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -1247,7 +1433,7 @@ export default function JobBuilder() {
             </div>
             <div className="rounded-md bg-white p-7 shadow-2xl sm:p-9" dangerouslySetInnerHTML={{ __html: jdToHtml(jd) }} />
             <p className="mt-3 text-center font-mono text-[10px] leading-relaxed tracking-label text-faint">
-              „PRO AI ASISTENTA“ ZKOPÍRUJE POPIS I S POKYNEM — VLOŽTE HO DO CHATGPT/CLAUDE A PROBERTE HO · CO VIDÍTE = CO SE STÁHNE DO WORDU
+              PRACOVNÍ DOKUMENT SE VŠ́M (I ROZPAD MZDY A POZNÁMKY) · PRO ČISTÝ INZERÁT POUŽIJTE „VYGENEROVAT INZERÁT“
             </p>
           </div>
         </div>
