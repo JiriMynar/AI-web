@@ -866,6 +866,36 @@ function Chip({ active, onClick, hint, children }: { active: boolean; onClick: (
   );
 }
 
+/** Skutečné tlačítko — výplň/okraj, čitelná velikost, sans (ne mono štítek). */
+function ActionButton({
+  variant = "secondary",
+  size = "md",
+  onClick,
+  className = "",
+  children,
+}: {
+  variant?: "primary" | "secondary";
+  size?: "sm" | "md";
+  onClick: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  const sizes = size === "sm" ? "px-3 py-2 text-[12px]" : "px-4 py-2.5 text-[13px]";
+  const variants =
+    variant === "primary"
+      ? "bg-hr text-bg shadow-sm hover:bg-hr/90"
+      : "border border-line bg-raised text-ink hover:border-faint hover:bg-line/30";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hr/40 ${sizes} ${variants} ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 /** Skupina polí ve formuláři — jasný nadpis s korálovým proužkem, ať se sloupec nečte jako zeď. */
 function FieldGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -1152,34 +1182,24 @@ export default function JobBuilder() {
         <Panel className="self-start px-6 py-6 lg:sticky lg:top-6">
           <div>
             <div className="font-mono text-[11px] tracking-label text-faint">NÁHLED POPISU POZICE</div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setShowPosting(true)}
-                className="rounded-md border border-hr/50 bg-hr/10 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/20"
-              >
-                VYGENEROVAT INZERÁT →
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowFull(true)}
-                className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-              >
-                CELÝ POPIS ↗
-              </button>
-              <button
-                type="button"
-                onClick={copy}
-                className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-              >
-                {copied ? "✓ ZKOPÍROVÁNO" : "ZKOPÍROVAT TEXT"}
-              </button>
+            <div className="mt-3 space-y-2">
+              <ActionButton variant="primary" onClick={() => setShowPosting(true)} className="w-full">
+                Vygenerovat inzerát →
+              </ActionButton>
+              <div className="grid grid-cols-2 gap-2">
+                <ActionButton variant="secondary" onClick={() => setShowFull(true)} className="w-full">
+                  Celý popis
+                </ActionButton>
+                <ActionButton variant="secondary" onClick={copy} className="w-full">
+                  {copied ? "✓ Zkopírováno" : "Zkopírovat"}
+                </ActionButton>
+              </div>
             </div>
           </div>
 
           {/* Kontrola profilu — validační banner */}
           {jd.warnings.length > 0 ? (
-            <div className="mt-4 rounded-md border border-warn/40 bg-warn/5 px-3.5 py-3">
+            <div className="mt-5 rounded-md border border-warn/40 bg-warn/5 px-3.5 py-3">
               <div className="flex items-center gap-2">
                 <span className="text-warn" aria-hidden>▲</span>
                 <span className="font-mono text-[11px] font-semibold tracking-label text-warn">KONTROLA PROFILU · {jd.warnings.length}</span>
@@ -1194,7 +1214,7 @@ export default function JobBuilder() {
               </ul>
             </div>
           ) : (
-            <div className="mt-4 flex items-center gap-2 rounded-md border border-ok/30 bg-ok/5 px-3.5 py-2">
+            <div className="mt-5 flex items-center gap-2 rounded-md border border-ok/30 bg-ok/5 px-3.5 py-2">
               <span className="text-ok" aria-hidden>✓</span>
               <span className="text-[12px] text-dim">Profil je konzistentní — dovednosti i mzda sedí k roli.</span>
             </div>
@@ -1238,13 +1258,9 @@ export default function JobBuilder() {
                 <div className="font-mono text-[26px] font-semibold leading-none text-hr">{jd.salary.headlineValue}</div>
                 <div className="mt-1.5 text-[11px] text-faint">{jd.salary.headlineLabel}</div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowSalary(true)}
-                className="rounded-md border border-hr/50 px-3 py-2 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
-              >
-                DETAILNÍ KALKULACE →
-              </button>
+              <ActionButton variant="secondary" size="sm" onClick={() => setShowSalary(true)}>
+                Detailní kalkulace →
+              </ActionButton>
             </div>
           </PreviewBlock>
 
@@ -1303,30 +1319,18 @@ export default function JobBuilder() {
           aria-modal="true"
         >
           <div className="mx-auto w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <span className="font-mono text-[11px] tracking-label text-ink">HOTOVÝ INZERÁT · K ZVEŘEJNĚNÍ</span>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={copyPosting}
-                  className="rounded-md border border-hr/50 bg-hr/10 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/20"
-                >
-                  {copiedPosting ? "✓ ZKOPÍROVÁNO" : "KOPÍROVAT INZERÁT"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadPostingWord(posting)}
-                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-                >
-                  STÁHNOUT WORD
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPosting(false)}
-                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-                >
-                  ZAVŘÍT ✕
-                </button>
+                <ActionButton variant="primary" size="sm" onClick={copyPosting}>
+                  {copiedPosting ? "✓ Zkopírováno" : "Kopírovat inzerát"}
+                </ActionButton>
+                <ActionButton variant="secondary" size="sm" onClick={() => downloadPostingWord(posting)}>
+                  Stáhnout Word
+                </ActionButton>
+                <ActionButton variant="secondary" size="sm" onClick={() => setShowPosting(false)}>
+                  Zavřít
+                </ActionButton>
               </div>
             </div>
             <div className="rounded-md bg-white p-7 shadow-2xl sm:p-9" dangerouslySetInnerHTML={{ __html: postingToHtml(posting) }} />
@@ -1352,13 +1356,9 @@ export default function JobBuilder() {
                   <SectionLabel>Kalkulace mzdy</SectionLabel>
                   <h3 className="mt-2 text-lg font-semibold leading-snug text-ink">{jd.title}</h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowSalary(false)}
-                  className="flex-shrink-0 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-                >
-                  ZAVŘÍT ✕
-                </button>
+                <ActionButton variant="secondary" size="sm" onClick={() => setShowSalary(false)}>
+                  Zavřít
+                </ActionButton>
               </div>
 
               <div className="mt-5 overflow-hidden rounded-md border border-line">
@@ -1389,7 +1389,7 @@ export default function JobBuilder() {
         </div>
       )}
 
-      {/* Celkový náhled CV + export */}
+      {/* Celý popis — pracovní dokument + export */}
       {showFull && (
         <div
           className="fixed inset-0 z-50 overflow-y-auto bg-black/75 px-4 py-6 sm:px-8"
@@ -1398,42 +1398,26 @@ export default function JobBuilder() {
           aria-modal="true"
         >
           <div className="mx-auto w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <span className="font-mono text-[11px] tracking-label text-ink">CELÝ POPIS POZICE · PRACOVNÍ DOKUMENT</span>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={copy}
-                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-                >
-                  {copied ? "✓ TEXT" : "KOPÍROVAT TEXT"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadWord(jd)}
-                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-                >
-                  STÁHNOUT WORD
-                </button>
-                <button
-                  type="button"
-                  onClick={copyAi}
-                  className="rounded-md border border-hr/50 bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-hr transition-colors hover:bg-hr/10"
-                >
-                  {copiedAi ? "✓ PRO AI" : "PRO AI ASISTENTA"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowFull(false)}
-                  className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide2 text-dim transition-colors hover:border-faint hover:text-ink"
-                >
-                  ZAVŘÍT ✕
-                </button>
+                <ActionButton variant="secondary" size="sm" onClick={copy}>
+                  {copied ? "✓ Text" : "Kopírovat text"}
+                </ActionButton>
+                <ActionButton variant="secondary" size="sm" onClick={() => downloadWord(jd)}>
+                  Stáhnout Word
+                </ActionButton>
+                <ActionButton variant="secondary" size="sm" onClick={copyAi}>
+                  {copiedAi ? "✓ Pro AI" : "Pro AI asistenta"}
+                </ActionButton>
+                <ActionButton variant="secondary" size="sm" onClick={() => setShowFull(false)}>
+                  Zavřít
+                </ActionButton>
               </div>
             </div>
             <div className="rounded-md bg-white p-7 shadow-2xl sm:p-9" dangerouslySetInnerHTML={{ __html: jdToHtml(jd) }} />
             <p className="mt-3 text-center font-mono text-[10px] leading-relaxed tracking-label text-faint">
-              PRACOVNÍ DOKUMENT SE VŠ́M (I ROZPAD MZDY A POZNÁMKY) · PRO ČISTÝ INZERÁT POUŽIJTE „VYGENEROVAT INZERÁT“
+              PRACOVNÍ DOKUMENT SE VŠÍM (I ROZPAD MZDY A POZNÁMKY) · PRO ČISTÝ INZERÁT POUŽIJTE „VYGENEROVAT INZERÁT“
             </p>
           </div>
         </div>
