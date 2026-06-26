@@ -1036,7 +1036,7 @@ export default function JobBuilder() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
+    <div className="mx-auto max-w-shell px-5 py-12 sm:py-16">
       <header>
         <div className="mb-8 flex items-center justify-between gap-3">
           <Eyebrow tone="text-hr">MODUL 02 · HR · POPIS POZICE</Eyebrow>
