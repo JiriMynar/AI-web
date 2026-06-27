@@ -18,6 +18,17 @@ const TONE = {
 const VERDICT_TONE = { hned: "ok", priprava: "warn", ne: "stop" } as const;
 const VERDICT_ORDER = { hned: 0, priprava: 1, ne: 2 } as const;
 
+/** Obsah reportu — proklik na sekce, ať to není jen dlouhá zeď. */
+const REPORT_TOC: { id: string; n: string; t: string }[] = [
+  { id: "cil", n: "01", t: "Ujasněte si cíl" },
+  { id: "postup", n: "02", t: "Postup, který funguje" },
+  { id: "zamery", n: "03", t: "Co je reálné a co po přípravě" },
+  { id: "pomoc", n: "04", t: "Jak vybrat pomoc" },
+  { id: "rizika", n: "05", t: "Na co si dát pozor" },
+  { id: "tym", n: "06", t: "Kdo to ponese" },
+  { id: "pravidla", n: "07", t: "Pravidla z praxe" },
+];
+
 /** Doporučený postup — edukativní jádro reportu (jak na to a proč). */
 const HOW: { title: string; body: string }[] = [
   {
@@ -193,11 +204,11 @@ function RuleRow({ big, label, body }: { big: string; label: string; body: strin
   );
 }
 
-function Section({ kicker, title, intro, children }: {
-  kicker: string; title: string; intro?: string; children: ReactNode;
+function Section({ id, kicker, title, intro, children }: {
+  id?: string; kicker: string; title: string; intro?: string; children: ReactNode;
 }) {
   return (
-    <section className="mt-16 border-t border-line pt-10">
+    <section id={id} className="mt-16 scroll-mt-24 border-t border-line pt-10">
       <Eyebrow tone="text-vedeni">{kicker}</Eyebrow>
       <h2 className="mt-2.5 text-2xl font-semibold tracking-tight sm:text-[28px]">{title}</h2>
       {intro && <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-dim">{intro}</p>}
@@ -320,8 +331,26 @@ export default function Report() {
         </Reveal>
       </header>
 
+      {/* Obsah reportu — proklik na sekce */}
+      <Reveal>
+        <nav aria-label="Obsah reportu" className="mt-12 rounded-lg border border-line bg-panel px-5 py-4">
+          <div className="font-mono text-[11px] font-semibold tracking-label text-faint">OBSAH REPORTU</div>
+          <ol className="mt-3 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+            {REPORT_TOC.map((s) => (
+              <li key={s.id}>
+                <a href={`#${s.id}`} className="group flex items-baseline gap-2.5 text-[14px] text-dim transition-colors hover:text-ink">
+                  <span className="font-mono text-[11px] font-semibold text-vedeni">{s.n}</span>
+                  <span className="underline decoration-line underline-offset-4 transition-colors group-hover:decoration-vedeni">{s.t}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </Reveal>
+
       {/* Ujasněte si cíl — kořen rozhodnutí */}
       <Section
+        id="cil"
         kicker="ZAČNĚTE TÍM NEJTĚŽŠÍM"
         title="Ujasněte si, kam se chcete dostat"
         intro="Nejdražší chyba není špatný nástroj — je to neujasněný cíl. „Chceme AI“ ani „chceme šetřit“ se nedá změřit, a co se nedá změřit, to vedení po půl roce zruší. Dobrý cíl pojmenuje číslo, směr a termín."
@@ -373,6 +402,7 @@ export default function Report() {
 
       {/* Jak na to — postup */}
       <Section
+        id="postup"
         kicker="JAK NA TO"
         title="Postup, který funguje"
         intro="Pořadí kroků rozhoduje víc než výběr nástroje. Z praxe padne 60–80 % práce na úspěšném projektu na procesy a data — samotná AI je menšina. Tahle posloupnost je nejlevnější cesta od cíle k výsledku, který obhájíte čísly."
@@ -388,6 +418,7 @@ export default function Report() {
 
       {/* Vaše záměry — verdikty */}
       <Section
+        id="zamery"
         kicker="VAŠE ZÁMĚRY"
         title="Co je reálné a co potřebuje přípravu"
         intro="Začněte tím, co je proveditelné hned — rychlý viditelný výsledek získá důvěru lidí i vedení. Záměry „po přípravě“ nejsou zamítnuté; mají jen domácí úkol, který musí předcházet startu. „Zatím ne“ znamená, že chybí základ, bez kterého by projekt skončil zklamáním."
@@ -408,6 +439,7 @@ export default function Report() {
 
       {/* Jak vybrat pomoc — odborník / dodavatel */}
       <Section
+        id="pomoc"
         kicker="JAK VYBRAT POMOC"
         title="Jak poznat dobrého odborníka nebo dodavatele"
         intro="Tady firmy nejčastěji chybují: bez ujasněného cíle najmou špatně. Dobrý odborník nezačne nástrojem — začne otázkou, jaké číslo chcete pohnout. Kdo nabízí řešení dřív, než pochopil váš proces a jak změříte přínos, je první varovný signál."
@@ -465,6 +497,7 @@ export default function Report() {
 
       {/* Na co si dát pozor — scénáře */}
       <Section
+        id="rizika"
         kicker="NA CO SI DÁT POZOR"
         title="Rizikové scénáře — a cesty ven"
         intro="Tohle nejsou teoretická rizika. Jsou to nejčastější způsoby, jak nasazení AI v praxi umírá — pojmenované tak, abyste je poznali u sebe včas. U každého je i konkrétní cesta ven."
@@ -480,6 +513,7 @@ export default function Report() {
 
       {/* Kdo to ponese — tým a oblasti */}
       <Section
+        id="tym"
         kicker="KDO TO PONESE"
         title="Tým a osm oblastí práce"
         intro="Implementace se neutáhne sama. Tyto role vyplývají z vašich odpovědí — u každé je i to, co se stane, když chybí."
@@ -521,6 +555,7 @@ export default function Report() {
 
       {/* Pravidla z praxe */}
       <Section
+        id="pravidla"
         kicker="PROČ PRÁVĚ TAKHLE"
         title="Pravidla z praxe"
         intro="Čísla a limity z výzkumu i praxe, které platí bez ohledu na dodavatele — a vysvětlují, proč doporučený postup vypadá tak, jak vypadá."
@@ -535,12 +570,6 @@ export default function Report() {
       <div className="mt-16">
         <ShareBar answers={a} />
       </div>
-      <p className="mt-6 font-mono text-[10px] tracking-label text-faint">
-        ORIENTAČNÍ VÝSTUP · NENAHRAZUJE ODBORNÉ POSOUZENÍ · SESTAVIL{" "}
-        <a href="https://www.linkedin.com/in/jirimynar/" target="_blank" rel="noopener noreferrer" className="underline decoration-line underline-offset-4 hover:text-ink">
-          JIŘÍ MYNÁŘ — LINKEDIN
-        </a>
-      </p>
     </div>
   );
 }
