@@ -12,6 +12,8 @@ export type Field = {
   hint: string;
   multi?: boolean;
   options: Opt[];
+  /** U multi pole: položky, které platí vždy a nejdou odznačit (např. AI Act, GDPR). */
+  locked?: Opt[];
   /** Pole se zobrazí jen když predikát vrátí true (podmíněné otázky). */
   showIf?: (p: Record<string, unknown>) => boolean;
 };
@@ -127,6 +129,16 @@ export const CHARAKTERISTIKA_GROUPS: Group[] = [
         ],
       },
       {
+        key: "zpusob",
+        label: "Jak chcete AI ve firmě využívat?",
+        hint: "Učit lidi pracovat s univerzálními asistenty je hlavně o školení a adopci. Nasazovat hotové AI nástroje je hlavně o integraci a výběru. Většina firem dělá obojí.",
+        options: [
+          { v: "llm", t: "Naučit lidi pracovat s LLM (ChatGPT, Claude)" },
+          { v: "nastroje", t: "Využívat hotové nástroje na bázi AI" },
+          { v: "oboji", t: "Obojí" },
+        ],
+      },
+      {
         key: "jazyky",
         multi: true,
         label: "V jakých jazycích firma komunikuje?",
@@ -169,17 +181,19 @@ export const CHARAKTERISTIKA_GROUPS: Group[] = [
         key: "regs",
         multi: true,
         label: "V jakém regulovaném prostředí firma je?",
-        hint: "Vyberte vše, co platí. Regulace nejsou důvod AI nezavádět — jsou důvod zvolit správný způsob nasazení.",
+        hint: "AI Act a GDPR platí pro vás vždy — AI Act pro kohokoli, kdo zavádí AI, GDPR pro kohokoli, kdo zpracovává osobní údaje. Níže vyberte, co se vás týká navíc.",
+        locked: [
+          { v: "aiact", t: "AI Act" },
+          { v: "gdpr", t: "GDPR" },
+        ],
         options: [
-          { v: "gdpr", t: "Osobní údaje zákazníků" },
           { v: "knowhow", t: "Citlivé know-how a výrobní data" },
           { v: "automotive", t: "Automotive / zákaznické audity" },
           { v: "zdravotnictvi", t: "Zdravotnictví" },
           { v: "finance", t: "Finance a pojišťovnictví" },
           { v: "verejny", t: "Veřejný sektor / NIS2" },
-          { v: "aiakt", t: "AI by rozhodovala o lidech" },
+          { v: "aiakt", t: "AI rozhoduje o lidech (vysoké riziko)" },
           { v: "koncern", t: "Pravidla mateřské společnosti" },
-          { v: "zadne", t: "Nic z toho", exclusive: true },
         ],
       },
     ],

@@ -42,6 +42,7 @@ export function CharakteristikaPodniku() {
                     label={f.label}
                     hint={f.hint}
                     options={f.options}
+                    locked={f.locked}
                     values={(pr[f.key] as string[]) || []}
                     onToggle={toggleMulti(f.key as keyof Profile, f.options)}
                   />

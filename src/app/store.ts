@@ -11,9 +11,8 @@ export type Profile = {
   erpUsage: string;
   strojeData: string;
   procesy: string;
-  objem: string;
-  mereni: string;
   uzivatele: string;
+  zpusob: string;
   jazyky: string[];
   zkusenost: string;
   lide: string;
@@ -22,6 +21,8 @@ export type Profile = {
   vize: string[];
   ambition: string;
   horizont: string;
+  objem: string;
+  mereni: string;
   cil: string;
 };
 
@@ -34,9 +35,8 @@ export const DEFAULT_PROFILE: Profile = {
   erpUsage: "",
   strojeData: "",
   procesy: "",
-  objem: "",
-  mereni: "",
   uzivatele: "",
+  zpusob: "",
   jazyky: [],
   zkusenost: "",
   lide: "",
@@ -44,6 +44,8 @@ export const DEFAULT_PROFILE: Profile = {
   vize: [],
   ambition: "",
   horizont: "",
+  objem: "",
+  mereni: "",
   cil: "",
 };
 
