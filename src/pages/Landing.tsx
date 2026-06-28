@@ -6,41 +6,10 @@ import ParticleField, { ParticleFieldHandle } from "../design/ParticleField";
 import { useSeo } from "../lib/seo";
 
 /**
- * Vstupní obrazovka v duchu moderní AI/automatizační landing page:
- * tmavé pozadí s gradientem, mřížkou a hemžícími se tečkami, velký nadpis
- * s barevně zvýrazněnými klíčovými slovy, krátký popis a jedno tlačítko
- * na vstup do aplikace. Vpravo vlastní SVG ilustrace robota (orbity, čip).
- * Dole vlnitý předěl do sekce, která říká, k čemu Velín je.
+ * Vstupní obrazovka — jen hero: tmavé pozadí s gradientem, mřížkou a tečkami,
+ * velký nadpis s barevně zvýrazněnými klíčovými slovy, krátký popis k čemu
+ * Velín je a jedno tlačítko na vstup. Vpravo vlastní SVG ilustrace robota.
  */
-
-const VALUE: { dot: string; ring: string; label: string; text: string; soon?: boolean }[] = [
-  {
-    dot: "bg-vedeni",
-    ring: "group-hover:border-vedeni/40",
-    label: "VEDENÍ / MAJITEL",
-    text: "Jak náročná je implementace zrovna u vás, co je reálné hned a co až po přípravě, jaký tým budete potřebovat a jaká rizika hlídat.",
-  },
-  {
-    dot: "bg-hr",
-    ring: "group-hover:border-hr/40",
-    label: "HR / NÁBOR",
-    text: "Koho přesně hledat, co napsat a co nepsat do inzerátu, otázky na pohovor — a hotový popis pozice ke stažení nebo zveřejnění.",
-  },
-  {
-    dot: "bg-spec",
-    ring: "group-hover:border-spec/40",
-    label: "AI SPECIALISTA",
-    soon: true,
-    text: "Postup implementace krok za krokem, verdikty proveditelnosti jednotlivých záměrů a legislativa s termíny.",
-  },
-];
-
-const STEPS3: { n: string; t: string; d: string }[] = [
-  { n: "01", t: "Vyberte perspektivu", d: "Vedení, HR, nebo specialista — každý dostane přesně svou část, nic navíc." },
-  { n: "02", t: "Odpovězte na pár otázek", d: "O firmě, datech, procesech a lidech. Zabere to kolem pěti minut." },
-  { n: "03", t: "Dostanete konkrétní výstup", d: "Sdílitelný odkazem. Žádná registrace, nic se neukládá ani neodesílá." },
-];
-
 export default function Landing() {
   useSeo(
     "Velín — nastartujte AI a automatizaci ve firmě",
@@ -80,8 +49,8 @@ export default function Landing() {
           backgroundImage:
             "linear-gradient(to right, rgba(34,48,63,0.45) 1px, transparent 1px), linear-gradient(to bottom, rgba(34,48,63,0.45) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse 75% 60% at 50% 30%, #000 25%, transparent 78%)",
-          WebkitMaskImage: "radial-gradient(ellipse 75% 60% at 50% 30%, #000 25%, transparent 78%)",
+          maskImage: "radial-gradient(ellipse 75% 60% at 50% 35%, #000 25%, transparent 78%)",
+          WebkitMaskImage: "radial-gradient(ellipse 75% 60% at 50% 35%, #000 25%, transparent 78%)",
         }}
       />
       <ParticleField ref={field} />
@@ -91,9 +60,8 @@ export default function Landing() {
         transition={{ duration: 0.65, ease: "easeIn" }}
         className="relative z-10"
       >
-        {/* HERO */}
         <section className="relative mx-auto max-w-shell px-5">
-          <div className="grid min-h-[78vh] items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+          <div className="grid min-h-[86vh] items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
             {/* Text */}
             <div className="text-center lg:text-left">
               <motion.div
@@ -128,7 +96,7 @@ export default function Landing() {
                 initial={reduce ? false : { opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.35, delay: 0.28 }}
-                className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:items-center lg:justify-start"
+                className="mt-10 flex justify-center lg:justify-start"
               >
                 <button
                   type="button"
@@ -139,12 +107,6 @@ export default function Landing() {
                   {leaving ? "Spouštím…" : "Vstoupit do aplikace"}
                   <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
                 </button>
-                <a
-                  href="#co-umi"
-                  className="font-mono text-xs tracking-wide2 text-dim underline decoration-line underline-offset-4 transition-colors hover:text-ink"
-                >
-                  ↓ CO VELÍN UMÍ
-                </a>
               </motion.div>
 
               <motion.p
@@ -243,90 +205,6 @@ export default function Landing() {
                 </svg>
               </motion.div>
             </motion.div>
-          </div>
-
-          {/* Vlnitý předěl */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0">
-            <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="block h-[80px] w-full sm:h-[120px]" fill="#0C131B">
-              <path d="M0,64 C240,112 480,18 720,42 C960,66 1200,120 1440,72 L1440,120 L0,120 Z" />
-            </svg>
-          </div>
-        </section>
-
-        {/* CO VELÍN UMÍ */}
-        <section id="co-umi" className="relative scroll-mt-20 bg-[#0C131B]">
-          <div className="mx-auto max-w-shell px-5 pb-24 pt-8">
-            {/* Perspektivy */}
-            <div className="pt-8">
-              <Eyebrow tone="text-dim">CO Z TOHO BUDETE MÍT</Eyebrow>
-              <h2 className="mt-3 max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
-                Konkrétní výstup pro vaši roli — ne obecné řeči o AI.
-              </h2>
-              <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-dim">
-                Implementace AI vypadá jinak pro vedení, pro náboráře a pro člověka, který ji provádí. Velín
-                dá každému přesně jeho díl — postavený na vaší situaci, ne na obecných radách z internetu.
-              </p>
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {VALUE.map((v) => (
-                  <div key={v.label} className={`group flex flex-col rounded-xl border border-line bg-panel p-5 transition-colors ${v.ring}`}>
-                    <div className="flex items-center gap-2.5">
-                      <span className={`h-2 w-2 flex-shrink-0 rounded-full ${v.dot}`} aria-hidden />
-                      <span className="font-mono text-[11px] font-semibold tracking-label text-dim">{v.label}</span>
-                      {v.soon && (
-                        <span className="ml-auto rounded border border-line px-1.5 py-0.5 font-mono text-[9px] tracking-label text-faint">
-                          PŘIPRAVUJEME
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-3 text-[14px] leading-relaxed text-dim">{v.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Jak to funguje */}
-            <div className="mt-16 border-t border-line pt-14">
-              <Eyebrow tone="text-dim">JAK TO FUNGUJE</Eyebrow>
-              <div className="mt-8 grid gap-8 sm:grid-cols-3">
-                {STEPS3.map((s) => (
-                  <div key={s.n}>
-                    <div className="font-mono text-2xl font-semibold leading-none tracking-tight text-vedeni">{s.n}</div>
-                    <h3 className="mt-3 text-[15px] font-semibold text-ink">{s.t}</h3>
-                    <p className="mt-1.5 text-[14px] leading-relaxed text-dim">{s.d}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Vstup */}
-            <div className="mt-16 border-t border-line pt-14">
-              <div className="flex flex-col gap-6 rounded-xl border border-line bg-panel px-6 py-7 sm:flex-row sm:items-center sm:justify-between">
-                <div className="max-w-xl">
-                  <h2 className="text-xl font-semibold tracking-tight">Vyzkoušejte to — nic neriskujete.</h2>
-                  <p className="mt-2 text-[14px] leading-relaxed text-dim">
-                    Bezplatné, bez registrace, odpovědi zůstávají jen ve vašem prohlížeči. Sestavil{" "}
-                    <a
-                      href="https://www.linkedin.com/in/jirimynar/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-dim underline decoration-line underline-offset-4 transition-colors hover:text-ink"
-                    >
-                      Jiří Mynář
-                    </a>{" "}
-                    — specialista na zavádění AI ve firmách.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={enter}
-                  disabled={leaving}
-                  className="group inline-flex flex-shrink-0 items-center gap-2.5 rounded-full bg-vedeni px-7 py-3.5 font-semibold text-bg transition-[transform,box-shadow] duration-200 enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_0_40px_rgba(79,195,247,0.45)] disabled:cursor-default"
-                >
-                  {leaving ? "Spouštím…" : "Vstoupit do aplikace"}
-                  <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-                </button>
-              </div>
-            </div>
           </div>
         </section>
       </motion.div>
