@@ -1,6 +1,6 @@
 import { useLocalStorage } from "../lib/useLocalStorage";
 
-/** Profil firmy ulozeny v prohlizeci. Sdili ho vic sekci. */
+/** Profil firmy uložený v prohlížeči. Sdílí ho víc sekcí. */
 export type Profile = {
   // charakteristika podniku
   size: string;
@@ -8,11 +8,17 @@ export type Profile = {
   it: string;
   kdeData: string;
   systemy: string;
+  erpUsage: string;
+  strojeData: string;
   procesy: string;
   objem: string;
   mereni: string;
+  uzivatele: string;
+  jazyky: string[];
+  zkusenost: string;
+  lide: string;
   regs: string[];
-  // stanoveni cilu
+  // stanovení cílů
   vize: string[];
   ambition: string;
   horizont: string;
@@ -25,9 +31,15 @@ export const DEFAULT_PROFILE: Profile = {
   it: "",
   kdeData: "",
   systemy: "",
+  erpUsage: "",
+  strojeData: "",
   procesy: "",
   objem: "",
   mereni: "",
+  uzivatele: "",
+  jazyky: [],
+  zkusenost: "",
+  lide: "",
   regs: [],
   vize: [],
   ambition: "",
@@ -36,5 +48,5 @@ export const DEFAULT_PROFILE: Profile = {
 };
 
 export function useProfile() {
-  return useLocalStorage<Profile>("velin.profile.v2", DEFAULT_PROFILE);
+  return useLocalStorage<Profile>("velin.profile.v3", DEFAULT_PROFILE);
 }

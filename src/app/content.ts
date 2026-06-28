@@ -1,111 +1,218 @@
 /**
- * Obsah preneseny z puvodniho modulu vedeni, rozdeleny do sekci nove aplikace.
- * Jen data — sekce z nej vykresluji. Zadna logika.
+ * Obsah přenesený z původního modulu vedení, rozdělený do sekcí nové aplikace.
+ * Jen data — sekce z něj vykreslují. Žádná logika.
  */
 
-export type Opt = { v: string; t: string };
+export type Opt = { v: string; t: string; exclusive?: boolean };
 
-// --- Charakteristika podniku: profilove otazky (single-select) ---
-export type Field = { key: string; label: string; hint: string; options: Opt[] };
+// --- Charakteristika podniku: profilové otázky seskupené do bloků ---
+export type Field = {
+  key: string;
+  label: string;
+  hint: string;
+  multi?: boolean;
+  options: Opt[];
+  /** Pole se zobrazí jen když predikát vrátí true (podmíněné otázky). */
+  showIf?: (p: Record<string, unknown>) => boolean;
+};
+export type Group = { heading: string; fields: Field[] };
 
-export const PROFILE_FIELDS: Field[] = [
+export const CHARAKTERISTIKA_GROUPS: Group[] = [
   {
-    key: "size",
-    label: "Kolik máte zaměstnanců?",
-    hint: "Velikost nemění, co je třeba udělat, ale kolik koordinace to stojí. Střední firma dostane AI do provozu za ~90 dní, korporace za ~9 měsíců.",
-    options: [
-      { v: "s", t: "Do 50" },
-      { v: "m", t: "50–250" },
-      { v: "l", t: "Nad 250" },
+    heading: "Profil firmy",
+    fields: [
+      {
+        key: "size",
+        label: "Kolik má firma zaměstnanců?",
+        hint: "Nemění, co je třeba udělat, ale kolik koordinace to stojí. Střední firma dostane AI do provozu za ~90 dní, korporace za ~9 měsíců.",
+        options: [
+          { v: "s", t: "Do 50" },
+          { v: "m", t: "50–250" },
+          { v: "l", t: "Nad 250" },
+        ],
+      },
+      {
+        key: "focus",
+        label: "Jaké je zaměření firmy?",
+        hint: "Kancelář a výroba jsou dva odlišné AI světy — v administrativě je nasazení rychlejší a levnější, ve výrobě delší a dražší.",
+        options: [
+          { v: "vyroba", t: "Výrobní" },
+          { v: "admin", t: "Administrativa a služby" },
+          { v: "obchod", t: "Obchod a e-commerce" },
+          { v: "kombinace", t: "Kombinace" },
+        ],
+      },
     ],
   },
   {
-    key: "focus",
-    label: "Jaké je zaměření firmy?",
-    hint: "Kancelář a výroba jsou dva odlišné AI světy — v administrativě je nasazení rychlejší a levnější, ve výrobě delší a dražší.",
-    options: [
-      { v: "vyroba", t: "Výrobní" },
-      { v: "admin", t: "Administrativa / služby" },
-      { v: "obchod", t: "Obchod / e-commerce" },
-      { v: "kombinace", t: "Kombinace" },
+    heading: "Data a systémy",
+    fields: [
+      {
+        key: "it",
+        label: "Máte vlastní IT oddělení?",
+        hint: "AI nástroje skoro vždy potřebují napojení na to, co už máte. Bez vlastního IT to jde přes partnera — počítejte s ním od začátku.",
+        options: [
+          { v: "ano", t: "Ano" },
+          { v: "ne", t: "Ne / jen externí správa" },
+        ],
+      },
+      {
+        key: "kdeData",
+        label: "Kde máte e-maily a dokumenty?",
+        hint: "Rozhoduje, jestli data smí ven a jaké nástroje vůbec přicházejí v úvahu. Nejde o značku, ale o to, kde data fyzicky leží.",
+        options: [
+          { v: "m365", t: "Microsoft 365 / Outlook" },
+          { v: "google", t: "Google Workspace" },
+          { v: "vlastni", t: "Vlastní server" },
+          { v: "nevim", t: "Nevím" },
+        ],
+      },
+      {
+        key: "systemy",
+        label: "V čem máte hlavní data a agendu?",
+        hint: "Říká zároveň, jak digitální vaše data jsou — a na co se dá nový nástroj napojit.",
+        options: [
+          { v: "papir", t: "Hlavně papír a hlavy lidí" },
+          { v: "excel", t: "Excel, e-maily, sdílené disky" },
+          { v: "system", t: "Ucelený systém / ERP" },
+          { v: "nevim", t: "Spravuje externí firma" },
+        ],
+      },
+      {
+        key: "erpUsage",
+        label: "Jak se systém reálně používá?",
+        hint: "Častý a zrádný stav: systém je koupený, ale firma běží v excelech a po telefonu. AI nad takovými daty počítá přesně, ale z fikce.",
+        showIf: (p) => p.systemy === "system",
+        options: [
+          { v: "zije", t: "Systém žije, zapisuje se průběžně" },
+          { v: "formalne", t: "Spíš formálně, zpětně a neúplně" },
+        ],
+      },
+      {
+        key: "strojeData",
+        label: "Sbíráte data ze strojů automaticky?",
+        hint: "Pokročilá AI ve výrobě (kvalita, údržba, plánování) potřebuje data přímo ze strojů — automaticky, ne opisováním.",
+        showIf: (p) => p.focus === "vyroba" || p.focus === "kombinace",
+        options: [
+          { v: "ano", t: "Ano, automaticky do systému" },
+          { v: "castecne", t: "Částečně" },
+          { v: "ne", t: "Ne, ručně nebo vůbec" },
+          { v: "nevim", t: "Nevím" },
+        ],
+      },
     ],
   },
   {
-    key: "it",
-    label: "Máte vlastní IT oddělení?",
-    hint: "AI nástroje skoro vždy potřebují napojení na to, co už máte. Bez vlastního IT to jde přes partnera — počítejte s ním v rozpočtu.",
-    options: [
-      { v: "ano", t: "Ano" },
-      { v: "ne", t: "Ne / jen externí správa" },
+    heading: "Procesy a objem",
+    fields: [
+      {
+        key: "procesy",
+        label: "Máte zmapované procesy?",
+        hint: "Zmapovaný proces = popsané kroky, jmenovaný vlastník a známé výjimky. Bez toho nelze říct, co přesně má AI dělat.",
+        options: [
+          { v: "ano", t: "Ano" },
+          { v: "castecne", t: "Částečně" },
+          { v: "ne", t: "Ne" },
+        ],
+      },
+      {
+        key: "objem",
+        label: "Kolik hlavní agendy zvládnete za měsíc?",
+        hint: "Objem rozhoduje o návratnosti — nákladnější automatizace se vyplatí až od určitého množství. Stačí řádový odhad.",
+        options: [
+          { v: "maly", t: "Desítky" },
+          { v: "stredni", t: "Stovky" },
+          { v: "velky", t: "Tisíce a víc" },
+          { v: "nevim", t: "Nevím" },
+        ],
+      },
+      {
+        key: "mereni",
+        label: "Víte, kolik vás ta činnost dnes stojí?",
+        hint: "Jediný způsob, jak po nasazení doložit, že se něco zlepšilo. Bez něj nejde přínos obhájit před vedením.",
+        options: [
+          { v: "ano", t: "Máme změřené" },
+          { v: "odhad", t: "Jen odhadem" },
+          { v: "ne", t: "Nevíme" },
+        ],
+      },
     ],
   },
   {
-    key: "kdeData",
-    label: "Kde máte e-maily a dokumenty?",
-    hint: "Rozhoduje, jestli data smí ven a jaké nástroje vůbec přicházejí v úvahu. Nejde o značku, ale o to, kde data fyzicky leží.",
-    options: [
-      { v: "m365", t: "Microsoft 365 / Outlook" },
-      { v: "google", t: "Google Workspace" },
-      { v: "vlastni", t: "Vlastní server" },
-      { v: "nevim", t: "Nevím" },
+    heading: "Lidé a adopce",
+    fields: [
+      {
+        key: "uzivatele",
+        label: "Kolik zaměstnanců se AI dotkne?",
+        hint: "Koncoví uživatelé, ne implementační tým. Čím víc lidí, tím víc rozhoduje adopce a školení, ne technologie.",
+        options: [
+          { v: "par", t: "Pár lidí (do 10)" },
+          { v: "oddeleni", t: "Celé oddělení (desítky)" },
+          { v: "firma", t: "Velká část firmy (stovky)" },
+          { v: "nevim", t: "Zatím nevíme" },
+        ],
+      },
+      {
+        key: "jazyky",
+        multi: true,
+        label: "V jakých jazycích firma komunikuje?",
+        hint: "Kvalita AI se liší jazyk od jazyka — co září v angličtině, může na češtině nebo méně častém jazyce ztrácet.",
+        options: [
+          { v: "cestina", t: "Čeština" },
+          { v: "slovenstina", t: "Slovenština" },
+          { v: "nemcina", t: "Němčina" },
+          { v: "anglictina", t: "Angličtina" },
+          { v: "jine", t: "Jiné" },
+        ],
+      },
+      {
+        key: "zkusenost",
+        label: "Dosavadní zkušenost s AI",
+        hint: "Historie určuje startovní pozici. Neúspěch znamená skepsi, kterou musí druhý pokus nejdřív rozpustit.",
+        options: [
+          { v: "nic", t: "Zatím žádná" },
+          { v: "stin", t: "Lidé si pomáhají sami" },
+          { v: "neuspech", t: "Pokus, který nedopadl" },
+          { v: "bezi", t: "Něco už běží" },
+        ],
+      },
+      {
+        key: "lide",
+        label: "Jak se na AI dívají vaši lidé?",
+        hint: "AI projekty zřídka selžou technicky — selžou na tom, že je lidé nepoužívají.",
+        options: [
+          { v: "tesi", t: "Spíš se těší" },
+          { v: "neutral", t: "Vyčkávají" },
+          { v: "odpor", t: "Spíš nedůvěra" },
+        ],
+      },
     ],
   },
   {
-    key: "systemy",
-    label: "V čem máte hlavní data a agendu?",
-    hint: "Říká zároveň, jak digitální vaše data jsou — a na co se dá nový nástroj napojit.",
-    options: [
-      { v: "papir", t: "Hlavně papír a hlavy lidí" },
-      { v: "excel", t: "Excel, e-maily, sdílené disky" },
-      { v: "system", t: "Ucelený systém / ERP" },
-      { v: "nevim", t: "Spravuje externí firma" },
-    ],
-  },
-  {
-    key: "procesy",
-    label: "Máte zmapované procesy?",
-    hint: "Zmapovaný proces = popsané kroky, jmenovaný vlastník a známé výjimky.",
-    options: [
-      { v: "ano", t: "Ano" },
-      { v: "castecne", t: "Částečně" },
-      { v: "ne", t: "Ne" },
-    ],
-  },
-  {
-    key: "objem",
-    label: "Kolik hlavní agendy zvládnete za měsíc?",
-    hint: "Objem rozhoduje o návratnosti — nákladnější automatizace se vyplatí až od určitého množství. Stačí řádový odhad.",
-    options: [
-      { v: "maly", t: "Desítky" },
-      { v: "stredni", t: "Stovky" },
-      { v: "velky", t: "Tisíce a víc" },
-      { v: "nevim", t: "Nevím" },
-    ],
-  },
-  {
-    key: "mereni",
-    label: "Víte, kolik vás ta činnost dnes stojí?",
-    hint: "Čas nebo peníze — jediný způsob, jak po nasazení doložit, že se něco zlepšilo. Bez něj nejde přínos obhájit před vedením.",
-    options: [
-      { v: "ano", t: "Máme změřené" },
-      { v: "odhad", t: "Jen odhadem" },
-      { v: "ne", t: "Nevíme" },
+    heading: "Regulace a citlivá data",
+    fields: [
+      {
+        key: "regs",
+        multi: true,
+        label: "V jakém regulovaném prostředí firma je?",
+        hint: "Vyberte vše, co platí. Regulace nejsou důvod AI nezavádět — jsou důvod zvolit správný způsob nasazení.",
+        options: [
+          { v: "gdpr", t: "Osobní údaje zákazníků" },
+          { v: "knowhow", t: "Citlivé know-how a výrobní data" },
+          { v: "automotive", t: "Automotive / zákaznické audity" },
+          { v: "zdravotnictvi", t: "Zdravotnictví" },
+          { v: "finance", t: "Finance a pojišťovnictví" },
+          { v: "verejny", t: "Veřejný sektor / NIS2" },
+          { v: "aiakt", t: "AI by rozhodovala o lidech" },
+          { v: "koncern", t: "Pravidla mateřské společnosti" },
+          { v: "zadne", t: "Nic z toho", exclusive: true },
+        ],
+      },
     ],
   },
 ];
 
-export const REGS: Opt[] = [
-  { v: "gdpr", t: "Osobní údaje zákazníků" },
-  { v: "knowhow", t: "Citlivé know-how a výrobní data" },
-  { v: "automotive", t: "Automotive / zákaznické audity" },
-  { v: "zdravotnictvi", t: "Zdravotnictví" },
-  { v: "finance", t: "Finance a pojišťovnictví" },
-  { v: "verejny", t: "Veřejný sektor / NIS2" },
-  { v: "aiakt", t: "AI by rozhodovala o lidech" },
-  { v: "koncern", t: "Pravidla mateřské společnosti" },
-];
-
-// --- Stanoveni cilu ---
+// --- Stanovení cílů ---
 export const VIZE: Opt[] = [
   { v: "naklady", t: "Snížit náklady" },
   { v: "kapacita", t: "Zvládnout růst bez náboru" },
@@ -126,7 +233,6 @@ export const HORIZONT: Opt[] = [
   { v: "termin", t: "Váže to na konkrétní termín" },
 ];
 
-// Konkretni AI zamery (oblasti) s odhadem delky pilotu
 export type Area = { label: string; items: { t: string; d: string; weeks: string }[] };
 
 export const AREAS: Area[] = [
@@ -173,7 +279,7 @@ export const AREAS: Area[] = [
   },
 ];
 
-// --- Sestaveni AI tymu ---
+// --- Sestavení AI týmu ---
 export type Role = { role: string; why: string; risk: string };
 
 export const TEAM: Role[] = [
@@ -204,7 +310,7 @@ export const TEAM: Role[] = [
   },
   {
     role: "Garant dat",
-    why: "Dá data do použitelné podoby a drží jejich kvalitu. Roztríštěné excely jsou nejčastější důvod, proč pilot nedopadne.",
+    why: "Dá data do použitelné podoby a drží jejich kvalitu. Roztříštěné excely jsou nejčastější důvod, proč pilot nedopadne.",
     risk: "Bez něj pilot poběží na datech, kterým nikdo nevěří — a stejně dopadnou jeho výsledky.",
   },
   {
@@ -227,7 +333,7 @@ export const WORK_AREAS: Area8[] = [
   { t: "Provoz a správa", d: "Údržba nasazených řešení, vztah s dodavateli, průběžné vyhodnocování.", risk: "Bez vlastníka řešení tiše degradují a vzniká neudržovaný dluh." },
 ];
 
-// --- Pravidla z praxe (vybrana) ---
+// --- Pravidla z praxe (vybraná) ---
 export type Rule = { big: string; label: string; d: string };
 
 export const RULES: Rule[] = [

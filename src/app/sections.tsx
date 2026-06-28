@@ -1,15 +1,27 @@
 import { useProfile, Profile } from "./store";
 import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
-import { AMBITION, AREAS, HORIZONT, PROFILE_FIELDS, REGS, RULES, TEAM, VIZE, WORK_AREAS } from "./content";
+import { AMBITION, AREAS, CHARAKTERISTIKA_GROUPS, HORIZONT, Opt, RULES, TEAM, VIZE, WORK_AREAS } from "./content";
 
 export function CharakteristikaPodniku() {
   const [p, setP] = useProfile();
+  const pr = p as Record<string, unknown>;
+
   const setStr = (k: keyof Profile) => (v: string) => setP((prev) => ({ ...prev, [k]: v } as Profile));
-  const toggleReg = (v: string) =>
-    setP((prev) => ({
-      ...prev,
-      regs: (prev.regs || []).includes(v) ? (prev.regs || []).filter((x) => x !== v) : [...(prev.regs || []), v],
-    }));
+
+  const toggleMulti = (key: keyof Profile, opts: Opt[]) => (v: string) =>
+    setP((prev) => {
+      const cur = ((prev[key] as string[]) || []);
+      const opt = opts.find((o) => o.v === v);
+      let next: string[];
+      if (opt?.exclusive) {
+        next = cur.includes(v) ? [] : [v];
+      } else {
+        const base = cur.filter((x) => !opts.find((o) => o.v === x)?.exclusive);
+        next = base.includes(v) ? base.filter((x) => x !== v) : [...base, v];
+      }
+      return { ...prev, [key]: next } as Profile;
+    });
+
   return (
     <div>
       <SectionHeader
@@ -17,25 +29,36 @@ export function CharakteristikaPodniku() {
         title="Jaká je vaše firma?"
         intro="Pár údajů o prostředí, ve kterém se bude AI zavádět. Z nich vychází, co je reálné a kde začít. Všechno se ukládá do tohoto prohlížeče."
       />
-      <Card className="space-y-7">
-        {PROFILE_FIELDS.map((f) => (
-          <ChoiceField
-            key={f.key}
-            label={f.label}
-            hint={f.hint}
-            options={f.options}
-            value={(p as any)[f.key]}
-            onChange={setStr(f.key as keyof Profile)}
-          />
+      <div className="space-y-6">
+        {CHARAKTERISTIKA_GROUPS.map((g) => (
+          <Card key={g.heading} className="space-y-7">
+            <div className="font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{g.heading.toUpperCase()}</div>
+            {g.fields
+              .filter((f) => !f.showIf || f.showIf(pr))
+              .map((f) =>
+                f.multi ? (
+                  <MultiField
+                    key={f.key}
+                    label={f.label}
+                    hint={f.hint}
+                    options={f.options}
+                    values={(pr[f.key] as string[]) || []}
+                    onToggle={toggleMulti(f.key as keyof Profile, f.options)}
+                  />
+                ) : (
+                  <ChoiceField
+                    key={f.key}
+                    label={f.label}
+                    hint={f.hint}
+                    options={f.options}
+                    value={(pr[f.key] as string) || ""}
+                    onChange={setStr(f.key as keyof Profile)}
+                  />
+                )
+              )}
+          </Card>
         ))}
-        <MultiField
-          label="Regulace a citlivá data"
-          hint="Vyberte vše, co platí. Regulace nejsou důvod AI nezavádět — jsou důvod zvolit správný způsob nasazení."
-          options={REGS}
-          values={p.regs || []}
-          onToggle={toggleReg}
-        />
-      </Card>
+      </div>
       <p className="mt-4 font-mono text-[11px] tracking-label text-[#9AA7B4]">ZMĚNY SE UKLÁDAJÍ AUTOMATICKY DO TOHOTO PROHLÍŽEČE</p>
     </div>
   );
