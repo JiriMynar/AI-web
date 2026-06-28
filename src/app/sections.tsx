@@ -1,58 +1,39 @@
 import { useProfile, Profile } from "./store";
-import { Card, ChoiceField, SectionHeader } from "./ui";
+import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
+import { AMBITION, AREAS, HORIZONT, PROFILE_FIELDS, REGS, RULES, TEAM, VIZE, WORK_AREAS } from "./content";
 
 export function CharakteristikaPodniku() {
   const [p, setP] = useProfile();
-  const set = (k: keyof Profile) => (v: string) => setP((prev) => ({ ...prev, [k]: v }));
+  const setStr = (k: keyof Profile) => (v: string) => setP((prev) => ({ ...prev, [k]: v } as Profile));
+  const toggleReg = (v: string) =>
+    setP((prev) => ({
+      ...prev,
+      regs: (prev.regs || []).includes(v) ? (prev.regs || []).filter((x) => x !== v) : [...(prev.regs || []), v],
+    }));
   return (
     <div>
       <SectionHeader
         eyebrow="CHARAKTERISTIKA PODNIKU"
         title="Jaká je vaše firma?"
-        intro="Pár základních údajů o firmě. Z nich vychází doporučení v dalších sekcích. Ukládá se to rovnou do tohoto prohlížeče — po obnovení stránky tu všechno zůstane."
+        intro="Pár údajů o prostředí, ve kterém se bude AI zavádět. Z nich vychází, co je reálné a kde začít. Všechno se ukládá do tohoto prohlížeče."
       />
       <Card className="space-y-7">
-        <ChoiceField
-          label="Zaměření firmy"
-          options={[
-            { v: "admin", t: "Administrativa / služby" },
-            { v: "vyroba", t: "Výroba" },
-            { v: "obchod", t: "Obchod / e-shop" },
-            { v: "kombinace", t: "Kombinace" },
-          ]}
-          value={p.zamereni}
-          onChange={set("zamereni")}
-        />
-        <ChoiceField
-          label="Stav dat"
-          hint="V jakém stavu jsou dnes firemní data — od papíru po ucelený systém."
-          options={[
-            { v: "papir", t: "Papír a hlavy lidí" },
-            { v: "excel", t: "Excel a sdílené disky" },
-            { v: "system", t: "Ucelený systém / ERP" },
-          ]}
-          value={p.data}
-          onChange={set("data")}
-        />
-        <ChoiceField
-          label="Vlastní IT"
-          options={[
-            { v: "ano", t: "Máme vlastní IT" },
-            { v: "ne", t: "Nemáme vlastní IT" },
-          ]}
-          value={p.it}
-          onChange={set("it")}
-        />
-        <ChoiceField
-          label="Kapacita na AI"
-          hint="Kolik lidí se tomu může reálně věnovat."
-          options={[
-            { v: "nikdo", t: "Zatím nikdo" },
-            { v: "jeden", t: "Jeden člověk" },
-            { v: "tym", t: "Malý tým" },
-          ]}
-          value={p.kapacita}
-          onChange={set("kapacita")}
+        {PROFILE_FIELDS.map((f) => (
+          <ChoiceField
+            key={f.key}
+            label={f.label}
+            hint={f.hint}
+            options={f.options}
+            value={(p as any)[f.key]}
+            onChange={setStr(f.key as keyof Profile)}
+          />
+        ))}
+        <MultiField
+          label="Regulace a citlivá data"
+          hint="Vyberte vše, co platí. Regulace nejsou důvod AI nezavádět — jsou důvod zvolit správný způsob nasazení."
+          options={REGS}
+          values={p.regs || []}
+          onToggle={toggleReg}
         />
       </Card>
       <p className="mt-4 font-mono text-[11px] tracking-label text-[#9AA7B4]">ZMĚNY SE UKLÁDAJÍ AUTOMATICKY DO TOHOTO PROHLÍŽEČE</p>
@@ -62,6 +43,12 @@ export function CharakteristikaPodniku() {
 
 export function FiremniCile() {
   const [p, setP] = useProfile();
+  const setStr = (k: keyof Profile) => (v: string) => setP((prev) => ({ ...prev, [k]: v } as Profile));
+  const toggleVize = (v: string) =>
+    setP((prev) => ({
+      ...prev,
+      vize: (prev.vize || []).includes(v) ? (prev.vize || []).filter((x) => x !== v) : [...(prev.vize || []), v],
+    }));
   return (
     <div>
       <SectionHeader
@@ -85,6 +72,29 @@ export function FiremniCile() {
           </div>
         </div>
       </Card>
+      <Card className="mt-5 space-y-7">
+        <MultiField
+          label="Jaké cíle má AI naplnit?"
+          hint="Vyberte vše. „Chceme AI“ se nedá změřit — vyberte číslo, které vás bolí."
+          options={VIZE}
+          values={p.vize || []}
+          onToggle={toggleVize}
+        />
+        <ChoiceField
+          label="Jak velkou ambici máte?"
+          hint="Pilot je test, který za pár týdnů prokáže přínos na jednom procesu. Rollout bez ověřeného pilotu je nejdražší způsob, jak zjistit, že to nefunguje."
+          options={AMBITION}
+          value={p.ambition}
+          onChange={setStr("ambition")}
+        />
+        <ChoiceField
+          label="Do kdy chcete první výsledek?"
+          hint="Termín mění pořadí kroků i to, jak velká ambice je reálná."
+          options={HORIZONT}
+          value={p.horizont}
+          onChange={setStr("horizont")}
+        />
+      </Card>
       <Card className="mt-5">
         <div className="text-[13px] font-semibold text-[#0E1726]">Váš hlavní cíl</div>
         <textarea
@@ -94,39 +104,64 @@ export function FiremniCile() {
           placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
           className="mt-3 w-full rounded-lg border border-[#D8E1EB] bg-white px-3.5 py-2.5 text-[14px] text-[#0E1726] placeholder:text-[#9AA7B4] focus:border-[#1F7AD4] focus:outline-none"
         />
-        <p className="mt-2 text-[12px] leading-relaxed text-[#9AA7B4]">Sdílí se s „Charakteristikou podniku“ a ukládá se do tohoto prohlížeče.</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-[#9AA7B4]">Ukládá se do tohoto prohlížeče spolu se zbytkem profilu.</p>
       </Card>
+
+      <h2 className="mb-1 mt-10 text-xl font-semibold text-[#0E1726]">Co konkrétně AI umí</h2>
+      <p className="mb-2 text-[14px] leading-relaxed text-[#52606D]">
+        Obecné „AI ve výrobě“ neexistuje — vizuální kontrola kvality a výrobní reporting jsou dva úplně jiné projekty. Přehled konkrétních záměrů s orientačním časem na pilot:
+      </p>
+      {AREAS.map((a) => (
+        <div key={a.label}>
+          <div className="mb-2 mt-5 font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{a.label.toUpperCase()}</div>
+          <div className="space-y-2">
+            {a.items.map((it) => (
+              <div key={it.t} className="flex items-start justify-between gap-3 rounded-lg border border-[#E6ECF3] bg-white px-4 py-3">
+                <div>
+                  <div className="text-[14px] font-medium text-[#0E1726]">{it.t}</div>
+                  <div className="mt-0.5 text-[13px] leading-relaxed text-[#7A8794]">{it.d}</div>
+                </div>
+                <span className="mt-0.5 flex-shrink-0 rounded-full bg-[#EAF2FB] px-2.5 py-1 font-mono text-[11px] font-medium text-[#1F7AD4]">{it.weeks}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 export function AITym() {
-  const roles: [string, string][] = [
-    ["Sponzor z vedení", "Drží prioritu, uvolňuje čas a peníze. Bez něj projekt usne."],
-    ["Vlastník procesu", "Zná, jak práce reálně běží, a má čas se zapojit."],
-    ["Implementátor / integrátor", "Postaví řešení z hotových nástrojů a napojí ho na systémy."],
-    ["Někdo na data", "Dá data do stavu, ze kterého může AI těžit."],
-  ];
   return (
     <div>
       <SectionHeader
         eyebrow="SESTAVENÍ AI TÝMU"
         title="Kdo to ponese"
-        intro="Implementace se neutáhne sama. Tady budou role, které vychází z vaší charakteristiky podniku — u každé i to, co se stane, když chybí."
+        intro="Implementace se neutáhne sama. Tohle jsou role, které u zavádění AI obvykle potřebujete — a co se stane, když chybí."
       />
-      <Card className="space-y-5">
-        <p className="text-[14px] leading-relaxed text-[#52606D]">
-          Detailní doporučení týmu podle vašeho profilu sem teprve stěhuji z původní verze. Zatím obecně — u zavádění AI obvykle potřebujete:
-        </p>
-        <ul className="space-y-3">
-          {roles.map(([r, d]) => (
-            <li key={r} className="border-l-2 border-[#1F7AD4] pl-4">
-              <div className="text-[14px] font-semibold text-[#0E1726]">{r}</div>
-              <p className="mt-1 text-[14px] leading-relaxed text-[#52606D]">{d}</p>
-            </li>
-          ))}
-        </ul>
-      </Card>
+      <div className="space-y-4">
+        {TEAM.map((r) => (
+          <Card key={r.role} className="border-l-2 border-l-[#1F7AD4]">
+            <div className="text-[15px] font-semibold text-[#0E1726]">{r.role}</div>
+            <p className="mt-1.5 text-[14px] leading-relaxed text-[#52606D]">{r.why}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#D1495B]">{r.risk}</p>
+          </Card>
+        ))}
+      </div>
+
+      <h2 className="mb-1 mt-10 text-xl font-semibold text-[#0E1726]">Osm oblastí práce</h2>
+      <p className="mb-5 text-[14px] leading-relaxed text-[#52606D]">
+        Ať tým tvoří jeden člověk nebo skupina, těchto osm oblastí musí mít někoho, kdo je drží. U každé je vidět, co se stane, když vlastníka nemá.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {WORK_AREAS.map((w) => (
+          <Card key={w.t}>
+            <div className="text-[14px] font-semibold text-[#0E1726]">{w.t}</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#52606D]">{w.d}</p>
+            <p className="mt-2 text-[12px] leading-relaxed text-[#9AA7B4]">{w.risk}</p>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -184,7 +219,7 @@ export function MapovaniProcesu() {
       <SectionHeader
         eyebrow="PRVNÍ KROKY TÝMU · MAPOVÁNÍ PROCESŮ"
         title="Zmapujte proces dřív, než sáhnete po nástroji"
-        intro="AI postavená nad nezmapovaným procesem jen zrychlí chaos. Z praxe padne 60–80 % práce na úspěšném projektu na procesy a data — samotná AI je menšina."
+        intro="Zmapovaný proces = popsané kroky, jmenovaný vlastník a známé výjimky. Bez toho nelze říct, co přesně má AI dělat — automatizací chaosu vznikne jen rychlejší chaos."
       />
       <div className="space-y-4">
         {steps.map(([t, d], i) => (
@@ -196,6 +231,17 @@ export function MapovaniProcesu() {
               <div className="text-[15px] font-semibold text-[#0E1726]">{t}</div>
               <p className="mt-1 text-[14px] leading-relaxed text-[#52606D]">{d}</p>
             </div>
+          </Card>
+        ))}
+      </div>
+
+      <h2 className="mb-4 mt-10 text-xl font-semibold text-[#0E1726]">Pár čísel z praxe</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {RULES.map((r) => (
+          <Card key={r.label}>
+            <div className="font-mono text-[18px] font-bold text-[#1F7AD4]">{r.big}</div>
+            <div className="mt-1 text-[13px] font-semibold text-[#0E1726]">{r.label}</div>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-[#52606D]">{r.d}</p>
           </Card>
         ))}
       </div>
