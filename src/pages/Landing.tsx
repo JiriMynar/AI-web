@@ -35,7 +35,7 @@ const GEAR_TEETH: { x1: number; y1: number; x2: number; y2: number }[] = [
 export default function Landing() {
   useSeo(
     "Velín — nastartujte AI a automatizaci ve firmě",
-    "Bezplatný interaktivní průvodce zaváděním AI a automatizace pro české firmy. Zjistěte, co je u vás proveditelné, koho najmout a jak se vyhnout draze pořízeným nástrojům."
+    "Bezplatný interaktivní průvodce zaváděním AI ve firmě: jak ji nastartovat, koho na to najít a jak ji rozšířit mezi lidi, aby ji opravdu používali."
   );
   const reduce = useReducedMotion();
   const navigate = useNavigate();
@@ -107,8 +107,8 @@ export default function Landing() {
                 transition={{ duration: 0.35, delay: 0.16 }}
                 className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[#52606D] lg:mx-0"
               >
-                Velín je bezplatný průvodce, který vám ukáže, co je u vás proveditelné hned, koho na to najmout
-                a jak se vyhnout draze pořízeným nástrojům, které pak nikdo nepoužívá.
+                Velín je bezplatný průvodce, který vám ukáže, jak ve firmě nastartovat AI, koho na to najít
+                a jak ji rozšířit mezi lidi, aby ji opravdu používali.
               </motion.p>
 
               <motion.div
