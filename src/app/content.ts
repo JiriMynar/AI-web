@@ -45,7 +45,7 @@ export const CHARAKTERISTIKA_GROUPS: Group[] = [
     ],
   },
   {
-    heading: "Data a systémy",
+    heading: "Data, systémy a procesy",
     fields: [
       {
         key: "it",
@@ -100,40 +100,14 @@ export const CHARAKTERISTIKA_GROUPS: Group[] = [
           { v: "nevim", t: "Nevím" },
         ],
       },
-    ],
-  },
-  {
-    heading: "Procesy a objem",
-    fields: [
       {
         key: "procesy",
         label: "Máte zmapované procesy?",
-        hint: "Zmapovaný proces = popsané kroky, jmenovaný vlastník a známé výjimky. Bez toho nelze říct, co přesně má AI dělat.",
+        hint: "Zmapovaný proces = popsané kroky, jmenovaný vlastník a známé výjimky. Obecná zralost firmy, ještě než víte, co konkrétně automatizovat.",
         options: [
           { v: "ano", t: "Ano" },
           { v: "castecne", t: "Částečně" },
           { v: "ne", t: "Ne" },
-        ],
-      },
-      {
-        key: "objem",
-        label: "Kolik hlavní agendy zvládnete za měsíc?",
-        hint: "Objem rozhoduje o návratnosti — nákladnější automatizace se vyplatí až od určitého množství. Stačí řádový odhad.",
-        options: [
-          { v: "maly", t: "Desítky" },
-          { v: "stredni", t: "Stovky" },
-          { v: "velky", t: "Tisíce a víc" },
-          { v: "nevim", t: "Nevím" },
-        ],
-      },
-      {
-        key: "mereni",
-        label: "Víte, kolik vás ta činnost dnes stojí?",
-        hint: "Jediný způsob, jak po nasazení doložit, že se něco zlepšilo. Bez něj nejde přínos obhájit před vedením.",
-        options: [
-          { v: "ano", t: "Máme změřené" },
-          { v: "odhad", t: "Jen odhadem" },
-          { v: "ne", t: "Nevíme" },
         ],
       },
     ],
@@ -231,6 +205,20 @@ export const HORIZONT: Opt[] = [
   { v: "letos", t: "Během letoška" },
   { v: "neni", t: "Není to tlačené" },
   { v: "termin", t: "Váže to na konkrétní termín" },
+];
+
+// Objem a měření patří až k vybranému cíli (referentem je konkrétní činnost ke zlepšení).
+export const OBJEM: Opt[] = [
+  { v: "maly", t: "Desítky měsíčně" },
+  { v: "stredni", t: "Stovky měsíčně" },
+  { v: "velky", t: "Tisíce a víc" },
+  { v: "nevim", t: "Nevím" },
+];
+
+export const MERENI: Opt[] = [
+  { v: "ano", t: "Máme změřené" },
+  { v: "odhad", t: "Jen odhadem" },
+  { v: "ne", t: "Nevíme" },
 ];
 
 export type Area = { label: string; items: { t: string; d: string; weeks: string }[] };

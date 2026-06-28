@@ -1,6 +1,6 @@
 import { useProfile, Profile } from "./store";
 import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
-import { AMBITION, AREAS, CHARAKTERISTIKA_GROUPS, HORIZONT, Opt, RULES, TEAM, VIZE, WORK_AREAS } from "./content";
+import { AMBITION, AREAS, CHARAKTERISTIKA_GROUPS, HORIZONT, MERENI, OBJEM, Opt, RULES, TEAM, VIZE, WORK_AREAS } from "./content";
 
 export function CharakteristikaPodniku() {
   const [p, setP] = useProfile();
@@ -118,16 +118,32 @@ export function FiremniCile() {
           onChange={setStr("horizont")}
         />
       </Card>
-      <Card className="mt-5">
-        <div className="text-[13px] font-semibold text-[#0E1726]">Váš hlavní cíl</div>
-        <textarea
-          value={p.cil}
-          onChange={(e) => setP((prev) => ({ ...prev, cil: e.target.value }))}
-          rows={2}
-          placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
-          className="mt-3 w-full rounded-lg border border-[#D8E1EB] bg-white px-3.5 py-2.5 text-[14px] text-[#0E1726] placeholder:text-[#9AA7B4] focus:border-[#1F7AD4] focus:outline-none"
+      <Card className="mt-5 space-y-7">
+        <div>
+          <div className="text-[13px] font-semibold text-[#0E1726]">Váš hlavní cíl</div>
+          <textarea
+            value={p.cil}
+            onChange={(e) => setP((prev) => ({ ...prev, cil: e.target.value }))}
+            rows={2}
+            placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
+            className="mt-3 w-full rounded-lg border border-[#D8E1EB] bg-white px-3.5 py-2.5 text-[14px] text-[#0E1726] placeholder:text-[#9AA7B4] focus:border-[#1F7AD4] focus:outline-none"
+          />
+        </div>
+        <ChoiceField
+          label="Jaký objem má ta agenda?"
+          hint="U činnosti, kterou chcete zlepšit — kolik dokladů, požadavků nebo kusů měsíčně. Objem rozhoduje o návratnosti: nákladnější automatizace se vyplatí až od určitého množství."
+          options={OBJEM}
+          value={p.objem}
+          onChange={setStr("objem")}
         />
-        <p className="mt-2 text-[12px] leading-relaxed text-[#9AA7B4]">Ukládá se do tohoto prohlížeče spolu se zbytkem profilu.</p>
+        <ChoiceField
+          label="Víte, kolik vás ta činnost dnes stojí?"
+          hint="Kolik hodin nebo korun dnes spotřebuje. Jediné číslo, se kterým po nasazení porovnáte výsledek a obhájíte přínos před vedením."
+          options={MERENI}
+          value={p.mereni}
+          onChange={setStr("mereni")}
+        />
+        <p className="text-[12px] leading-relaxed text-[#9AA7B4]">Ukládá se do tohoto prohlížeče spolu se zbytkem profilu.</p>
       </Card>
 
       <h2 className="mb-1 mt-10 text-xl font-semibold text-[#0E1726]">Co konkrétně AI umí</h2>
