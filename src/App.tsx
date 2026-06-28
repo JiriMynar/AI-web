@@ -1,18 +1,28 @@
 import { Suspense, lazy } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Shell from "./design/Shell";
 import Landing from "./pages/Landing";
 import Vyber from "./pages/Vyber";
+import AppLayout from "./app/AppLayout";
+import {
+  AITym,
+  CharakteristikaPodniku,
+  FiremniCile,
+  MapovaniProcesu,
+  PopisPrace,
+  PrehledyMezd,
+} from "./app/sections";
 
 /*
- * Striktní oddělení rolí: každá role je samostatný lazy modul.
- * Žádná role neimportuje obsah jiné role.
+ * Dve vrstvy:
+ *  - /app/*  bezi v samostatnem svetlem AppLayout (vlastni postranni menu, mimo Shell)
+ *  - vse ostatni bezi pod puvodnim Shellem (landing, rozcestnik, role moduly)
  */
 const Vedeni = lazy(() => import("./roles/vedeni"));
 const Hr = lazy(() => import("./roles/hr"));
 const Specialista = lazy(() => import("./roles/specialista"));
 
-export default function App() {
+function ShellRoutes() {
   return (
     <Shell>
       <Suspense
@@ -34,12 +44,30 @@ export default function App() {
               <div className="mx-auto max-w-shell px-5 py-24">
                 <p className="font-mono text-xs tracking-label text-warn">CHYBA 404</p>
                 <h1 className="mt-3 text-3xl font-semibold">Tahle obrazovka ve velínu není.</h1>
-                <a href="/" className="mt-6 inline-block font-mono text-sm text-vedeni underline underline-offset-4">← Zpět na rozcestník</a>
+                <a href="/" className="mt-6 inline-block font-mono text-sm text-vedeni underline underline-offset-4">← Zpět na úvod</a>
               </div>
             }
           />
         </Routes>
       </Suspense>
     </Shell>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/app" element={<AppLayout />}>
+        <Route index element={<Navigate to="/app/charakteristika-podniku" replace />} />
+        <Route path="charakteristika-podniku" element={<CharakteristikaPodniku />} />
+        <Route path="firemni-cile" element={<FiremniCile />} />
+        <Route path="ai-tym" element={<AITym />} />
+        <Route path="popis-prace" element={<PopisPrace />} />
+        <Route path="prehledy-mezd" element={<PrehledyMezd />} />
+        <Route path="mapovani-procesu" element={<MapovaniProcesu />} />
+        <Route path="*" element={<Navigate to="/app/charakteristika-podniku" replace />} />
+      </Route>
+      <Route path="*" element={<ShellRoutes />} />
+    </Routes>
   );
 }

@@ -6,8 +6,8 @@ import { useSeo } from "../lib/seo";
 
 /**
  * Vstupní obrazovka — světlý mód, bez částic. Vlevo nadpis s barevně
- * zvýrazněnými klíčovými slovy, krátký popis a tlačítko na vstup. Vpravo
- * animovaná SVG ilustrace: firemní podklady (dokument, e-mail, tabulka)
+ * zvýrazněnými klíčovými slovy, krátký popis a tlačítko na vstup do aplikace.
+ * Vpravo animovaná SVG ilustrace: firemní podklady (dokument, e-mail, tabulka)
  * tečou do AI jádra, to je zpracuje (pulzuje, vedle se točí ozubené kolo)
  * a ven vytékají hotové výstupy (schváleno, report, odesláno).
  */
@@ -44,11 +44,11 @@ export default function Landing() {
   const enter = () => {
     if (leaving) return;
     if (reduce) {
-      navigate("/vyber");
+      navigate("/app");
       return;
     }
     setLeaving(true);
-    window.setTimeout(() => navigate("/vyber"), 600);
+    window.setTimeout(() => navigate("/app"), 600);
   };
 
   return (
