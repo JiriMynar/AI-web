@@ -1,15 +1,37 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Eyebrow } from "../design/primitives";
-import ParticleField, { ParticleFieldHandle } from "../design/ParticleField";
 import { useSeo } from "../lib/seo";
 
 /**
- * Vstupní obrazovka — jen hero: tmavé pozadí s gradientem, mřížkou a tečkami,
- * velký nadpis s barevně zvýrazněnými klíčovými slovy, krátký popis k čemu
- * Velín je a jedno tlačítko na vstup. Vpravo vlastní SVG ilustrace robota.
+ * Vstupní obrazovka — světlý mód, bez částic. Vlevo nadpis s barevně
+ * zvýrazněnými klíčovými slovy, krátký popis a tlačítko na vstup. Vpravo
+ * animovaná SVG ilustrace: firemní podklady (dokument, e-mail, tabulka)
+ * tečou do AI jádra, to je zpracuje (pulzuje, vedle se točí ozubené kolo)
+ * a ven vytékají hotové výstupy (schváleno, report, odesláno).
  */
+
+const FLOW: { x1: number; y1: number; x2: number; y2: number; c: string; d: number }[] = [
+  { x1: 70, y1: 70, x2: 176, y2: 158, c: "#1F7AD4", d: 0 },
+  { x1: 70, y1: 160, x2: 174, y2: 180, c: "#1F7AD4", d: 0.45 },
+  { x1: 70, y1: 250, x2: 176, y2: 202, c: "#1F7AD4", d: 0.9 },
+  { x1: 264, y1: 158, x2: 370, y2: 70, c: "#12A065", d: 0.6 },
+  { x1: 266, y1: 180, x2: 370, y2: 160, c: "#12A065", d: 1.05 },
+  { x1: 264, y1: 202, x2: 370, y2: 250, c: "#12A065", d: 1.5 },
+];
+
+const GEAR_TEETH: { x1: number; y1: number; x2: number; y2: number }[] = [
+  { x1: 9, y1: 0, x2: 13, y2: 0 },
+  { x1: 6.4, y1: 6.4, x2: 9.2, y2: 9.2 },
+  { x1: 0, y1: 9, x2: 0, y2: 13 },
+  { x1: -6.4, y1: 6.4, x2: -9.2, y2: 9.2 },
+  { x1: -9, y1: 0, x2: -13, y2: 0 },
+  { x1: -6.4, y1: -6.4, x2: -9.2, y2: -9.2 },
+  { x1: 0, y1: -9, x2: 0, y2: -13 },
+  { x1: 6.4, y1: -6.4, x2: 9.2, y2: -9.2 },
+];
+
 export default function Landing() {
   useSeo(
     "Velín — nastartujte AI a automatizaci ve firmě",
@@ -17,29 +39,27 @@ export default function Landing() {
   );
   const reduce = useReducedMotion();
   const navigate = useNavigate();
-  const field = useRef<ParticleFieldHandle>(null);
   const [leaving, setLeaving] = useState(false);
 
-  const enter = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const enter = () => {
     if (leaving) return;
     if (reduce) {
       navigate("/vyber");
       return;
     }
-    field.current?.explode(e.clientX, e.clientY);
     setLeaving(true);
-    window.setTimeout(() => navigate("/vyber"), 1100);
+    window.setTimeout(() => navigate("/vyber"), 600);
   };
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Vrstvy pozadí: gradient → mřížka → tečky */}
+    <div className="relative min-h-screen overflow-hidden bg-[#F6F9FC]">
+      {/* Světlé pozadí: jemný gradient + mřížka */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 80% 70% at 62% 12%, rgba(79,195,247,0.12), transparent 58%), radial-gradient(ellipse 65% 55% at 15% 85%, rgba(67,221,154,0.07), transparent 55%)",
+            "radial-gradient(ellipse 80% 70% at 70% 8%, rgba(31,122,212,0.10), transparent 55%), radial-gradient(ellipse 60% 55% at 10% 92%, rgba(18,160,101,0.08), transparent 55%)",
         }}
       />
       <div
@@ -47,21 +67,20 @@ export default function Landing() {
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(to right, rgba(34,48,63,0.45) 1px, transparent 1px), linear-gradient(to bottom, rgba(34,48,63,0.45) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse 75% 60% at 50% 35%, #000 25%, transparent 78%)",
-          WebkitMaskImage: "radial-gradient(ellipse 75% 60% at 50% 35%, #000 25%, transparent 78%)",
+            "linear-gradient(to right, rgba(15,23,42,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.05) 1px, transparent 1px)",
+          backgroundSize: "46px 46px",
+          maskImage: "radial-gradient(ellipse 78% 62% at 50% 35%, #000 22%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse 78% 62% at 50% 35%, #000 22%, transparent 80%)",
         }}
       />
-      <ParticleField ref={field} />
 
       <motion.div
-        animate={leaving ? { opacity: 0, scale: 0.95, filter: "blur(6px)" } : { opacity: 1, scale: 1, filter: "blur(0px)" }}
-        transition={{ duration: 0.65, ease: "easeIn" }}
+        animate={leaving ? { opacity: 0, scale: 0.97 } : { opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeIn" }}
         className="relative z-10"
       >
-        <section className="relative mx-auto max-w-shell px-5">
-          <div className="grid min-h-[86vh] items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+        <section className="mx-auto max-w-shell px-5">
+          <div className="grid min-h-[88vh] items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
             {/* Text */}
             <div className="text-center lg:text-left">
               <motion.div
@@ -69,24 +88,24 @@ export default function Landing() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Eyebrow tone="text-dim">/// PRŮVODCE ZAVÁDĚNÍM AI · CZ</Eyebrow>
+                <Eyebrow tone="text-[#1F7AD4]">/// PRŮVODCE ZAVÁDĚNÍM AI · CZ</Eyebrow>
               </motion.div>
 
               <motion.h1
                 initial={reduce ? false : { opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.06 }}
-                className="mt-6 text-4xl font-semibold leading-[1.06] tracking-tight sm:text-6xl"
+                className="mt-6 text-4xl font-semibold leading-[1.06] tracking-tight text-[#0E1726] sm:text-6xl"
               >
-                Nastartujte <span className="text-spec">AI</span> a{" "}
-                <span className="text-warn">automatizaci</span> ve vaší firmě
+                Nastartujte <span className="text-[#12A065]">AI</span> a{" "}
+                <span className="text-[#1F7AD4]">automatizaci</span> ve vaší firmě
               </motion.h1>
 
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: 0.16 }}
-                className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-dim lg:mx-0"
+                className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[#52606D] lg:mx-0"
               >
                 Velín je bezplatný průvodce, který vám ukáže, co je u vás proveditelné hned, koho na to najmout
                 a jak se vyhnout draze pořízeným nástrojům, které pak nikdo nepoužívá.
@@ -102,7 +121,7 @@ export default function Landing() {
                   type="button"
                   onClick={enter}
                   disabled={leaving}
-                  className="group inline-flex items-center gap-3 rounded-full bg-vedeni px-9 py-4 text-base font-semibold text-bg shadow-[0_0_45px_rgba(79,195,247,0.4)] transition-[transform,box-shadow] duration-200 enabled:hover:-translate-y-1 enabled:hover:shadow-[0_0_70px_rgba(79,195,247,0.55)] disabled:cursor-default"
+                  className="group inline-flex items-center gap-3 rounded-full bg-[#1F7AD4] px-9 py-4 text-base font-semibold text-white shadow-[0_12px_34px_rgba(31,122,212,0.32)] transition-[transform,box-shadow] duration-200 enabled:hover:-translate-y-1 enabled:hover:shadow-[0_18px_46px_rgba(31,122,212,0.42)] disabled:cursor-default"
                 >
                   {leaving ? "Spouštím…" : "Vstoupit do aplikace"}
                   <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-1">→</span>
@@ -113,97 +132,146 @@ export default function Landing() {
                 initial={reduce ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3, delay: 0.42 }}
-                className="mt-7 font-mono text-xs tracking-wide2 text-faint"
+                className="mt-7 font-mono text-xs tracking-wide2 text-[#9AA7B4]"
               >
                 bezplatné · bez registrace · nic se nikam neodesílá
               </motion.p>
             </div>
 
-            {/* Ilustrace */}
+            {/* Ilustrace: AI do firemních procesů + automatizace */}
             <motion.div
-              initial={reduce ? false : { opacity: 0, scale: 0.9 }}
+              initial={reduce ? false : { opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative mx-auto w-full max-w-[460px]"
+              className="relative mx-auto w-full max-w-[480px]"
             >
-              <motion.div
-                animate={reduce ? undefined : { y: [0, -14, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <svg viewBox="0 0 420 420" className="h-auto w-full" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustrace robota a automatizace">
-                  <defs>
-                    <radialGradient id="vlnGlow" cx="50%" cy="46%" r="55%">
-                      <stop offset="0%" stopColor="#4FC3F7" stopOpacity="0.22" />
-                      <stop offset="55%" stopColor="#43DD9A" stopOpacity="0.06" />
-                      <stop offset="100%" stopColor="#0A1017" stopOpacity="0" />
-                    </radialGradient>
-                    <linearGradient id="vlnBody" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1A2532" />
-                      <stop offset="100%" stopColor="#111A26" />
-                    </linearGradient>
-                    <filter id="vlnSoft" x="-60%" y="-60%" width="220%" height="220%">
-                      <feGaussianBlur stdDeviation="4" result="b" />
-                      <feMerge>
-                        <feMergeNode in="b" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
+              <svg viewBox="0 0 440 360" className="h-auto w-full" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Firemní podklady proudí do AI jádra a ven vytékají automatizované výstupy">
+                <defs>
+                  <radialGradient id="vlnHalo" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#1F7AD4" stopOpacity="0.12" />
+                    <stop offset="60%" stopColor="#1F7AD4" stopOpacity="0.04" />
+                    <stop offset="100%" stopColor="#1F7AD4" stopOpacity="0" />
+                  </radialGradient>
+                  <filter id="vlnCard" x="-25%" y="-25%" width="150%" height="160%">
+                    <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#1F3A56" floodOpacity="0.12" />
+                  </filter>
+                </defs>
 
-                  <circle cx="210" cy="205" r="205" fill="url(#vlnGlow)" />
+                <ellipse cx="220" cy="180" rx="210" ry="170" fill="url(#vlnHalo)" />
 
-                  {/* orbity */}
-                  <g stroke="#22303F" strokeWidth="1" opacity="0.7">
-                    <ellipse cx="210" cy="212" rx="182" ry="150" />
-                    <ellipse cx="210" cy="212" rx="128" ry="184" transform="rotate(20 210 212)" />
-                  </g>
+                {/* spojnice */}
+                {FLOW.map((f, i) => (
+                  <line key={`l${i}`} x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="2 6" strokeLinecap="round" />
+                ))}
 
-                  {/* spojnice automatizace */}
-                  <g stroke="#22303F" strokeWidth="1.5">
-                    <line x1="112" y1="96" x2="138" y2="156" strokeDasharray="3 5" />
-                    <line x1="388" y1="252" x2="296" y2="240" strokeDasharray="3 5" />
-                  </g>
+                {/* tekoucí datačky */}
+                {!reduce &&
+                  FLOW.map((f, i) => (
+                    <motion.circle
+                      key={`d${i}`}
+                      r="4"
+                      fill={f.c}
+                      initial={{ cx: f.x1, cy: f.y1 }}
+                      animate={{ cx: [f.x1, f.x2], cy: [f.y1, f.y2] }}
+                      transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut", delay: f.d }}
+                    />
+                  ))}
 
-                  {/* orbitální tečky */}
-                  <circle cx="40" cy="158" r="5" fill="#43DD9A" filter="url(#vlnSoft)" />
-                  <circle cx="388" cy="252" r="4.5" fill="#FFB547" filter="url(#vlnSoft)" />
-                  <circle cx="306" cy="70" r="3.5" fill="#4FC3F7" filter="url(#vlnSoft)" />
+                {/* --- vstupní karty (vlevo) --- */}
+                {/* dokument */}
+                <g filter="url(#vlnCard)">
+                  <rect x="16" y="49" width="54" height="42" rx="10" fill="#FFFFFF" stroke="#E3EAF2" />
+                </g>
+                <rect x="33" y="59" width="20" height="22" rx="2.5" fill="none" stroke="#64748B" strokeWidth="1.5" />
+                <g stroke="#9AA8B6" strokeWidth="1.5" strokeLinecap="round">
+                  <line x1="37" y1="65" x2="49" y2="65" />
+                  <line x1="37" y1="70" x2="49" y2="70" />
+                  <line x1="37" y1="75" x2="45" y2="75" />
+                </g>
 
-                  {/* čip AI */}
-                  <g>
-                    <rect x="66" y="72" width="46" height="46" rx="10" fill="#111A26" stroke="#FFB547" strokeOpacity="0.55" />
-                    <text x="89" y="101" textAnchor="middle" fontFamily="monospace" fontSize="16" fontWeight="700" fill="#FFB547">AI</text>
-                    <g stroke="#FFB547" strokeOpacity="0.55" strokeWidth="2">
-                      <line x1="76" y1="72" x2="76" y2="64" />
-                      <line x1="102" y1="72" x2="102" y2="64" />
-                      <line x1="76" y1="118" x2="76" y2="126" />
-                      <line x1="102" y1="118" x2="102" y2="126" />
-                    </g>
-                  </g>
+                {/* e-mail */}
+                <g filter="url(#vlnCard)">
+                  <rect x="16" y="139" width="54" height="42" rx="10" fill="#FFFFFF" stroke="#E3EAF2" />
+                </g>
+                <rect x="31" y="151" width="24" height="18" rx="2.5" fill="none" stroke="#64748B" strokeWidth="1.5" />
+                <path d="M32 153 L43 161 L54 153" fill="none" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
 
-                  {/* anténa */}
-                  <line x1="210" y1="156" x2="210" y2="122" stroke="#3A4A5C" strokeWidth="3" />
-                  <circle cx="210" cy="118" r="7" fill="#4FC3F7" filter="url(#vlnSoft)" />
+                {/* tabulka */}
+                <g filter="url(#vlnCard)">
+                  <rect x="16" y="229" width="54" height="42" rx="10" fill="#FFFFFF" stroke="#E3EAF2" />
+                </g>
+                <rect x="32" y="241" width="22" height="18" rx="2.5" fill="none" stroke="#64748B" strokeWidth="1.5" />
+                <line x1="43" y1="241" x2="43" y2="259" stroke="#9AA8B6" strokeWidth="1.5" />
+                <line x1="32" y1="250" x2="54" y2="250" stroke="#9AA8B6" strokeWidth="1.5" />
 
-                  {/* sluchátka */}
-                  <rect x="120" y="190" width="20" height="54" rx="9" fill="#15202E" stroke="#2A3848" />
-                  <rect x="280" y="190" width="20" height="54" rx="9" fill="#15202E" stroke="#2A3848" />
+                {/* --- výstupní karty (vpravo) --- */}
+                {/* schváleno */}
+                <g filter="url(#vlnCard)">
+                  <rect x="370" y="49" width="54" height="42" rx="10" fill="#FFFFFF" stroke="#E3EAF2" />
+                </g>
+                <circle cx="397" cy="70" r="12" fill="#12A065" />
+                <path d="M391 70.5 l4 4 l8 -8.5" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
-                  {/* hlava */}
-                  <rect x="136" y="152" width="148" height="128" rx="30" fill="url(#vlnBody)" stroke="#2A3848" strokeWidth="1.5" />
+                {/* report */}
+                <g filter="url(#vlnCard)">
+                  <rect x="370" y="139" width="54" height="42" rx="10" fill="#FFFFFF" stroke="#E3EAF2" />
+                </g>
+                <rect x="388" y="162" width="5" height="9" rx="1" fill="#1F7AD4" />
+                <rect x="395" y="156" width="5" height="15" rx="1" fill="#12A065" />
+                <rect x="402" y="159" width="5" height="12" rx="1" fill="#1F7AD4" />
 
-                  {/* obličejová obrazovka */}
-                  <rect x="153" y="172" width="114" height="80" rx="18" fill="#0A1017" stroke="#22303F" />
-                  <circle cx="191" cy="208" r="11" fill="#4FC3F7" filter="url(#vlnSoft)" />
-                  <circle cx="229" cy="208" r="11" fill="#4FC3F7" filter="url(#vlnSoft)" />
-                  <path d="M189 230 q21 16 42 0" stroke="#43DD9A" strokeWidth="3" strokeLinecap="round" fill="none" />
+                {/* odesláno */}
+                <g filter="url(#vlnCard)">
+                  <rect x="370" y="229" width="54" height="42" rx="10" fill="#FFFFFF" stroke="#E3EAF2" />
+                </g>
+                <path d="M386 250 L410 241 L402 259 L398 252 Z" fill="#1F7AD4" />
+                <path d="M398 252 L410 241" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" />
 
-                  {/* krk + trup + kontrolka */}
-                  <rect x="196" y="280" width="28" height="16" fill="#15202E" />
-                  <path d="M150 362 q60 -46 120 0" fill="#111A26" stroke="#2A3848" strokeWidth="1.5" />
-                  <circle cx="210" cy="340" r="6" fill="#43DD9A" filter="url(#vlnSoft)" />
-                </svg>
-              </motion.div>
+                {/* --- AI jádro --- */}
+                {!reduce && (
+                  <motion.circle
+                    cx="220"
+                    cy="180"
+                    r="58"
+                    fill="none"
+                    stroke="#1F7AD4"
+                    strokeWidth="1.5"
+                    initial={{ scale: 1, opacity: 0.5 }}
+                    animate={{ scale: [1, 1.14, 1], opacity: [0.45, 0, 0.45] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ transformBox: "fill-box", transformOrigin: "center" }}
+                  />
+                )}
+                <g filter="url(#vlnCard)">
+                  <rect x="174" y="134" width="92" height="92" rx="22" fill="#FFFFFF" stroke="#BFD8EF" strokeWidth="1.5" />
+                </g>
+                {/* nervový glyf */}
+                <g stroke="#1F7AD4" strokeWidth="2">
+                  <line x1="220" y1="180" x2="200" y2="162" />
+                  <line x1="220" y1="180" x2="240" y2="162" />
+                  <line x1="220" y1="180" x2="220" y2="202" />
+                </g>
+                <circle cx="200" cy="162" r="5" fill="#1F7AD4" />
+                <circle cx="240" cy="162" r="5" fill="#1F7AD4" />
+                <circle cx="220" cy="202" r="5" fill="#12A065" />
+                <circle cx="220" cy="180" r="6.5" fill="#0E1726" />
+                <text x="220" y="224" textAnchor="middle" fontFamily="monospace" fontSize="10" fontWeight="700" fill="#1F7AD4" letterSpacing="1">AI</text>
+
+                {/* ozubené kolo = automatizace */}
+                <g transform="translate(260 142)">
+                  <motion.g
+                    animate={reduce ? undefined : { rotate: 360 }}
+                    transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+                    style={{ transformBox: "fill-box", transformOrigin: "center" }}
+                  >
+                    {GEAR_TEETH.map((t, i) => (
+                      <line key={`g${i}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#E0933A" strokeWidth="3" strokeLinecap="round" />
+                    ))}
+                    <circle cx="0" cy="0" r="8.5" fill="#E0933A" />
+                    <circle cx="0" cy="0" r="3.5" fill="#FFFFFF" />
+                  </motion.g>
+                </g>
+              </svg>
             </motion.div>
           </div>
         </section>
