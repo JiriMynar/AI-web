@@ -79,6 +79,19 @@ const FIRST_STEPS: Item[] = [
   },
 ];
 
+const PLAN: Item[] = [
+  {
+    to: "/app/roadmap",
+    label: "Roadmapa",
+    icon: (
+      <svg viewBox="0 0 24 24" className={IC} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 21V4" />
+        <path d="M5 4h11l-2 3.5L16 11H5" />
+      </svg>
+    ),
+  },
+];
+
 function linkClass({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] transition-colors ${
     isActive
@@ -135,6 +148,18 @@ export default function AppLayout() {
           </div>
           <div className="space-y-1">
             {FIRST_STEPS.map((it) => (
+              <NavLink key={it.to} to={it.to} className={linkClass} onClick={closeOnMobile}>
+                <span className="text-[#7A8794]">{it.icon}</span>
+                <span>{it.label}</span>
+              </NavLink>
+            ))}
+          </div>
+
+          <div className="px-3 pb-2 pt-6 font-mono text-[10px] font-semibold tracking-label text-[#9AA7B4]">
+            VÁŠ PLÁN
+          </div>
+          <div className="space-y-1">
+            {PLAN.map((it) => (
               <NavLink key={it.to} to={it.to} className={linkClass} onClick={closeOnMobile}>
                 <span className="text-[#7A8794]">{it.icon}</span>
                 <span>{it.label}</span>

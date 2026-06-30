@@ -12,6 +12,7 @@ import {
   PopisPrace,
   PrehledyMezd,
 } from "./app/sections";
+import { Roadmap } from "./app/roadmap";
 
 /*
  * Dve vrstvy:
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="popis-prace" element={<PopisPrace />} />
         <Route path="prehledy-mezd" element={<PrehledyMezd />} />
         <Route path="mapovani-procesu" element={<MapovaniProcesu />} />
+        <Route path="roadmap" element={<Roadmap />} />
         <Route path="*" element={<Navigate to="/app/charakteristika-podniku" replace />} />
       </Route>
       <Route path="*" element={<ShellRoutes />} />
