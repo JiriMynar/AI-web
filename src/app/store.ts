@@ -7,15 +7,18 @@ export type Profile = {
   focus: string;
   it: string;
   kdeData: string;
+  dataVen: string;
   systemy: string;
   erpUsage: string;
   strojeData: string;
   procesy: string;
   uzivatele: string;
-  zpusob: string;
-  jazyky: string[];
-  zkusenost: string;
+  dovednosti: string;
   lide: string;
+  zkusenost: string;
+  zpusob: string;
+  vyvoj: string;
+  jazyky: string[];
   regs: string[];
   // stanovení cílů
   vize: string[];
@@ -31,15 +34,18 @@ export const DEFAULT_PROFILE: Profile = {
   focus: "",
   it: "",
   kdeData: "",
+  dataVen: "",
   systemy: "",
   erpUsage: "",
   strojeData: "",
   procesy: "",
   uzivatele: "",
-  zpusob: "",
-  jazyky: [],
-  zkusenost: "",
+  dovednosti: "",
   lide: "",
+  zkusenost: "",
+  zpusob: "",
+  vyvoj: "",
+  jazyky: [],
   regs: [],
   vize: [],
   ambition: "",
