@@ -28,6 +28,10 @@ export type Profile = {
   objem: string;
   mereni: string;
   cil: string;
+  // cíle pro AI gramotnost týmu (když lidé pracují s LLM)
+  ucitKoho: string[];
+  ucitUroven: string;
+  ucitCo: string[];
 };
 
 export const DEFAULT_PROFILE: Profile = {
@@ -55,6 +59,9 @@ export const DEFAULT_PROFILE: Profile = {
   objem: "",
   mereni: "",
   cil: "",
+  ucitKoho: [],
+  ucitUroven: "",
+  ucitCo: [],
 };
 
 export function useProfile() {

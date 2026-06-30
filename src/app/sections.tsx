@@ -69,15 +69,23 @@ export function CharakteristikaPodniku() {
 export function FiremniCile() {
   const [p, setP] = useProfile();
   const setStr = (k: keyof Profile) => (v: string) => setP((prev) => ({ ...prev, [k]: v } as Profile));
-  const toggleVize = (v: string) =>
-    setP((prev) => ({
-      ...prev,
-      vize: (prev.vize || []).includes(v) ? (prev.vize || []).filter((x) => x !== v) : [...(prev.vize || []), v],
-    }));
+  const toggleArr = (key: keyof Profile) => (v: string) =>
+    setP((prev) => {
+      const cur = (prev[key] as string[]) || [];
+      return { ...prev, [key]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] } as Profile;
+    });
 
   const noClue = p.cileZna === "ne";
   const showGoals = p.cileZna !== "ne";
   const showConsultant = p.cileZna === "ne" || p.cileZna === "castecne";
+  const wantsLLM = p.zpusob === "llm" || p.zpusob === "oboji";
+
+  const UROVNE = [
+    { v: "u1", t: "Základní povědomí", d: "Ví, co LLM umí a kde má limity, zná rizika a co do něj nepatří." },
+    { v: "u2", t: "Bezpečné používání", d: "Umí zadat prompt, ověřit výstup a dodržet pravidla o firemních datech." },
+    { v: "u3", t: "Efektivní práce", d: "Staví si vlastní postupy a šablony, kombinuje AI s daty a nástroji firmy." },
+    { v: "u4", t: "Multiplikátor", d: "Učí ostatní, navrhuje nové use-case a hlídá kvalitu i soulad s pravidly." },
+  ];
 
   return (
     <div>
@@ -140,7 +148,7 @@ export function FiremniCile() {
               { v: "konkurence", t: "Nezůstat pozadu za konkurencí" },
             ]}
             values={p.vize || []}
-            onToggle={toggleVize}
+            onToggle={toggleArr("vize")}
           />
           <ChoiceField
             label="Jak velkou ambici máte?"
@@ -155,6 +163,72 @@ export function FiremniCile() {
             options={HORIZONT}
             value={p.horizont}
             onChange={setStr("horizont")}
+          />
+        </Card>
+      )}
+
+      {showGoals && wantsLLM && (
+        <Card className="mt-5 space-y-7">
+          <div>
+            <div className="font-mono text-[11px] font-semibold tracking-label text-[#1F7AD4]">AI GRAMOTNOST TÝMU</div>
+            <h3 className="mt-1.5 text-[15px] font-semibold text-[#0E1726]">Co chcete lidi naučit</h3>
+            <p className="mt-1.5 text-[14px] leading-relaxed text-[#52606D]">
+              V profilu jste zvolili, že lidé budou pracovat s LLM (ChatGPT, Claude). Tím vzniká samostatný cíl — dostat je na potřebnou úroveň. Není to jen dobrá praxe: AI Act (článek 4, platný od února 2025) přímo ukládá zajistit u lidí pracujících s AI dostatečnou úroveň AI gramotnosti.
+            </p>
+          </div>
+
+          <MultiField
+            label="Koho chcete vyškolit?"
+            hint="Různé skupiny potřebují různou úroveň — vedení jiný rozsah než provoz."
+            options={[
+              { v: "vedeni", t: "Vedení a manažeři" },
+              { v: "kancelar", t: "Kancelář a administrativa" },
+              { v: "obchod", t: "Obchod a marketing" },
+              { v: "podpora", t: "Zákaznická podpora" },
+              { v: "provoz", t: "Výroba a provoz" },
+              { v: "it", t: "IT a správci" },
+            ]}
+            values={p.ucitKoho || []}
+            onToggle={toggleArr("ucitKoho")}
+          />
+
+          <div>
+            <div className="text-[13px] font-semibold text-[#0E1726]">Na jakou úroveň je chcete dostat?</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#7A8794]">Vyberte cílovou úroveň. Stavte ji odspodu — skok na multiplikátora bez základů nedrží.</p>
+            <div className="mt-3 space-y-2">
+              {UROVNE.map((u, i) => {
+                const active = p.ucitUroven === u.v;
+                return (
+                  <button
+                    key={u.v}
+                    type="button"
+                    onClick={() => setStr("ucitUroven")(active ? "" : u.v)}
+                    className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${active ? "border-[#1F7AD4] bg-[#EAF2FB]" : "border-[#E6ECF3] bg-white hover:border-[#CFE0F0]"}`}
+                  >
+                    <span className={`mt-0.5 grid h-6 w-6 flex-shrink-0 place-items-center rounded-full font-mono text-[12px] font-semibold ${active ? "bg-[#1F7AD4] text-white" : "bg-[#F1F5F9] text-[#7A8794]"}`}>{i + 1}</span>
+                    <span className="min-w-0">
+                      <span className="block text-[14px] font-semibold text-[#0E1726]">{u.t}</span>
+                      <span className="mt-0.5 block text-[13px] leading-relaxed text-[#52606D]">{u.d}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <MultiField
+            label="Co se mají naučit?"
+            hint="Konkrétní dovednosti, ne obecné „umět AI“. Tyhle tvoří jádro AI gramotnosti."
+            options={[
+              { v: "prompty", t: "Psát srozumitelné prompty" },
+              { v: "overovani", t: "Ověřit výstup a poznat halucinaci" },
+              { v: "data", t: "Vědět, co nesmí do veřejných nástrojů" },
+              { v: "ulohy", t: "Rozpoznat vhodné a nevhodné úlohy" },
+              { v: "nastroje", t: "Práce s firemními AI nástroji" },
+              { v: "etika", t: "Transparentnost a etika vůči zákazníkům" },
+            ]}
+            values={p.ucitCo || []}
+            onToggle={toggleArr("ucitCo")}
           />
         </Card>
       )}
