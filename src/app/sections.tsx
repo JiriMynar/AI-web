@@ -87,6 +87,80 @@ export function FiremniCile() {
     { v: "u4", t: "Multiplikátor", d: "Učí ostatní, navrhuje nové use-case a hlídá kvalitu i soulad s pravidly." },
   ];
 
+  const COMPETENCY_GROUPS: { heading: string; items: Opt[] }[] = [
+    {
+      heading: "Porozumění LLM",
+      items: [
+        { v: "por_funguje", t: "Jak LLM funguje (hádá slova, není databáze faktů)" },
+        { v: "por_halucinace", t: "Proč vznikají halucinace" },
+        { v: "por_limity", t: "Limity: zastaralá data, nespolehlivé počítání" },
+        { v: "por_kontext", t: "Kontextové okno a proč model „zapomíná“" },
+        { v: "por_modely", t: "Rozdíly mezi modely a kdy který použít" },
+      ],
+    },
+    {
+      heading: "Psaní promptů",
+      items: [
+        { v: "pro_jasne", t: "Jasné zadání: role, cíl, formát výstupu" },
+        { v: "pro_kontext", t: "Dodat kontext a podklady" },
+        { v: "pro_priklad", t: "Ukázat příklad (vzor výstupu)" },
+        { v: "pro_iterace", t: "Iterovat a doptávat se místo jednoho dotazu" },
+        { v: "pro_kroky", t: "Rozdělit složitý úkol na kroky" },
+        { v: "pro_sablony", t: "Stavět šablony pro opakované úlohy" },
+      ],
+    },
+    {
+      heading: "Ověřování výstupů",
+      items: [
+        { v: "ov_fakta", t: "Ověřit fakta, čísla a citace" },
+        { v: "ov_nesmysl", t: "Poznat sebejistě podaný nesmysl" },
+        { v: "ov_kontrola", t: "Nepřebírat výstup bez kontroly" },
+        { v: "ov_zdroje", t: "Vyžádat a prověřit zdroje" },
+        { v: "ov_bias", t: "Rozpoznat zaujatost výstupu" },
+      ],
+    },
+    {
+      heading: "Data a bezpečnost",
+      items: [
+        { v: "bz_citlive", t: "Co nesmí do veřejných nástrojů" },
+        { v: "bz_verze", t: "Rozdíl veřejné vs. firemní verze" },
+        { v: "bz_anon", t: "Anonymizovat citlivé údaje před vložením" },
+        { v: "bz_trenink", t: "Vstupy můžou sloužit k tréninku modelu" },
+        { v: "bz_injection", t: "Prompt injection a podezřelé odkazy" },
+        { v: "bz_pravidla", t: "Firemní pravidla a kam se obrátit" },
+      ],
+    },
+    {
+      heading: "Úsudek a vhodné použití",
+      items: [
+        { v: "us_vhodne", t: "Na co se AI hodí a na co ne" },
+        { v: "us_clovek", t: "Kdy musí finálně rozhodnout člověk" },
+        { v: "us_riziko", t: "Odhad rizika podle dopadu úlohy" },
+        { v: "us_nezavislost", t: "Udržet si vlastní úsudek, neslepě spoléhat" },
+      ],
+    },
+    {
+      heading: "Etika a právo",
+      items: [
+        { v: "et_transp", t: "Transparentnost vůči zákazníkům a kolegům" },
+        { v: "et_odpovednost", t: "Odpovědnost za výstup nese vždy člověk" },
+        { v: "et_autorstvi", t: "Autorská práva a původ obsahu" },
+        { v: "et_pravo", t: "GDPR a AI Act v běžné práci" },
+        { v: "et_ferovost", t: "Férovost a předsudky (bias)" },
+      ],
+    },
+    {
+      heading: "Nasazení v práci",
+      items: [
+        { v: "np_usecase", t: "Konkrétní use-case pro vlastní roli" },
+        { v: "np_nastroje", t: "Práce s firemními AI nástroji a asistenty" },
+        { v: "np_data", t: "Kombinace AI s firemními daty a dokumenty" },
+        { v: "np_sdileni", t: "Sdílet dobré prompty a postupy v týmu" },
+        { v: "np_mereni", t: "Ověřit, že to reálně šetří čas" },
+      ],
+    },
+  ];
+
   return (
     <div>
       <SectionHeader
@@ -216,20 +290,32 @@ export function FiremniCile() {
             </div>
           </div>
 
-          <MultiField
-            label="Co se mají naučit?"
-            hint="Konkrétní dovednosti, ne obecné „umět AI“. Tyhle tvoří jádro AI gramotnosti."
-            options={[
-              { v: "prompty", t: "Psát srozumitelné prompty" },
-              { v: "overovani", t: "Ověřit výstup a poznat halucinaci" },
-              { v: "data", t: "Vědět, co nesmí do veřejných nástrojů" },
-              { v: "ulohy", t: "Rozpoznat vhodné a nevhodné úlohy" },
-              { v: "nastroje", t: "Práce s firemními AI nástroji" },
-              { v: "etika", t: "Transparentnost a etika vůči zákazníkům" },
-            ]}
-            values={p.ucitCo || []}
-            onToggle={toggleArr("ucitCo")}
-          />
+          <div>
+            <div className="text-[13px] font-semibold text-[#0E1726]">Co se mají naučit?</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#7A8794]">Osnova AI gramotnosti rozdělená do okruhů. Zaškrtněte dovednosti, které vaši lidé potřebují — rozsah roste se zvolenou úrovní. Není nutné všechno.</p>
+            <div className="mt-4 space-y-5">
+              {COMPETENCY_GROUPS.map((g) => (
+                <div key={g.heading}>
+                  <div className="font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{g.heading.toUpperCase()}</div>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {g.items.map((o) => {
+                      const active = (p.ucitCo || []).includes(o.v);
+                      return (
+                        <button
+                          key={o.v}
+                          type="button"
+                          onClick={() => toggleArr("ucitCo")(o.v)}
+                          className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${active ? "border-[#1F7AD4] bg-[#EAF2FB] text-[#1F7AD4]" : "border-[#D8E1EB] bg-white text-[#52606D] hover:border-[#9AA7B4]"}`}
+                        >
+                          {active ? "✓ " : ""}{o.t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </Card>
       )}
     </div>
