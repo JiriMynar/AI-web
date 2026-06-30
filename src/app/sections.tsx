@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useProfile, Profile } from "./store";
 import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
-import { AMBITION, CHARAKTERISTIKA_GROUPS, HORIZONT, Opt, RULES, TEAM, WORK_AREAS } from "./content";
+import { AMBITION, CHARAKTERISTIKA_GROUPS, HORIZONT, Opt, RULES, WORK_AREAS } from "./content";
 
 export function CharakteristikaPodniku() {
   const [p, setP] = useProfile();
@@ -322,39 +322,98 @@ export function FiremniCile() {
   );
 }
 
+type TeamNode = { name: string; sub: string; tier: string; temp?: boolean };
+
 export function AITym() {
   const [p] = useProfile();
-  const needsConsultant = p.cileZna === "ne" || p.cileZna === "castecne";
+  const wantsLLM = p.zpusob === "llm" || p.zpusob === "oboji";
+  const regs = p.regs || [];
+  const dataMessy =
+    p.systemy === "excel" || p.systemy === "papir" || p.systemy === "nevim" ||
+    p.strojeData === "ne" || p.strojeData === "castecne" || p.erpUsage === "formalne" || p.kdeData === "nevim";
+  const sensitive = ["aiakt", "finance", "zdravotnictvi", "verejny", "knowhow", "koncern", "automotive"].some((r) => regs.includes(r));
+
+  const roles: TeamNode[] = [];
+  roles.push({ name: "Sponzor z vedení", sub: "Drží prioritu, rozpočet a odblokovává překážky mezi odděleními.", tier: "zadani" });
+  if (p.cileZna === "ne" || p.cileZna === "castecne")
+    roles.push({ name: "AI konzultant", sub: "Pomůže ujasnit cíle a směr. Časově ohraničená spolupráce, ne stálé místo.", tier: "zadani", temp: true });
+  roles.push({ name: "Koordinátor implementace", sub: "Vede mapování, výběr nástrojů, regulace a měření. U menší firmy klidně částečný úvazek.", tier: "rizeni" });
+  if (p.it === "ne" && (p.vyvoj === "dodavatel" || p.vyvoj === "kombinace"))
+    roles.push({ name: "Partner na řízení dodavatele", sub: "Hlídá dodavatele technicky za vás — zadání, kvalitu i ceny.", tier: "rizeni" });
+  roles.push({ name: "Vlastníci procesů", sub: "Lidé, kteří dotčené procesy denně dělají. Bez nich proces nezměníte.", tier: "realizace" });
+  if (dataMessy)
+    roles.push({ name: "Garant dat", sub: "Dá data do použitelné podoby a hlídá jejich kvalitu.", tier: "realizace" });
+  roles.push(
+    p.it === "ano"
+      ? { name: "IT podpora", sub: "Přístupy, integrace na stávající systémy, bezpečnost.", tier: "realizace" }
+      : { name: "Externí IT partner", sub: "Zajistí přístupy, integrace a bezpečnost zvenku.", tier: "realizace" }
+  );
+  if (sensitive)
+    roles.push({ name: "Pověřenec / právní podpora", sub: "Osobní údaje, smlouvy s dodavateli AI, dopady AI Actu.", tier: "realizace" });
+  if (p.focus === "vyroba" || p.focus === "kombinace")
+    roles.push({ name: "Garant výroby", sub: "Propojí AI s výrobou a daty ze strojů.", tier: "realizace" });
+  if (wantsLLM || p.dovednosti === "nizka" || (p.ucitUroven && p.ucitUroven !== ""))
+    roles.push({ name: "Garant AI gramotnosti", sub: "Vyškolí lidi a drží zvolenou cílovou úroveň.", tier: "adopce" });
+  roles.push({ name: "Ambasadoři z provozu", sub: "Vyzkouší nástroj první a získají kolegy. Adopce se šíří od kolegů, ne shora.", tier: "adopce" });
+
+  const TIERS: { id: string; label: string; color: string; soft: string }[] = [
+    { id: "zadani", label: "Zadání a podpora", color: "#C2410C", soft: "#FBEDE4" },
+    { id: "rizeni", label: "Řízení", color: "#1F7AD4", soft: "#EAF2FB" },
+    { id: "realizace", label: "Realizace", color: "#12A065", soft: "#E9F8F1" },
+    { id: "adopce", label: "Adopce", color: "#5B4FC7", soft: "#EEEBFB" },
+  ];
+
   return (
     <div>
       <SectionHeader
         eyebrow="SESTAVENÍ AI TÝMU"
-        title="Kdo to ponese"
-        intro="Implementace se neutáhne sama. Tohle jsou role, které u zavádění AI obvykle potřebujete — a co se stane, když chybí."
+        title="Jak má vypadat váš tým"
+        intro="Tým namodelovaný podle vašeho profilu — kdo zadává, kdo řídí, kdo realizuje a kdo se stará o adopci. U menší firmy klidně nosí jeden člověk víc rolí; jde o to, aby každou roli někdo držel."
       />
 
-      {needsConsultant && (
-        <Card className="mb-4 border-l-2 border-l-[#12A065] bg-[#F1FBF6]">
-          <div className="font-mono text-[11px] font-semibold tracking-label text-[#12A065]">PODLE VAŠEHO PROFILU</div>
-          <div className="mt-1.5 text-[15px] font-semibold text-[#0E1726]">AI konzultant — ujasnění cílů a směru</div>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-[#52606D]">
-            Doporučeno, protože zatím nemáte jasno v cílech. Než dává smysl řešit nástroje a zbytek týmu, potřebujete vědět, čeho chcete dosáhnout a kde to měřit. Konzultant projde firmu a procesy, najde příležitosti s nejlepší návratností a převede je na konkrétní, měřitelné zadání. Bývá to časově ohraničená spolupráce na pár týdnů, ne stálé místo.
-          </p>
-          <p className="mt-2 text-[13px] leading-relaxed text-[#D1495B]">
-            Bez ujasnění cílů hrozí nejdražší chyba: nasadit nástroj na špatný problém a po půl roce ho zrušit, protože nikdo neumí doložit přínos.
-          </p>
-        </Card>
-      )}
-
-      <div className="space-y-4">
-        {TEAM.map((r) => (
-          <Card key={r.role} className="border-l-2 border-l-[#1F7AD4]">
-            <div className="text-[15px] font-semibold text-[#0E1726]">{r.role}</div>
-            <p className="mt-1.5 text-[14px] leading-relaxed text-[#52606D]">{r.why}</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#D1495B]">{r.risk}</p>
-          </Card>
-        ))}
+      <div className="rounded-2xl border border-[#E6ECF3] bg-[#FAFCFE] p-5 sm:p-7">
+        {TIERS.map((tier, ti) => {
+          const group = roles.filter((r) => r.tier === tier.id);
+          if (group.length === 0) return null;
+          return (
+            <div key={tier.id}>
+              {ti > 0 && <div className="mx-auto h-6 w-px bg-[#CFE0F0]" />}
+              <div className="mb-3 flex items-center justify-center gap-2">
+                <span className="h-px w-6 bg-[#E3EAF2]" />
+                <span className="font-mono text-[11px] font-semibold tracking-label" style={{ color: tier.color }}>{tier.label.toUpperCase()}</span>
+                <span className="h-px w-6 bg-[#E3EAF2]" />
+              </div>
+              <div className="flex flex-wrap justify-center gap-3">
+                {group.map((r) => (
+                  <div
+                    key={r.name}
+                    className="flex w-full items-start gap-3 rounded-xl border border-[#E6ECF3] border-l-2 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:w-72"
+                    style={{ borderLeftColor: tier.color }}
+                  >
+                    <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full" style={{ backgroundColor: tier.soft, color: tier.color }}>
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="8" r="3.2" />
+                        <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[14px] font-semibold text-[#0E1726]">{r.name}</span>
+                        {r.temp && <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5 text-[10px] font-medium text-[#7A8794]">dočasně</span>}
+                      </div>
+                      <p className="mt-0.5 text-[13px] leading-relaxed text-[#52606D]">{r.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      <p className="mt-4 text-[13px] leading-relaxed text-[#7A8794]">
+        Není to organigram na nábor osmi lidí. U menší firmy běžně drží víc rolí jeden člověk a část (IT, pověřenec, konzultant) bývá externí. Důležité je, aby na každou roli byl někdo konkrétní — ne aby „to nějak dělali všichni“.
+      </p>
 
       <h2 className="mb-1 mt-10 text-xl font-semibold text-[#0E1726]">Osm oblastí práce</h2>
       <p className="mb-5 text-[14px] leading-relaxed text-[#52606D]">
