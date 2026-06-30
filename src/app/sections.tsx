@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useProfile, Profile } from "./store";
 import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
 import { AMBITION, AREAS, CHARAKTERISTIKA_GROUPS, HORIZONT, MERENI, OBJEM, Opt, RULES, TEAM, VIZE, WORK_AREAS } from "./content";
@@ -73,83 +74,129 @@ export function FiremniCile() {
       ...prev,
       vize: (prev.vize || []).includes(v) ? (prev.vize || []).filter((x) => x !== v) : [...(prev.vize || []), v],
     }));
+
+  const noClue = p.cileZna === "ne";
+  const showGoals = p.cileZna !== "ne";
+  const showConsultant = p.cileZna === "ne" || p.cileZna === "castecne";
+
   return (
     <div>
       <SectionHeader
         eyebrow="STANOVENÍ FIREMNÍCH CÍLŮ"
         title="Ujasněte si, kam se chcete dostat"
-        intro="Nejdražší chyba není špatný nástroj — je to neujasněný cíl. Co se nedá změřit, to vedení po půl roce zruší."
+        intro="Ujasněný cíl je základ celé implementace — bez něj se nedá měřit přínos ani vybrat, kde začít. Pokud jasno nemáte, nevadí, počítá se s tím."
       />
+
       <Card>
-        <div className="font-mono text-[11px] tracking-label text-[#9AA7B4]">DOBRÝ CÍL =</div>
-        <p className="mt-2 text-[18px] font-semibold leading-snug text-[#0E1726]">
-          co měříte <span className="text-[#9AA7B4]">+</span> z čeho kam <span className="text-[#9AA7B4]">+</span> do kdy
-        </p>
-        <div className="mt-6 space-y-2">
-          <div className="flex gap-2.5">
-            <span className="mt-px font-semibold text-[#D1495B]">✕</span>
-            <p className="text-[14px] leading-relaxed text-[#52606D]">„Snížit náklady na administrativu.“</p>
-          </div>
-          <div className="flex gap-2.5">
-            <span className="mt-px font-semibold text-[#12A065]">✓</span>
-            <p className="text-[14px] leading-relaxed text-[#0E1726]">„Zkrátit zpracování faktur z 8 na 3 minuty — ušetřit ~120 hodin měsíčně — do konce Q3.“</p>
-          </div>
+        <ChoiceField
+          label="Máte jasno v tom, čeho chcete s AI dosáhnout?"
+          hint="Buďte upřímní — od téhle odpovědi se odvíjí i doporučený tým."
+          options={[
+            { v: "ano", t: "Ano, mám jasno" },
+            { v: "castecne", t: "Mám rámcovou představu" },
+            { v: "ne", t: "Zatím vůbec ne" },
+          ]}
+          value={p.cileZna || ""}
+          onChange={setStr("cileZna")}
+        />
+      </Card>
+
+      {showConsultant && (
+        <div className="mt-5 rounded-xl border border-[#CFE0F0] bg-[#F2F8FE] p-6">
+          <div className="font-mono text-[11px] font-semibold tracking-label text-[#1F7AD4]">PODLE VAŠEHO PROFILU</div>
+          <h3 className="mt-1.5 text-[16px] font-semibold text-[#0E1726]">
+            {noClue ? "Do týmu doporučujeme AI konzultanta" : "Zvažte AI konzultanta na ujasnění cílů"}
+          </h3>
+          <p className="mt-2 text-[14px] leading-relaxed text-[#52606D]">
+            {noClue
+              ? "To je úplně běžné — většina firem neumí cíle pojmenovat měřitelně. Ujasnění cílů je první práce konzultanta: projde s vámi procesy, najde, kde má AI nejlepší návratnost, a převede to na konkrétní zadání. Přidali jsme ho do doporučeného týmu."
+              : "Rámcovou představu máte. Konzultant pomůže převést ji na měřitelné cíle a seřadit je podle návratnosti. Přidali jsme ho do doporučeného týmu."}
+          </p>
+          <Link
+            to="/app/ai-tym"
+            className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#1F7AD4] transition-colors hover:text-[#1A6BBC]"
+          >
+            Zobrazit doporučený tým →
+          </Link>
         </div>
-      </Card>
-      <Card className="mt-5 space-y-7">
-        <MultiField
-          label="Jaké cíle má AI naplnit?"
-          hint="Vyberte vše. „Chceme AI“ se nedá změřit — vyberte číslo, které vás bolí."
-          options={VIZE}
-          values={p.vize || []}
-          onToggle={toggleVize}
-        />
-        <ChoiceField
-          label="Jak velkou ambici máte?"
-          hint="Pilot je test, který za pár týdnů prokáže přínos na jednom procesu. Rollout bez ověřeného pilotu je nejdražší způsob, jak zjistit, že to nefunguje."
-          options={AMBITION}
-          value={p.ambition}
-          onChange={setStr("ambition")}
-        />
-        <ChoiceField
-          label="Do kdy chcete první výsledek?"
-          hint="Termín mění pořadí kroků i to, jak velká ambice je reálná."
-          options={HORIZONT}
-          value={p.horizont}
-          onChange={setStr("horizont")}
-        />
-      </Card>
-      <Card className="mt-5 space-y-7">
-        <div>
-          <div className="text-[13px] font-semibold text-[#0E1726]">Váš hlavní cíl</div>
-          <textarea
-            value={p.cil}
-            onChange={(e) => setP((prev) => ({ ...prev, cil: e.target.value }))}
-            rows={2}
-            placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
-            className="mt-3 w-full rounded-lg border border-[#D8E1EB] bg-white px-3.5 py-2.5 text-[14px] text-[#0E1726] placeholder:text-[#9AA7B4] focus:border-[#1F7AD4] focus:outline-none"
-          />
-        </div>
-        <ChoiceField
-          label="Jaký objem má ta agenda?"
-          hint="U činnosti, kterou chcete zlepšit — kolik dokladů, požadavků nebo kusů měsíčně. Objem rozhoduje o návratnosti: nákladnější automatizace se vyplatí až od určitého množství."
-          options={OBJEM}
-          value={p.objem}
-          onChange={setStr("objem")}
-        />
-        <ChoiceField
-          label="Víte, kolik vás ta činnost dnes stojí?"
-          hint="Kolik hodin nebo korun dnes spotřebuje. Jediné číslo, se kterým po nasazení porovnáte výsledek a obhájíte přínos před vedením."
-          options={MERENI}
-          value={p.mereni}
-          onChange={setStr("mereni")}
-        />
-        <p className="text-[12px] leading-relaxed text-[#9AA7B4]">Ukládá se do tohoto prohlížeče spolu se zbytkem profilu.</p>
-      </Card>
+      )}
+
+      {showGoals && (
+        <>
+          <Card className="mt-5">
+            <div className="font-mono text-[11px] tracking-label text-[#9AA7B4]">DOBRÝ CÍL =</div>
+            <p className="mt-2 text-[18px] font-semibold leading-snug text-[#0E1726]">
+              co měříte <span className="text-[#9AA7B4]">+</span> z čeho kam <span className="text-[#9AA7B4]">+</span> do kdy
+            </p>
+            <div className="mt-6 space-y-2">
+              <div className="flex gap-2.5">
+                <span className="mt-px font-semibold text-[#D1495B]">✕</span>
+                <p className="text-[14px] leading-relaxed text-[#52606D]">„Snížit náklady na administrativu.“</p>
+              </div>
+              <div className="flex gap-2.5">
+                <span className="mt-px font-semibold text-[#12A065]">✓</span>
+                <p className="text-[14px] leading-relaxed text-[#0E1726]">„Zkrátit zpracování faktur z 8 na 3 minuty — ušetřit ~120 hodin měsíčně — do konce Q3.“</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="mt-5 space-y-7">
+            <MultiField
+              label="Jaké cíle má AI naplnit?"
+              hint="Vyberte vše. „Chceme AI“ se nedá změřit — vyberte číslo, které vás bolí."
+              options={VIZE}
+              values={p.vize || []}
+              onToggle={toggleVize}
+            />
+            <ChoiceField
+              label="Jak velkou ambici máte?"
+              hint="Pilot je test, který za pár týdnů prokáže přínos na jednom procesu. Rollout bez ověřeného pilotu je nejdražší způsob, jak zjistit, že to nefunguje."
+              options={AMBITION}
+              value={p.ambition}
+              onChange={setStr("ambition")}
+            />
+            <ChoiceField
+              label="Do kdy chcete první výsledek?"
+              hint="Termín mění pořadí kroků i to, jak velká ambice je reálná."
+              options={HORIZONT}
+              value={p.horizont}
+              onChange={setStr("horizont")}
+            />
+          </Card>
+          <Card className="mt-5 space-y-7">
+            <div>
+              <div className="text-[13px] font-semibold text-[#0E1726]">Váš hlavní cíl</div>
+              <textarea
+                value={p.cil}
+                onChange={(e) => setP((prev) => ({ ...prev, cil: e.target.value }))}
+                rows={2}
+                placeholder="např. zkrátit zpracování faktur z 8 na 3 minuty do Q3"
+                className="mt-3 w-full rounded-lg border border-[#D8E1EB] bg-white px-3.5 py-2.5 text-[14px] text-[#0E1726] placeholder:text-[#9AA7B4] focus:border-[#1F7AD4] focus:outline-none"
+              />
+            </div>
+            <ChoiceField
+              label="Jaký objem má ta agenda?"
+              hint="U činnosti, kterou chcete zlepšit — kolik dokladů, požadavků nebo kusů měsíčně. Objem rozhoduje o návratnosti: nákladnější automatizace se vyplatí až od určitého množství."
+              options={OBJEM}
+              value={p.objem}
+              onChange={setStr("objem")}
+            />
+            <ChoiceField
+              label="Víte, kolik vás ta činnost dnes stojí?"
+              hint="Kolik hodin nebo korun dnes spotřebuje. Jediné číslo, se kterým po nasazení porovnáte výsledek a obhájíte přínos před vedením."
+              options={MERENI}
+              value={p.mereni}
+              onChange={setStr("mereni")}
+            />
+            <p className="text-[12px] leading-relaxed text-[#9AA7B4]">Ukládá se do tohoto prohlížeče spolu se zbytkem profilu.</p>
+          </Card>
+        </>
+      )}
 
       <h2 className="mb-1 mt-10 text-xl font-semibold text-[#0E1726]">Co konkrétně AI umí</h2>
       <p className="mb-2 text-[14px] leading-relaxed text-[#52606D]">
-        Obecné „AI ve výrobě“ neexistuje — vizuální kontrola kvality a výrobní reporting jsou dva úplně jiné projekty. Přehled konkrétních záměrů s orientačním časem na pilot:
+        {noClue
+          ? "Nevíte, kde začít? Tady je přehled konkrétních záměrů — může nakopnout, kde má AI u vás smysl. Obecné „AI ve výrobě“ neexistuje, vždy jde o konkrétní úlohu:"
+          : "Obecné „AI ve výrobě“ neexistuje — vizuální kontrola kvality a výrobní reporting jsou dva úplně jiné projekty. Přehled konkrétních záměrů s orientačním časem na pilot:"}
       </p>
       {AREAS.map((a) => (
         <div key={a.label}>
@@ -172,6 +219,8 @@ export function FiremniCile() {
 }
 
 export function AITym() {
+  const [p] = useProfile();
+  const needsConsultant = p.cileZna === "ne" || p.cileZna === "castecne";
   return (
     <div>
       <SectionHeader
@@ -179,6 +228,20 @@ export function AITym() {
         title="Kdo to ponese"
         intro="Implementace se neutáhne sama. Tohle jsou role, které u zavádění AI obvykle potřebujete — a co se stane, když chybí."
       />
+
+      {needsConsultant && (
+        <Card className="mb-4 border-l-2 border-l-[#12A065] bg-[#F1FBF6]">
+          <div className="font-mono text-[11px] font-semibold tracking-label text-[#12A065]">PODLE VAŠEHO PROFILU</div>
+          <div className="mt-1.5 text-[15px] font-semibold text-[#0E1726]">AI konzultant — ujasnění cílů a směru</div>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-[#52606D]">
+            Doporučeno, protože zatím nemáte jasno v cílech. Než dává smysl řešit nástroje a zbytek týmu, potřebujete vědět, čeho chcete dosáhnout a kde to měřit. Konzultant projde firmu a procesy, najde příležitosti s nejlepší návratností a převede je na konkrétní, měřitelné zadání. Bývá to časově ohraničená spolupráce na pár týdnů, ne stálé místo.
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#D1495B]">
+            Bez ujasnění cílů hrozí nejdražší chyba: nasadit nástroj na špatný problém a po půl roce ho zrušit, protože nikdo neumí doložit přínos.
+          </p>
+        </Card>
+      )}
+
       <div className="space-y-4">
         {TEAM.map((r) => (
           <Card key={r.role} className="border-l-2 border-l-[#1F7AD4]">

@@ -21,6 +21,7 @@ export type Profile = {
   jazyky: string[];
   regs: string[];
   // stanovení cílů
+  cileZna: string;
   vize: string[];
   ambition: string;
   horizont: string;
@@ -47,6 +48,7 @@ export const DEFAULT_PROFILE: Profile = {
   vyvoj: "",
   jazyky: [],
   regs: [],
+  cileZna: "",
   vize: [],
   ambition: "",
   horizont: "",
