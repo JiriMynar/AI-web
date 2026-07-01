@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useProfile, Profile } from "./store";
+import { useProfile, Profile, DEFAULT_PROFILE } from "./store";
 import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
 import { AMBITION, CHARAKTERISTIKA_GROUPS, HORIZONT, Opt, RULES, WORK_AREAS } from "./content";
 
@@ -22,6 +22,10 @@ export function CharakteristikaPodniku() {
       }
       return { ...prev, [key]: next } as Profile;
     });
+
+  const resetAll = () => {
+    if (window.confirm("Opravdu vymazat všechny odpovědi? Vynuluje se uložení profilu v tomto prohlížeči a nedá se to vrátit.")) setP(DEFAULT_PROFILE);
+  };
 
   return (
     <div>
@@ -61,7 +65,16 @@ export function CharakteristikaPodniku() {
           </Card>
         ))}
       </div>
-      <p className="mt-4 font-mono text-[11px] tracking-label text-[#9AA7B4]">ZMĚNY SE UKLÁDAJÍ AUTOMATICKY DO TOHOTO PROHLÍŽEČE</p>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[#E6ECF3] pt-5">
+        <p className="font-mono text-[11px] tracking-label text-[#9AA7B4]">ZMĚNY SE UKLÁDAJÍ AUTOMATICKY DO TOHOTO PROHLÍŽEČE</p>
+        <button
+          type="button"
+          onClick={resetAll}
+          className="flex-shrink-0 rounded-lg border border-[#F1C7CE] bg-white px-4 py-2 text-[13px] font-semibold text-[#D1495B] transition-colors hover:bg-[#FCEBEE]"
+        >
+          Vymazat všechny odpovědi
+        </button>
+      </div>
     </div>
   );
 }
