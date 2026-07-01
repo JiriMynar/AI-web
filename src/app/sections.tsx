@@ -74,6 +74,9 @@ export function FiremniCile() {
       const cur = (prev[key] as string[]) || [];
       return { ...prev, [key]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v] } as Profile;
     });
+  const clearKeys = (key: keyof Profile, vals: string[]) =>
+    setP((prev) => ({ ...prev, [key]: ((prev[key] as string[]) || []).filter((x) => !vals.includes(x)) } as Profile));
+  const clearAll = (key: keyof Profile) => setP((prev) => ({ ...prev, [key]: [] } as Profile));
 
   const noClue = p.cileZna === "ne";
   const showGoals = p.cileZna !== "ne";
@@ -291,29 +294,54 @@ export function FiremniCile() {
           </div>
 
           <div>
-            <div className="text-[13px] font-semibold text-[#0E1726]">Co se mají naučit?</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[13px] font-semibold text-[#0E1726]">Co se mají naučit?</div>
+              {(p.ucitCo || []).length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => clearAll("ucitCo")}
+                  className="flex-shrink-0 text-[12px] font-medium text-[#9AA7B4] transition-colors hover:text-[#D1495B]"
+                >
+                  Vymazat vše
+                </button>
+              )}
+            </div>
             <p className="mt-1 text-[13px] leading-relaxed text-[#7A8794]">Osnova AI gramotnosti rozdělená do okruhů. Zaškrtněte dovednosti, které vaši lidé potřebují — rozsah roste se zvolenou úrovní. Není nutné všechno.</p>
             <div className="mt-4 space-y-5">
-              {COMPETENCY_GROUPS.map((g) => (
-                <div key={g.heading}>
-                  <div className="font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{g.heading.toUpperCase()}</div>
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {g.items.map((o) => {
-                      const active = (p.ucitCo || []).includes(o.v);
-                      return (
+              {COMPETENCY_GROUPS.map((g) => {
+                const groupSelected = g.items.some((o) => (p.ucitCo || []).includes(o.v));
+                return (
+                  <div key={g.heading}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{g.heading.toUpperCase()}</div>
+                      {groupSelected && (
                         <button
-                          key={o.v}
                           type="button"
-                          onClick={() => toggleArr("ucitCo")(o.v)}
-                          className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${active ? "border-[#1F7AD4] bg-[#EAF2FB] text-[#1F7AD4]" : "border-[#D8E1EB] bg-white text-[#52606D] hover:border-[#9AA7B4]"}`}
+                          onClick={() => clearKeys("ucitCo", g.items.map((it) => it.v))}
+                          className="flex-shrink-0 text-[11px] font-medium text-[#9AA7B4] transition-colors hover:text-[#D1495B]"
                         >
-                          {active ? "✓ " : ""}{o.t}
+                          Vymazat
                         </button>
-                      );
-                    })}
+                      )}
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {g.items.map((o) => {
+                        const active = (p.ucitCo || []).includes(o.v);
+                        return (
+                          <button
+                            key={o.v}
+                            type="button"
+                            onClick={() => toggleArr("ucitCo")(o.v)}
+                            className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${active ? "border-[#1F7AD4] bg-[#EAF2FB] text-[#1F7AD4]" : "border-[#D8E1EB] bg-white text-[#52606D] hover:border-[#9AA7B4]"}`}
+                          >
+                            {active ? "✓ " : ""}{o.t}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </Card>
