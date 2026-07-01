@@ -1,0 +1,72 @@
+/* ============================================================
+   VELIN — vizualni vrstva aplikace /app
+   Scopovano pod .vln-app, nedotyka se starych modulu ani landingu.
+   ============================================================ */
+
+.vln-app {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Jemna zare v horni casti platna — hloubka pozadi */
+.vln-glow {
+  background:
+    radial-gradient(760px 280px at 50% -90px, rgba(31, 122, 212, 0.08), transparent 70%),
+    #f6f8fb;
+}
+
+/* Technicky teckovy rastr (podklad diagramu tymu) */
+.vln-grid-bg {
+  background-image: radial-gradient(rgba(31, 122, 212, 0.14) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Vstupni animace sekce pri prepnuti v menu */
+.vln-enter {
+  animation: vln-enter 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes vln-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Vyber textu a focus ring v barve aplikace */
+.vln-app ::selection {
+  background: #cfe6fb;
+  color: #0e1726;
+}
+.vln-app *:focus-visible {
+  outline: 2px solid #1f7ad4;
+  outline-offset: 2px;
+}
+
+/* Tenky scrollbar */
+.vln-app * {
+  scrollbar-width: thin;
+  scrollbar-color: #c9d6e3 transparent;
+}
+.vln-app *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.vln-app *::-webkit-scrollbar-thumb {
+  background: #c9d6e3;
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.vln-app *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vln-enter {
+    animation: none;
+  }
+}

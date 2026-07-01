@@ -1,6 +1,9 @@
 import { ReactNode } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLocalStorage } from "../lib/useLocalStorage";
+import { useProfile } from "./store";
+import { GRAD } from "./ui";
+import "./velin.css";
 
 const IC = "h-[18px] w-[18px] flex-shrink-0";
 
@@ -92,34 +95,86 @@ const PLAN: Item[] = [
   },
 ];
 
+const ALL_ITEMS: Item[] = [...MAIN, ...FIRST_STEPS, ...PLAN];
+
 function linkClass({ isActive }: { isActive: boolean }) {
-  return `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] transition-colors ${
+  return `relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] transition-colors ${
     isActive
-      ? "bg-[#EAF2FB] font-semibold text-[#1F7AD4]"
+      ? "bg-[#EAF3FD] font-semibold text-[#155FA8]"
       : "text-[#4A5A6B] hover:bg-[#F1F5F9] hover:text-[#0E1726]"
   }`;
+}
+
+function StatusDot({ done }: { done: boolean }) {
+  return done ? (
+    <span className="grid h-4 w-4 flex-shrink-0 place-items-center rounded-full bg-[#12A065] text-white">
+      <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 13l4 4L19 7" />
+      </svg>
+    </span>
+  ) : (
+    <span className="h-4 w-4 flex-shrink-0 rounded-full border-[1.5px] border-[#CBD8E6]" />
+  );
 }
 
 export default function AppLayout() {
   const initialOpen = typeof window !== "undefined" ? window.innerWidth >= 1024 : true;
   const [open, setOpen] = useLocalStorage<boolean>("velin.sidebar.open", initialOpen);
+  const [p] = useProfile();
+  const { pathname } = useLocation();
+
+  const charDone = Boolean(p.size && p.focus && p.it && p.systemy);
+  const cileDone = Boolean(p.cileZna);
+  const status: Record<string, boolean | undefined> = {
+    "/app/charakteristika-podniku": charDone,
+    "/app/firemni-cile": cileDone,
+    "/app/ai-tym": charDone && cileDone,
+  };
+
+  const current = ALL_ITEMS.find((i) => pathname.startsWith(i.to));
 
   const closeOnMobile = () => {
     if (typeof window !== "undefined" && window.innerWidth < 1024) setOpen(false);
   };
 
+  const renderItem = (it: Item) => (
+    <NavLink key={it.to} to={it.to} className={linkClass} onClick={closeOnMobile}>
+      {({ isActive }) => (
+        <>
+          <span
+            className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full transition-opacity duration-200 ${
+              isActive ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ background: GRAD }}
+          />
+          <span className={`transition-colors ${isActive ? "text-[#1F7AD4]" : "text-[#8DA0B5]"}`}>{it.icon}</span>
+          <span className="min-w-0 flex-1 truncate">{it.label}</span>
+          {status[it.to] !== undefined && <StatusDot done={Boolean(status[it.to])} />}
+        </>
+      )}
+    </NavLink>
+  );
+
   return (
-    <div className="min-h-screen bg-[#F6F9FC] text-[#0E1726]">
-      {/* Sidebar */}
+    <div className="vln-app vln-glow min-h-screen text-[#0E1726]">
+      {/* Postranní menu */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-[#E6ECF3] bg-white transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-[#E4EAF2] bg-white transition-transform duration-300 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-[#E6ECF3] px-4 py-4">
+        <div className="flex items-center justify-between border-b border-[#EAF0F6] px-4 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-[#1F7AD4] text-[13px] font-bold text-white">V</span>
-            <span className="font-semibold tracking-tight text-[#0E1726]">Velín</span>
+            <span
+              className="grid h-8 w-8 place-items-center rounded-[10px] text-[14px] font-bold text-white shadow-[0_6px_14px_-6px_rgba(31,122,212,0.7)]"
+              style={{ background: GRAD }}
+            >
+              V
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[15px] font-semibold tracking-tight text-[#0E1726]">Velín</span>
+              <span className="mt-1 font-mono text-[8.5px] tracking-label text-[#9AA7B4]">AI IMPLEMENTACE</span>
+            </span>
           </Link>
           <button
             type="button"
@@ -134,48 +189,27 @@ export default function AppLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <div className="space-y-1">
-            {MAIN.map((it) => (
-              <NavLink key={it.to} to={it.to} className={linkClass} onClick={closeOnMobile}>
-                <span className="text-[#7A8794]">{it.icon}</span>
-                <span>{it.label}</span>
-              </NavLink>
-            ))}
-          </div>
+          <div className="space-y-0.5">{MAIN.map(renderItem)}</div>
 
-          <div className="px-3 pb-2 pt-6 font-mono text-[10px] font-semibold tracking-label text-[#9AA7B4]">
+          <div className="px-3 pb-2 pt-7 font-mono text-[10px] font-semibold tracking-label text-[#9AA7B4]">
             PRVNÍ KROKY TÝMU
           </div>
-          <div className="space-y-1">
-            {FIRST_STEPS.map((it) => (
-              <NavLink key={it.to} to={it.to} className={linkClass} onClick={closeOnMobile}>
-                <span className="text-[#7A8794]">{it.icon}</span>
-                <span>{it.label}</span>
-              </NavLink>
-            ))}
-          </div>
+          <div className="space-y-0.5">{FIRST_STEPS.map(renderItem)}</div>
 
-          <div className="px-3 pb-2 pt-6 font-mono text-[10px] font-semibold tracking-label text-[#9AA7B4]">
+          <div className="px-3 pb-2 pt-7 font-mono text-[10px] font-semibold tracking-label text-[#9AA7B4]">
             VÁŠ PLÁN
           </div>
-          <div className="space-y-1">
-            {PLAN.map((it) => (
-              <NavLink key={it.to} to={it.to} className={linkClass} onClick={closeOnMobile}>
-                <span className="text-[#7A8794]">{it.icon}</span>
-                <span>{it.label}</span>
-              </NavLink>
-            ))}
-          </div>
+          <div className="space-y-0.5">{PLAN.map(renderItem)}</div>
         </nav>
 
-        <div className="border-t border-[#E6ECF3] px-4 py-3">
+        <div className="border-t border-[#EAF0F6] px-4 py-3.5">
           <a
             href="https://www.linkedin.com/in/jirimynar/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[10px] tracking-label text-[#9AA7B4] transition-colors hover:text-[#0E1726]"
+            className="font-mono text-[10px] tracking-label text-[#9AA7B4] transition-colors hover:text-[#1F7AD4]"
           >
-            SESTAVIL JIŘÍ MYNÁŘ · LINKEDIN
+            SESTAVIL JIŘÍ MYNÁŘ · LINKEDIN ↗
           </a>
         </div>
       </aside>
@@ -186,13 +220,13 @@ export default function AppLayout() {
           type="button"
           aria-label="Zavřít menu"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
+          className="fixed inset-0 z-30 bg-[#0E1726]/25 backdrop-blur-[2px] lg:hidden"
         />
       )}
 
       {/* Obsah */}
       <div className={`flex min-h-screen flex-col transition-[padding] duration-300 ${open ? "lg:pl-64" : "lg:pl-0"}`}>
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-[#E6ECF3] bg-[#F6F9FC]/85 px-4 py-3 backdrop-blur">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-[#E4EAF2] bg-white/65 px-4 py-3 backdrop-blur-md">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -203,13 +237,28 @@ export default function AppLayout() {
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           </button>
-          <Link to="/" className="font-mono text-[11px] font-semibold tracking-label text-[#52606D] transition-colors hover:text-[#0E1726]">
+          <Link
+            to="/"
+            className="font-mono text-[10.5px] font-semibold tracking-label text-[#8DA0B5] transition-colors hover:text-[#0E1726]"
+          >
             VELÍN
           </Link>
+          {current && (
+            <>
+              <svg viewBox="0 0 24 24" className="h-3 w-3 flex-shrink-0 text-[#C3D0DE]" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+              <span className="truncate text-[13px] font-semibold text-[#0E1726]">{current.label}</span>
+            </>
+          )}
+          <span className="ml-auto hidden flex-shrink-0 items-center gap-2 sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#12A065] shadow-[0_0_0_3px_rgba(18,160,101,0.15)]" />
+            <span className="font-mono text-[9.5px] tracking-label text-[#9AA7B4]">UKLÁDÁNO AUTOMATICKY</span>
+          </span>
         </header>
 
         <main className="flex-1 px-5 py-8 sm:px-8 sm:py-10">
-          <div className="mx-auto max-w-4xl">
+          <div key={pathname} className="vln-enter mx-auto max-w-4xl pb-16">
             <Outlet />
           </div>
         </main>
