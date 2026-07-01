@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useProfile, Profile, DEFAULT_PROFILE } from "./store";
-import { Card, ChoiceField, MultiField, SectionHeader } from "./ui";
+import { Card, ChoiceField, GRAD, MultiField, SectionHeader, chipBase, chipOff, chipOn } from "./ui";
 import { AMBITION, CHARAKTERISTIKA_GROUPS, HORIZONT, Opt, RULES, WORK_AREAS } from "./content";
 
 export function CharakteristikaPodniku() {
@@ -37,7 +37,10 @@ export function CharakteristikaPodniku() {
       <div className="space-y-6">
         {CHARAKTERISTIKA_GROUPS.map((g) => (
           <Card key={g.heading} className="space-y-7">
-            <div className="font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{g.heading.toUpperCase()}</div>
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-[2px]" style={{ background: GRAD }} />
+              <span className="font-mono text-[11px] font-semibold tracking-label text-[#7A8794]">{g.heading.toUpperCase()}</span>
+            </div>
             {g.fields
               .filter((f) => !f.showIf || f.showIf(pr))
               .map((f) =>
@@ -65,12 +68,12 @@ export function CharakteristikaPodniku() {
           </Card>
         ))}
       </div>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[#E6ECF3] pt-5">
-        <p className="font-mono text-[11px] tracking-label text-[#9AA7B4]">ZMĚNY SE UKLÁDAJÍ AUTOMATICKY DO TOHOTO PROHLÍŽEČE</p>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[#E4EAF2] pt-5">
+        <p className="font-mono text-[10.5px] tracking-label text-[#9AA7B4]">ZMĚNY SE UKLÁDAJÍ AUTOMATICKY DO TOHOTO PROHLÍŽEČE</p>
         <button
           type="button"
           onClick={resetAll}
-          className="flex-shrink-0 rounded-lg border border-[#F1C7CE] bg-white px-4 py-2 text-[13px] font-semibold text-[#D1495B] transition-colors hover:bg-[#FCEBEE]"
+          className="flex-shrink-0 rounded-lg border border-[#F1C7CE] bg-white px-4 py-2 text-[13px] font-semibold text-[#D1495B] transition-all hover:bg-[#FCEBEE] hover:shadow-sm active:scale-[0.98]"
         >
           Vymazat všechny odpovědi
         </button>
@@ -200,22 +203,38 @@ export function FiremniCile() {
       </Card>
 
       {showConsultant && (
-        <div className="mt-5 rounded-xl border border-[#CFE0F0] bg-[#F2F8FE] p-6">
-          <div className="font-mono text-[11px] font-semibold tracking-label text-[#1F7AD4]">PODLE VAŠEHO PROFILU</div>
-          <h3 className="mt-1.5 text-[16px] font-semibold text-[#0E1726]">
-            {noClue ? "Do týmu doporučujeme AI konzultanta" : "Zvažte AI konzultanta na ujasnění cílů"}
-          </h3>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#52606D]">
-            {noClue
-              ? "To je úplně běžné — většina firem neumí cíle pojmenovat měřitelně. Ujasnění cílů je první práce konzultanta: projde s vámi procesy, najde, kde má AI nejlepší návratnost, a převede to na konkrétní zadání. Přidali jsme ho do doporučeného týmu."
-              : "Rámcovou představu máte. Konzultant pomůže převést ji na měřitelné cíle a seřadit je podle návratnosti. Přidali jsme ho do doporučeného týmu."}
-          </p>
-          <Link
-            to="/app/ai-tym"
-            className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#1F7AD4] transition-colors hover:text-[#1A6BBC]"
-          >
-            Zobrazit doporučený tým →
-          </Link>
+        <div
+          className="mt-5 overflow-hidden rounded-2xl border border-[#CBE0F7] p-6"
+          style={{ background: "linear-gradient(135deg, #F4FAFF 0%, #EAF3FD 100%)" }}
+        >
+          <div className="flex items-start gap-4">
+            <span
+              className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl text-white shadow-[0_8px_18px_-8px_rgba(31,122,212,0.7)]"
+              style={{ background: GRAD }}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="8.5" />
+                <circle cx="12" cy="12" r="4" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <div className="font-mono text-[10.5px] font-semibold tracking-label text-[#1668B8]">PODLE VAŠEHO PROFILU</div>
+              <h3 className="mt-1.5 text-[16px] font-semibold text-[#0E1726]">
+                {noClue ? "Do týmu doporučujeme AI konzultanta" : "Zvažte AI konzultanta na ujasnění cílů"}
+              </h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#46586D]">
+                {noClue
+                  ? "To je úplně běžné — většina firem neumí cíle pojmenovat měřitelně. Ujasnění cílů je první práce konzultanta: projde s vámi procesy, najde, kde má AI nejlepší návratnost, a převede to na konkrétní zadání. Přidali jsme ho do doporučeného týmu."
+                  : "Rámcovou představu máte. Konzultant pomůže převést ji na měřitelné cíle a seřadit je podle návratnosti. Přidali jsme ho do doporučeného týmu."}
+              </p>
+              <Link
+                to="/app/ai-tym"
+                className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#1F7AD4] transition-colors hover:text-[#1A6BBC]"
+              >
+                Zobrazit doporučený tým →
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
@@ -260,8 +279,11 @@ export function FiremniCile() {
       {showGoals && wantsLLM && (
         <Card className="mt-5 space-y-7">
           <div>
-            <div className="font-mono text-[11px] font-semibold tracking-label text-[#1F7AD4]">AI GRAMOTNOST TÝMU</div>
-            <h3 className="mt-1.5 text-[15px] font-semibold text-[#0E1726]">Co chcete lidi naučit</h3>
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-[2px]" style={{ background: GRAD }} />
+              <span className="font-mono text-[11px] font-semibold tracking-label text-[#1668B8]">AI GRAMOTNOST TÝMU</span>
+            </div>
+            <h3 className="mt-2 text-[16px] font-semibold text-[#0E1726]">Co chcete lidi naučit</h3>
             <p className="mt-1.5 text-[14px] leading-relaxed text-[#52606D]">
               V profilu jste zvolili, že lidé budou pracovat s LLM (ChatGPT, Claude). Tím vzniká samostatný cíl — dostat je na potřebnou úroveň. Není to jen dobrá praxe: AI Act (článek 4, platný od února 2025) přímo ukládá zajistit u lidí pracujících s AI dostatečnou úroveň AI gramotnosti.
             </p>
@@ -283,8 +305,8 @@ export function FiremniCile() {
           />
 
           <div>
-            <div className="text-[13px] font-semibold text-[#0E1726]">Na jakou úroveň je chcete dostat?</div>
-            <p className="mt-1 text-[13px] leading-relaxed text-[#7A8794]">Vyberte cílovou úroveň. Stavte ji odspodu — skok na multiplikátora bez základů nedrží.</p>
+            <div className="text-[13.5px] font-semibold text-[#0E1726]">Na jakou úroveň je chcete dostat?</div>
+            <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[#7A8794]">Vyberte cílovou úroveň. Stavte ji odspodu — skok na multiplikátora bez základů nedrží.</p>
             <div className="mt-3 space-y-2">
               {UROVNE.map((u, i) => {
                 const active = p.ucitUroven === u.v;
@@ -293,9 +315,20 @@ export function FiremniCile() {
                     key={u.v}
                     type="button"
                     onClick={() => setStr("ucitUroven")(active ? "" : u.v)}
-                    className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${active ? "border-[#1F7AD4] bg-[#EAF2FB]" : "border-[#E6ECF3] bg-white hover:border-[#CFE0F0]"}`}
+                    className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-150 active:scale-[0.99] ${
+                      active
+                        ? "border-[#1F7AD4] bg-[#EFF6FD] shadow-[0_10px_24px_-14px_rgba(31,122,212,0.45)]"
+                        : "border-[#E6ECF3] bg-white hover:border-[#C7D8EA] hover:shadow-[0_4px_14px_-8px_rgba(15,23,42,0.18)]"
+                    }`}
                   >
-                    <span className={`mt-0.5 grid h-6 w-6 flex-shrink-0 place-items-center rounded-full font-mono text-[12px] font-semibold ${active ? "bg-[#1F7AD4] text-white" : "bg-[#F1F5F9] text-[#7A8794]"}`}>{i + 1}</span>
+                    <span
+                      className={`mt-0.5 grid h-6 w-6 flex-shrink-0 place-items-center rounded-full font-mono text-[12px] font-semibold ${
+                        active ? "text-white" : "bg-[#F1F5F9] text-[#7A8794]"
+                      }`}
+                      style={active ? { background: GRAD } : undefined}
+                    >
+                      {i + 1}
+                    </span>
                     <span className="min-w-0">
                       <span className="block text-[14px] font-semibold text-[#0E1726]">{u.t}</span>
                       <span className="mt-0.5 block text-[13px] leading-relaxed text-[#52606D]">{u.d}</span>
@@ -308,16 +341,16 @@ export function FiremniCile() {
 
           <div>
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[13px] font-semibold text-[#0E1726]">Co se mají naučit?</div>
+              <div className="text-[13.5px] font-semibold text-[#0E1726]">Co se mají naučit?</div>
               <button
                 type="button"
                 onClick={() => clearAll("ucitCo")}
-                className="flex-shrink-0 text-[12px] font-medium text-[#9AA7B4] transition-colors hover:text-[#D1495B]"
+                className="flex-shrink-0 text-[12px] font-medium text-[#96A3B3] transition-colors hover:text-[#D1495B]"
               >
                 Vymazat vše
               </button>
             </div>
-            <p className="mt-1 text-[13px] leading-relaxed text-[#7A8794]">Osnova AI gramotnosti rozdělená do okruhů. Zaškrtněte dovednosti, které vaši lidé potřebují — rozsah roste se zvolenou úrovní. Není nutné všechno.</p>
+            <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[#7A8794]">Osnova AI gramotnosti rozdělená do okruhů. Zaškrtněte dovednosti, které vaši lidé potřebují — rozsah roste se zvolenou úrovní. Není nutné všechno.</p>
             <div className="mt-4 space-y-6">
               {COMPETENCY_GROUPS.map((g) => (
                 <div key={g.heading}>
@@ -329,10 +362,12 @@ export function FiremniCile() {
                         <button
                           key={o.v}
                           type="button"
+                          aria-pressed={active}
                           onClick={() => toggleArr("ucitCo")(o.v)}
-                          className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${active ? "border-[#1F7AD4] bg-[#EAF2FB] text-[#1F7AD4]" : "border-[#D8E1EB] bg-white text-[#52606D] hover:border-[#9AA7B4]"}`}
+                          className={`${chipBase} ${active ? chipOn : chipOff}`}
                         >
-                          {active ? "✓ " : ""}{o.t}
+                          {active ? "\u2713 " : ""}
+                          {o.t}
                         </button>
                       );
                     })}
@@ -340,7 +375,7 @@ export function FiremniCile() {
                   <button
                     type="button"
                     onClick={() => clearKeys("ucitCo", g.items.map((it) => it.v))}
-                    className="mt-3 text-[12px] font-medium text-[#9AA7B4] transition-colors hover:text-[#D1495B]"
+                    className="mt-3 text-[12px] font-medium text-[#96A3B3] transition-colors hover:text-[#D1495B]"
                   >
                     Vymazat kategorii
                   </button>
@@ -377,7 +412,7 @@ export function AITym() {
           intro="Tým se skládá na míru podle toho, co vyplníte o firmě a cílech. Model se objeví, jakmile budou podklady hotové."
         />
         <Card>
-          <div className="font-mono text-[11px] font-semibold tracking-label text-[#B7791F]">NEJDŘÍV VYPLŇTE PODKLADY</div>
+          <div className="font-mono text-[10.5px] font-semibold tracking-label text-[#B7791F]">NEJDŘÍV VYPLŇTE PODKLADY</div>
           <h3 className="mt-1.5 text-[16px] font-semibold text-[#0E1726]">Tým poskládáme podle vaší firmy</h3>
           <p className="mt-2 text-[14px] leading-relaxed text-[#52606D]">
             Hierarchie týmu vzniká z toho, co vyplníte v Charakteristice podniku a ve Stanovení cílů — kdo má být v týmu a jestli je potřeba konzultant, IT partner nebo pověřenec, se odvíjí právě od těchto odpovědí. Než jsou hotové, nemáme z čeho tým sestavit, takže se model zatím nezobrazuje.
@@ -387,7 +422,11 @@ export function AITym() {
               <Link
                 key={pq.to}
                 to={pq.to}
-                className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-colors ${pq.done ? "border-[#D3EFE1] bg-[#F1FBF6]" : "border-[#E6ECF3] bg-white hover:border-[#CFE0F0]"}`}
+                className={`group flex items-center justify-between gap-3 rounded-xl border px-4 py-3.5 transition-all ${
+                  pq.done
+                    ? "border-[#CBE9DA] bg-[#F1FBF6]"
+                    : "border-[#E6ECF3] bg-white hover:border-[#C7D8EA] hover:shadow-[0_4px_14px_-8px_rgba(15,23,42,0.15)]"
+                }`}
               >
                 <div className="flex items-center gap-3">
                   {pq.done ? (
@@ -404,7 +443,11 @@ export function AITym() {
                     <div className="text-[13px] leading-relaxed text-[#7A8794]">{pq.done ? "Vyplněno" : pq.hint}</div>
                   </div>
                 </div>
-                <span className={`flex-shrink-0 text-[13px] font-semibold ${pq.done ? "text-[#12A065]" : "text-[#1F7AD4]"}`}>
+                <span
+                  className={`flex-shrink-0 text-[13px] font-semibold transition-transform group-hover:translate-x-0.5 ${
+                    pq.done ? "text-[#12A065]" : "text-[#1F7AD4]"
+                  }`}
+                >
                   {pq.done ? "Upravit" : "Vyplnit →"}
                 </span>
               </Link>
@@ -460,57 +503,69 @@ export function AITym() {
         intro="Tým namodelovaný podle vašeho profilu — kdo zadává, kdo řídí, kdo realizuje a kdo se stará o adopci. U menší firmy klidně nosí jeden člověk víc rolí; jde o to, aby každou roli někdo držel."
       />
 
-      <div className="rounded-2xl border border-[#E6ECF3] bg-[#FAFCFE] p-5 sm:p-7">
-        {TIERS.map((tier, ti) => {
-          const group = roles.filter((r) => r.tier === tier.id);
-          if (group.length === 0) return null;
-          return (
-            <div key={tier.id}>
-              {ti > 0 && <div className="mx-auto h-6 w-px bg-[#CFE0F0]" />}
-              <div className="mb-3 flex items-center justify-center gap-2">
-                <span className="h-px w-6 bg-[#E3EAF2]" />
-                <span className="font-mono text-[11px] font-semibold tracking-label" style={{ color: tier.color }}>{tier.label.toUpperCase()}</span>
-                <span className="h-px w-6 bg-[#E3EAF2]" />
-              </div>
-              <div className="flex flex-wrap justify-center gap-3">
-                {group.map((r) => (
-                  <div
-                    key={r.name}
-                    className="flex w-full items-start gap-3 rounded-xl border border-[#E6ECF3] border-l-2 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:w-72"
-                    style={{ borderLeftColor: tier.color }}
+      <div className="relative overflow-hidden rounded-2xl border border-[#E0E9F3] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_28px_-18px_rgba(15,23,42,0.12)] sm:p-8">
+        <div className="vln-grid-bg pointer-events-none absolute inset-0 opacity-50" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28" style={{ background: "linear-gradient(180deg, rgba(31,122,212,0.06), transparent)" }} />
+        <div className="relative">
+          {TIERS.map((tier, ti) => {
+            const group = roles.filter((r) => r.tier === tier.id);
+            if (group.length === 0) return null;
+            return (
+              <div key={tier.id}>
+                {ti > 0 && <div className="mx-auto h-7 w-px bg-gradient-to-b from-[#CFE0F0] to-[#AFC8E2]" />}
+                <div className="mb-3.5 flex justify-center">
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[10.5px] font-semibold tracking-label"
+                    style={{ color: tier.color, backgroundColor: tier.soft }}
                   >
-                    <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full" style={{ backgroundColor: tier.soft, color: tier.color }}>
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="8" r="3.2" />
-                        <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
-                      </svg>
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[14px] font-semibold text-[#0E1726]">{r.name}</span>
-                        {r.temp && <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5 text-[10px] font-medium text-[#7A8794]">dočasně</span>}
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: tier.color }} />
+                    {tier.label.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-3 pb-1">
+                  {group.map((r) => (
+                    <div
+                      key={r.name}
+                      className="flex w-full items-start gap-3 rounded-xl border border-[#E3EAF3] border-l-2 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-16px_rgba(15,23,42,0.28)] sm:w-72"
+                      style={{ borderLeftColor: tier.color }}
+                    >
+                      <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full" style={{ backgroundColor: tier.soft, color: tier.color }}>
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="8" r="3.2" />
+                          <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+                        </svg>
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[14px] font-semibold text-[#0E1726]">{r.name}</span>
+                          {r.temp && (
+                            <span className="rounded-full border border-dashed border-[#B9C9D9] bg-white px-2 py-0.5 text-[10px] font-medium text-[#7A8794]">
+                              dočasně
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-[13px] leading-relaxed text-[#52606D]">{r.sub}</p>
                       </div>
-                      <p className="mt-0.5 text-[13px] leading-relaxed text-[#52606D]">{r.sub}</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <p className="mt-4 text-[13px] leading-relaxed text-[#7A8794]">
         Není to organigram na nábor osmi lidí. U menší firmy běžně drží víc rolí jeden člověk a část (IT, pověřenec, konzultant) bývá externí. Důležité je, aby na každou roli byl někdo konkrétní — ne aby „to nějak dělali všichni“.
       </p>
 
-      <h2 className="mb-1 mt-10 text-xl font-semibold text-[#0E1726]">Osm oblastí práce</h2>
+      <h2 className="mb-1 mt-10 text-xl font-semibold tracking-tight text-[#0E1726]">Osm oblastí práce</h2>
       <p className="mb-5 text-[14px] leading-relaxed text-[#52606D]">
         Ať tým tvoří jeden člověk nebo skupina, těchto osm oblastí musí mít někoho, kdo je drží. U každé je vidět, co se stane, když vlastníka nemá.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {WORK_AREAS.map((w) => (
-          <Card key={w.t}>
+          <Card key={w.t} className="transition-colors hover:border-[#CBD9E8]">
             <div className="text-[14px] font-semibold text-[#0E1726]">{w.t}</div>
             <p className="mt-1 text-[13px] leading-relaxed text-[#52606D]">{w.d}</p>
             <p className="mt-2 text-[12px] leading-relaxed text-[#9AA7B4]">{w.risk}</p>
@@ -530,12 +585,16 @@ export function PopisPrace() {
         intro="Sestavte popis pracovní pozice z konkrétní náplně, ne z buzzwordů — a vygenerujte z něj hotový inzerát."
       />
       <Card>
+        <span className="mb-3 inline-flex rounded-md border border-[#F2E2C4] bg-[#FFF6E3] px-2 py-1 font-mono text-[10px] font-semibold tracking-label text-[#B7791F]">
+          PŘIPRAVUJE SE
+        </span>
         <p className="text-[14px] leading-relaxed text-[#52606D]">
           Interaktivní stavěč popisu se sem přesouvá do nového vzhledu. Než to dokončím, najdete ho v původní podobě tady:
         </p>
         <a
           href="/hr"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1F7AD4] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#1A6BBC]"
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_22px_-10px_rgba(31,122,212,0.65)] transition-all hover:brightness-110 active:scale-[0.98]"
+          style={{ background: GRAD }}
         >
           Otevřít stavěč popisu →
         </a>
@@ -553,6 +612,9 @@ export function PrehledyMezd() {
         intro="Orientační mzdová pásma pro role kolem zavádění AI — podle seniority, zaměření a regionu."
       />
       <Card>
+        <span className="mb-3 inline-flex rounded-md border border-[#F2E2C4] bg-[#FFF6E3] px-2 py-1 font-mono text-[10px] font-semibold tracking-label text-[#B7791F]">
+          PŘIPRAVUJE SE
+        </span>
         <p className="text-[14px] leading-relaxed text-[#52606D]">
           Přehledy mezd sem teprve stěhuji. Budou stavět na veřejných platových přehledech a inzerci — ne na oficiální statistice, protože AI implementační role zatím nemají vlastní kód v CZ-ISCO. Čísla proto budou vždy orientační, jako vodítko k jednání.
         </p>
@@ -578,7 +640,7 @@ export function MapovaniProcesu() {
       />
       <div className="space-y-4">
         {steps.map(([t, d], i) => (
-          <Card key={t} className="flex gap-4">
+          <Card key={t} className="flex gap-4 transition-colors hover:border-[#CBD9E8]">
             <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full border border-[#CFE0F0] bg-[#EAF2FB] font-mono text-[15px] font-semibold text-[#1F7AD4]">
               {i + 1}
             </span>
@@ -590,11 +652,13 @@ export function MapovaniProcesu() {
         ))}
       </div>
 
-      <h2 className="mb-4 mt-10 text-xl font-semibold text-[#0E1726]">Pár čísel z praxe</h2>
+      <h2 className="mb-4 mt-10 text-xl font-semibold tracking-tight text-[#0E1726]">Pár čísel z praxe</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {RULES.map((r) => (
-          <Card key={r.label}>
-            <div className="font-mono text-[18px] font-bold text-[#1F7AD4]">{r.big}</div>
+          <Card key={r.label} className="transition-colors hover:border-[#CBD9E8]">
+            <div className="bg-clip-text font-mono text-[20px] font-bold text-transparent" style={{ backgroundImage: GRAD }}>
+              {r.big}
+            </div>
             <div className="mt-1 text-[13px] font-semibold text-[#0E1726]">{r.label}</div>
             <p className="mt-1.5 text-[13px] leading-relaxed text-[#52606D]">{r.d}</p>
           </Card>
