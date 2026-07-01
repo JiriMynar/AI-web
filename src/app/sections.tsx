@@ -326,6 +326,63 @@ type TeamNode = { name: string; sub: string; tier: string; temp?: boolean };
 
 export function AITym() {
   const [p] = useProfile();
+
+  const charComplete = Boolean(p.size && p.focus && p.it && p.systemy);
+  const cileComplete = Boolean(p.cileZna);
+  const ready = charComplete && cileComplete;
+
+  const prereqs = [
+    { to: "/app/charakteristika-podniku", label: "Charakteristika podniku", done: charComplete, hint: "Velikost, zaměření, vlastní IT, systémy a data." },
+    { to: "/app/firemni-cile", label: "Stanovení firemních cílů", done: cileComplete, hint: "Aspoň jestli máte jasno v cílech." },
+  ];
+
+  if (!ready) {
+    return (
+      <div>
+        <SectionHeader
+          eyebrow="SESTAVENÍ AI TÝMU"
+          title="Jak má vypadat váš tým"
+          intro="Tým se skládá na míru podle toho, co vyplníte o firmě a cílech. Model se objeví, jakmile budou podklady hotové."
+        />
+        <Card>
+          <div className="font-mono text-[11px] font-semibold tracking-label text-[#B7791F]">NEJDŘÍV VYPLŇTE PODKLADY</div>
+          <h3 className="mt-1.5 text-[16px] font-semibold text-[#0E1726]">Tým poskládáme podle vaší firmy</h3>
+          <p className="mt-2 text-[14px] leading-relaxed text-[#52606D]">
+            Hierarchie týmu vzniká z toho, co vyplníte v Charakteristice podniku a ve Stanovení cílů — kdo má být v týmu a jestli je potřeba konzultant, IT partner nebo pověřenec, se odvíjí právě od těchto odpovědí. Než jsou hotové, nemáme z čeho tým sestavit, takže se model zatím nezobrazuje.
+          </p>
+          <div className="mt-5 space-y-2.5">
+            {prereqs.map((pq) => (
+              <Link
+                key={pq.to}
+                to={pq.to}
+                className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-colors ${pq.done ? "border-[#D3EFE1] bg-[#F1FBF6]" : "border-[#E6ECF3] bg-white hover:border-[#CFE0F0]"}`}
+              >
+                <div className="flex items-center gap-3">
+                  {pq.done ? (
+                    <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-full bg-[#12A065] text-white">
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  ) : (
+                    <span className="h-6 w-6 flex-shrink-0 rounded-full border-2 border-[#CFE0F0]" />
+                  )}
+                  <div>
+                    <div className="text-[14px] font-semibold text-[#0E1726]">{pq.label}</div>
+                    <div className="text-[13px] leading-relaxed text-[#7A8794]">{pq.done ? "Vyplněno" : pq.hint}</div>
+                  </div>
+                </div>
+                <span className={`flex-shrink-0 text-[13px] font-semibold ${pq.done ? "text-[#12A065]" : "text-[#1F7AD4]"}`}>
+                  {pq.done ? "Upravit" : "Vyplnit →"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const wantsLLM = p.zpusob === "llm" || p.zpusob === "oboji";
   const regs = p.regs || [];
   const dataMessy =
